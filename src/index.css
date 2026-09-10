@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply bg-[#F8F9FB] text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased overflow-hidden select-none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  html.pip-mode-body,
+  html.pip-mode-body body,
+  html.pip-mode-body #root,
+  body:has(#standalone-pip-root),
+  body:has(#standalone-pip-root) #root,
+  #standalone-pip-root {
+    background-color: transparent !important;
+    background: transparent !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+  scrollbar-gutter: stable;
+}
+
+/* Electron Frameless Window Dragging */
+.titlebar-drag {
+  -webkit-app-region: drag !important;
+  user-select: none;
+}
+
+.titlebar-no-drag,
+.titlebar-no-drag *,
+button,
+input,
+select,
+textarea,
+a {
+  -webkit-app-region: no-drag !important;
+}
+
+.titlebar-drag img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.7);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.6);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.8);
+}
+
+/* No Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Alert Red Card/Border Pulse (border, glow shadow, and solid opaque background pulse) */
+@keyframes alert-pulse-red-border {
+  0%, 100% {
+    border-color: #ef4444; /* red-500 */
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.7), 0 4px 14px rgba(239, 68, 68, 0.35);
+    background-color: #fef2f2; /* red-50 (완전 불투명) */
+  }
+  50% {
+    border-color: #f87171; /* red-400 */
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 2px 5px rgba(239, 68, 68, 0.1);
+    background-color: #ffffff; /* white (완전 불투명) */
+  }
+}
+
+@keyframes alert-pulse-red-border-dark {
+  0%, 100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.7), 0 4px 14px rgba(239, 68, 68, 0.35);
+    background-color: #260e14; /* 다크모드 완전 불투명 붉은 배경 */
+  }
+  50% {
+    border-color: #f87171;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 2px 5px rgba(239, 68, 68, 0.1);
+    background-color: #0f172a; /* slate-900 (완전 불투명) */
+  }
+}
+
+@keyframes alert-badge-pulse-red {
+  0%, 100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1.5px rgba(239, 68, 68, 0.6);
+    background-color: #fee2e2;
+  }
+  50% {
+    border-color: #fca5a5;
+    box-shadow: 0 0 0 0.5px rgba(239, 68, 68, 0.2);
+    background-color: #fef2f2;
+  }
+}
+
+@keyframes alert-badge-pulse-red-dark {
+  0%, 100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1.5px rgba(239, 68, 68, 0.6);
+    background-color: #450a0a;
+  }
+  50% {
+    border-color: #f87171;
+    box-shadow: 0 0 0 0.5px rgba(239, 68, 68, 0.2);
+    background-color: #250505;
+  }
+}
+
+.alert-pulse-red {
+  animation: alert-pulse-red-border 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  opacity: 1 !important;
+}
+
+.dark .alert-pulse-red {
+  animation: alert-pulse-red-border-dark 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  opacity: 1 !important;
+}
+
+.alert-badge-pulse {
+  animation: alert-badge-pulse-red 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  opacity: 1 !important;
+}
+
+.dark .alert-badge-pulse {
+  animation: alert-badge-pulse-red-dark 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  opacity: 1 !important;
+}
+
+
