@@ -1,6 +1,10 @@
 node_modules/
 build/
 dist/
+dist-electron/
+release/
+*.exe
+*.msi
 coverage/
 .DS_Store
 *.log

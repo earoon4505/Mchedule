@@ -1,9 +1,10 @@
 import type { SyntheticEvent } from 'react';
+import { isWeb } from './platform';
 
 /**
  * 캐릭터 아바타 이미지 URL 변환 헬퍼
- * 넥슨 오픈 API의 아바타 이미지는 인증 헤더(x-nxopen-api-key)가 필요한 경우가 많으므로,
- * 로컬 프록시(/api/proxy/image)를 거쳐 403 Forbidden 없이 100% 안정적으로 표시되도록 보장합니다.
+ * 데스크톱(Electron) 환경에서는 로컬 프록시(/api/proxy/image)를 거쳐 안정적으로 표시하고,
+ * 웹 브라우저(Vercel 등) 환경에서는 원본 CDN URL을 직접 반환합니다.
  */
 export function getCharacterAvatarUrl(rawUrl?: string | null): string {
   if (!rawUrl || typeof rawUrl !== 'string') return '';
@@ -15,8 +16,12 @@ export function getCharacterAvatarUrl(rawUrl?: string | null): string {
     return trimmed;
   }
 
-  // 외래 URL(넥슨 Open API static 이미지 등)은 프록시 라우팅
+  // 외래 URL(넥슨 Open API static 이미지 등)
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    // 웹 환경에서는 백엔드 프록시 서버가 없으므로 원본 CDN 직접 사용
+    if (isWeb) {
+      return trimmed;
+    }
     return `/api/proxy/image?url=${encodeURIComponent(trimmed)}`;
   }
 
@@ -39,6 +44,9 @@ export function onAvatarError(e: SyntheticEvent<HTMLImageElement, Event>, origin
 export function getProxyImageUrl(rawUrl: string): string {
   if (!rawUrl) return '';
   if (rawUrl.startsWith('/api/proxy') || rawUrl.startsWith('data:') || rawUrl.startsWith('/')) {
+    return rawUrl;
+  }
+  if (isWeb) {
     return rawUrl;
   }
   return `/api/proxy/image?url=${encodeURIComponent(rawUrl)}`;

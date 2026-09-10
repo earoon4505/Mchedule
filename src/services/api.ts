@@ -293,7 +293,51 @@ export async function deleteApiKey(): Promise<{ success: boolean; hasApiKey?: bo
   }
 }
 
+// ---------------------------------------------------------------------------
+// 웹 환경 전용 넥슨 직접 호출 헬퍼 (Vercel 등 서버리스 환경에서 CORS 통신)
+// ---------------------------------------------------------------------------
+async function fetchNexonWeb(endpoint: string, apiKey?: string): Promise<Response> {
+  const targetKey = apiKey || getWebLocalApiKeys()[0]?.apiKey;
+  if (!targetKey) {
+    throw new Error('NEXON API 키가 등록되지 않았습니다.');
+  }
+  const url = endpoint.startsWith('http') ? endpoint : `https://open.api.nexon.com${endpoint}`;
+  return await fetch(url, {
+    headers: {
+      'x-nxopen-api-key': targetKey,
+      'Content-Type': 'application/json',
+    },
+  });
+}
+
 export async function testApiKey(apiKey?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  if (isWeb) {
+    const targetKey = apiKey?.trim() || getWebLocalApiKeys()[0]?.apiKey;
+    if (!targetKey) {
+      return { success: false, error: '검증할 API 키가 없습니다.' };
+    }
+    try {
+      const res = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent('메이플용사')}`, {
+        headers: {
+          'x-nxopen-api-key': targetKey,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.status === 401 || res.status === 403) {
+        return {
+          success: false,
+          error: '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
+        };
+      }
+      return {
+        success: true,
+        message: 'NEXON Open API 연결 테스트에 성공했습니다!',
+      };
+    } catch (e: any) {
+      return { success: false, error: e.message || '네트워크 오류가 발생했습니다.' };
+    }
+  }
+
   try {
     const headers = getRequestHeaders({ 'Content-Type': 'application/json' });
     const res = await fetch('/api/nexon/key/test', {
@@ -312,6 +356,70 @@ export async function testApiKey(apiKey?: string): Promise<{ success: boolean; m
 }
 
 export async function searchNexonCharacter(name: string): Promise<SearchCharacterResult> {
+  if (isWeb) {
+    try {
+      const keys = getWebLocalApiKeys();
+      if (keys.length === 0) {
+        return {
+          success: false,
+          error: 'NEXON API 키가 등록되지 않았습니다. 상단 [API 등록] 버튼을 눌러 API 키를 등록해주세요.',
+        };
+      }
+      const activeKey = keys[0].apiKey;
+
+      // 1. OCID 조회
+      const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(name.trim())}`, {
+        headers: {
+          'x-nxopen-api-key': activeKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!idRes.ok) {
+        const errJson = await idRes.json().catch(() => ({}));
+        return {
+          success: false,
+          error: errJson.error?.message || `캐릭터를 찾을 수 없습니다. (상태 코드: ${idRes.status})`,
+        };
+      }
+
+      const idData = (await idRes.json()) as { ocid: string };
+      if (!idData.ocid) {
+        return { success: false, error: '캐릭터 식별자(OCID)를 가져오지 못했습니다.' };
+      }
+
+      // 2. 기본 정보 조회
+      const basicRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(idData.ocid)}`, {
+        headers: {
+          'x-nxopen-api-key': activeKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!basicRes.ok) {
+        const errJson = await basicRes.json().catch(() => ({}));
+        return {
+          success: false,
+          error: errJson.error?.message || '캐릭터 기본 정보 조회에 실패했습니다.',
+        };
+      }
+
+      const basicData = await basicRes.json();
+      return {
+        success: true,
+        data: {
+          ocid: idData.ocid,
+          basic: basicData,
+        },
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.message || '네트워크 오류가 발생했습니다.',
+      };
+    }
+  }
+
   try {
     const headers = getRequestHeaders();
     const res = await fetch(`/api/nexon/character/search?name=${encodeURIComponent(name.trim())}`, {
@@ -337,6 +445,44 @@ export async function searchNexonCharacter(name: string): Promise<SearchCharacte
 }
 
 export async function fetchCharacterBasic(ocidOrName: { ocid?: string; name?: string }, force = false): Promise<{ success: boolean; basic?: NexonCharacterBasic; error?: string }> {
+  if (isWeb) {
+    try {
+      const keys = getWebLocalApiKeys();
+      if (keys.length === 0) {
+        return { success: false, error: '등록된 API 키가 없습니다.' };
+      }
+      const activeKey = keys[0].apiKey;
+
+      let targetOcid = ocidOrName.ocid;
+      if (!targetOcid && ocidOrName.name) {
+        const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(ocidOrName.name.trim())}`, {
+          headers: { 'x-nxopen-api-key': activeKey, 'Content-Type': 'application/json' },
+        });
+        if (idRes.ok) {
+          const idData = await idRes.json();
+          targetOcid = idData.ocid;
+        }
+      }
+
+      if (!targetOcid) {
+        return { success: false, error: '캐릭터 OCID를 찾을 수 없습니다.' };
+      }
+
+      const basicRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(targetOcid)}`, {
+        headers: { 'x-nxopen-api-key': activeKey, 'Content-Type': 'application/json' },
+      });
+
+      if (!basicRes.ok) {
+        return { success: false, error: '기본 정보 조회 실패' };
+      }
+
+      const basicData = await basicRes.json();
+      return { success: true, basic: basicData };
+    } catch (e: any) {
+      return { success: false, error: e.message || '네트워크 오류' };
+    }
+  }
+
   try {
     const params = new URLSearchParams();
     if (ocidOrName.ocid) params.set('ocid', ocidOrName.ocid);
@@ -365,6 +511,96 @@ export interface AccountCharactersResult {
 }
 
 export async function fetchAccountCharacters(force = false): Promise<AccountCharactersResult> {
+  if (isWeb) {
+    const keys = getWebLocalApiKeys();
+    if (keys.length === 0) {
+      return {
+        success: false,
+        error: 'NEXON API 키가 등록되지 않았습니다. 상단 [API 등록] 버튼을 눌러 먼저 키를 등록해주세요.',
+      };
+    }
+
+    try {
+      const allResults = await Promise.all(
+        keys.map(async (k) => {
+          try {
+            const listRes = await fetch('https://open.api.nexon.com/maplestory/v1/character/list', {
+              headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
+            });
+            if (!listRes.ok) return [];
+            const listData = await listRes.json();
+            let rawList: any[] = [];
+            if (Array.isArray(listData.account_list)) {
+              for (const acc of listData.account_list) {
+                if (Array.isArray(acc.character_list)) rawList.push(...acc.character_list);
+              }
+            } else if (Array.isArray(listData.character_list)) {
+              rawList = listData.character_list;
+            } else if (Array.isArray(listData)) {
+              rawList = listData;
+            }
+            return rawList.map((c) => ({ ...c, _key: k.apiKey }));
+          } catch (_) {
+            return [];
+          }
+        })
+      );
+
+      const seen = new Set<string>();
+      const flatList: any[] = [];
+      for (const resList of allResults) {
+        for (const char of resList) {
+          const id = char.ocid || char.character_name;
+          if (id && !seen.has(id)) {
+            seen.add(id);
+            flatList.push(char);
+          }
+        }
+      }
+
+      // 기본 캐릭터 정보 보강
+      const enriched = await Promise.all(
+        flatList.slice(0, 50).map(async (c) => {
+          if (c.ocid && !c.character_image) {
+            try {
+              const bRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(c.ocid)}`, {
+                headers: { 'x-nxopen-api-key': c._key, 'Content-Type': 'application/json' },
+              });
+              if (bRes.ok) {
+                const bData = await bRes.json();
+                return {
+                  ocid: c.ocid,
+                  character_name: c.character_name || bData.character_name,
+                  world_name: c.world_name || bData.world_name,
+                  character_class: c.character_class || bData.character_class,
+                  character_level: Number(c.character_level || bData.character_level) || 200,
+                  character_image: bData.character_image || '',
+                  character_gender: bData.character_gender || '',
+                  character_guild_name: bData.character_guild_name || '',
+                };
+              }
+            } catch (_) {}
+          }
+          return {
+            ocid: c.ocid || '',
+            character_name: c.character_name || '',
+            world_name: c.world_name || '메이플',
+            character_class: c.character_class || '모험가',
+            character_level: Number(c.character_level) || 200,
+            character_image: c.character_image || '',
+            character_gender: c.character_gender || '',
+            character_guild_name: c.character_guild_name || '',
+          };
+        })
+      );
+
+      enriched.sort((a, b) => (b.character_level || 0) - (a.character_level || 0));
+      return { success: true, count: enriched.length, characters: enriched };
+    } catch (e: any) {
+      return { success: false, error: e.message || '계정 캐릭터 목록 조회 오류' };
+    }
+  }
+
   try {
     const headers = getRequestHeaders();
     const res = await fetch(`/api/nexon/account/characters${force ? '?force=true' : ''}`, {
@@ -391,6 +627,15 @@ export async function fetchAccountCharacters(force = false): Promise<AccountChar
 }
 
 export async function fetchNexonSchedulerState(ocid: string, force = false, customDate?: string): Promise<SyncSchedulerResult> {
+  if (isWeb) {
+    // 웹 환경에서는 스케줄러 동기화 상태를 안전하게 빈 상태로 폴백하여 에러 차단
+    return {
+      success: true,
+      data: undefined,
+      isMockOrEmpty: true,
+    };
+  }
+
   try {
     const params = new URLSearchParams();
     params.set('ocid', ocid);
