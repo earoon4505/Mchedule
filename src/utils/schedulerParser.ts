@@ -1061,6 +1061,36 @@ export function applyNexonSchedulerData(
     return { updatedRecord: currentRecord, syncCount: 0 };
   }
 
+  const data = apiData.scheduler || apiData;
+  if (!data || typeof data !== 'object') {
+    return { updatedRecord: currentRecord, syncCount: 0 };
+  }
+
+  const rawDaily = Array.isArray(data.daily_contents) 
+    ? data.daily_contents 
+    : (Array.isArray(apiData.daily_contents) 
+        ? apiData.daily_contents 
+        : (Array.isArray(apiData.scheduler?.daily_contents) ? apiData.scheduler.daily_contents : []));
+
+  const rawWeekly = Array.isArray(data.weekly_contents) 
+    ? data.weekly_contents 
+    : (Array.isArray(apiData.weekly_contents) 
+        ? apiData.weekly_contents 
+        : (Array.isArray(apiData.scheduler?.weekly_contents) ? apiData.scheduler.weekly_contents : []));
+
+  const rawBoss = Array.isArray(data.boss_contents) 
+    ? data.boss_contents 
+    : (Array.isArray(apiData.boss_contents) 
+        ? apiData.boss_contents 
+        : (Array.isArray(apiData.scheduler?.boss_contents) ? apiData.scheduler.boss_contents : []));
+
+  // 넥슨 스케줄러 유효 데이터 존재 여부 엄격 검증:
+  // 일일, 주간, 보스 콘텐츠 중 단 하나라도 존재하지 않는 빈 객체/에러 응답인 경우,
+  // 기존에 유저가 완료해둔 클리어 현황을 훼손하지 않고 100% 안전하게 원본 유지합니다.
+  if (rawDaily.length === 0 && rawWeekly.length === 0 && rawBoss.length === 0) {
+    return { updatedRecord: currentRecord, syncCount: 0 };
+  }
+
   // 1) 인게임 스케줄러 기준 동기화:
   // 일일, 주간, 일보, 주보, 검마는 인게임 스케줄러와 비교하여 클리어했을 시에만 체크하고,
   // 그 외에는 수동으로 체크가 되어있더라도 무조건 체크 해제(completed: false) 처리합니다.
@@ -1120,26 +1150,6 @@ export function applyNexonSchedulerData(
 
   let syncCount = 0;
   const nowIso = new Date().toISOString();
-
-  const data = apiData.scheduler || apiData;
-
-  const rawDaily = Array.isArray(data.daily_contents) 
-    ? data.daily_contents 
-    : (Array.isArray(apiData.daily_contents) 
-        ? apiData.daily_contents 
-        : (Array.isArray(apiData.scheduler?.daily_contents) ? apiData.scheduler.daily_contents : []));
-
-  const rawWeekly = Array.isArray(data.weekly_contents) 
-    ? data.weekly_contents 
-    : (Array.isArray(apiData.weekly_contents) 
-        ? apiData.weekly_contents 
-        : (Array.isArray(apiData.scheduler?.weekly_contents) ? apiData.scheduler.weekly_contents : []));
-
-  const rawBoss = Array.isArray(data.boss_contents) 
-    ? data.boss_contents 
-    : (Array.isArray(apiData.boss_contents) 
-        ? apiData.boss_contents 
-        : (Array.isArray(apiData.scheduler?.boss_contents) ? apiData.scheduler.boss_contents : []));
 
   const rawGuild = Array.isArray(data.guild_contents) 
     ? data.guild_contents 

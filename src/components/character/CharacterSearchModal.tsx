@@ -10,7 +10,7 @@ import {
   Plus
 } from 'lucide-react';
 import { CharacterInfo, NexonAccountCharacter } from '../../types';
-import { fetchAccountCharacters, fetchNexonSchedulerState } from '../../services/api';
+import { fetchAccountCharacters, fetchNexonSchedulerState, fetchCharacterBasic } from '../../services/api';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { getDefaultEnabledTasksForLevel, getDefaultBossesForLevel, getDefaultDailyBossesForLevel } from '../../data/defaultTasks';
 import { extractInGameRegisteredTasks } from '../../utils/schedulerParser';
@@ -139,12 +139,22 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
     let initialBosses: string[] = [];
     let initialDailyBosses: string[] = [];
     let initialBlackMageId: string | undefined = undefined;
+    let charImage = char.character_image || '';
 
     // 인게임 스케줄러(/maplestory/v1/scheduler/character-state) 설정이 존재할 경우 그대로 가져오기
     // 캐릭터 등록 시 인게임 스케줄러와 똑같이 등록: 인게임에 등록된 것만 등록하고, 인게임에 등록되어 있지 않은 항목은 해제
     if (char.ocid) {
       try {
-        const schedRes = await fetchNexonSchedulerState(char.ocid, true);
+        // 프로필 이미지가 없는 경우 기본 정보 동시 조회
+        const schedPromise = fetchNexonSchedulerState(char.ocid, true);
+        const basicPromise = !charImage ? fetchCharacterBasic({ ocid: char.ocid }) : Promise.resolve(null);
+
+        const [schedRes, basicRes] = await Promise.all([schedPromise, basicPromise]);
+
+        if (basicRes && basicRes.success && basicRes.basic?.character_image) {
+          charImage = basicRes.basic.character_image;
+        }
+
         if (schedRes.success && schedRes.data) {
           const { enabledTaskIds, selectedBossIds, selectedDailyBossIds, selectedBlackMageId } = extractInGameRegisteredTasks(schedRes.data);
           initialTasks = enabledTaskIds;
@@ -171,7 +181,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
       worldName: char.world_name || '메이플',
       characterLevel: level,
       characterClass: char.character_class || '모험가',
-      characterImage: char.character_image || '',
+      characterImage: charImage,
       characterGuildName: char.character_guild_name || '',
       favorite: false,
       sortOrder: existingCharacters.length + justAddedNames.size,

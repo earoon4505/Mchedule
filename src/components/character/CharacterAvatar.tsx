@@ -22,6 +22,11 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
 
+  // imageUrl이 변경되거나 갱신되면 에러 상태 초기화
+  React.useEffect(() => {
+    setHasError(false);
+  }, [imageUrl]);
+
   // 컨테이너 크기 클래스
   const sizeClasses = {
     sm: 'w-8 h-8 rounded-lg',

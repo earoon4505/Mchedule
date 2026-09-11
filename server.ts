@@ -175,9 +175,10 @@ async function safeFetch(url: string, options: RequestInit = {}, timeoutMs = 800
 }
 
 // 동시 실행 수를 제한하는 병렬 맵 함수 (TLS/소켓 고갈 및 ConnectTimeout 방지)
+// 개별 작업 실패 시에도 undefined가 남지 않고 안전하게 처리
 async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   if (items.length === 0) return [];
-  const results: R[] = new Array(items.length);
+  const results: (R | null)[] = new Array(items.length).fill(null);
   let currentIndex = 0;
 
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
@@ -186,13 +187,13 @@ async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => P
       try {
         results[i] = await fn(items[i]);
       } catch (e) {
-        // 개별 워커 실패 시 빈 처리
+        results[i] = null;
       }
     }
   });
 
   await Promise.all(workers);
-  return results;
+  return results.filter((r): r is R => r !== null);
 }
 
 // ----------------------------------------------------
@@ -237,7 +238,7 @@ app.get('/api/proxy/image', async (req, res) => {
       'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
     };
 
-    const apiKey = getActiveApiKey();
+    const apiKey = getActiveApiKey(req);
     if (apiKey && imageUrl.includes('open.api.nexon.com')) {
       headers['x-nxopen-api-key'] = apiKey;
     }
@@ -616,21 +617,25 @@ app.get('/api/nexon/character/basic', async (req, res) => {
   const name = req.query.name as string;
   const force = req.query.force === 'true';
 
-  const apiKey = getActiveApiKey(req);
-  if (!apiKey) {
+  const apiKeys = getAllActiveApiKeys(req);
+  if (apiKeys.length === 0) {
     return res.status(400).json({ success: false, error: 'NEXON API 키가 등록되지 않았습니다.' });
   }
 
   let targetOcid = ocid;
   try {
+    // 이름만 있고 OCID가 없는 경우 이름으로 OCID 조회
     if (!targetOcid && name) {
-      const idUrl = `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(name.trim())}`;
-      const idRes = await safeFetch(idUrl, {
-        headers: { 'x-nxopen-api-key': apiKey, 'Content-Type': 'application/json' },
-      }, 7000);
-      if (idRes.ok) {
-        const idData = (await idRes.json()) as { ocid: string };
-        targetOcid = idData.ocid;
+      for (const key of apiKeys) {
+        const idUrl = `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(name.trim())}`;
+        const idRes = await safeFetch(idUrl, {
+          headers: { 'x-nxopen-api-key': key, 'Content-Type': 'application/json' },
+        }, 6000);
+        if (idRes.ok) {
+          const idData = (await idRes.json()) as { ocid: string };
+          targetOcid = idData.ocid;
+          break;
+        }
       }
     }
 
@@ -638,28 +643,46 @@ app.get('/api/nexon/character/basic', async (req, res) => {
       return res.status(400).json({ success: false, error: 'OCID 또는 캐릭터명이 필요합니다.' });
     }
 
+    const cacheKey = `basic_${targetOcid}`;
     if (!force) {
-      const cachedBasic = getFromCache(`basic_${targetOcid}`);
+      const cachedBasic = getFromCache(cacheKey);
       if (cachedBasic) {
         return res.json({ success: true, ocid: targetOcid, basic: cachedBasic, cached: true });
       }
     }
 
-    const basicUrl = `https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(targetOcid.trim())}`;
-    const basicRes = await safeFetch(basicUrl, {
-      headers: { 'x-nxopen-api-key': apiKey, 'Content-Type': 'application/json' },
-    }, 7000);
+    // 캐릭터를 보유한 키가 매핑되어 있으면 우선 사용
+    const candidateKeys = ocidToApiKeyMap.has(targetOcid)
+      ? [ocidToApiKeyMap.get(targetOcid)!, ...apiKeys.filter((k) => k !== ocidToApiKeyMap.get(targetOcid)!)]
+      : [...apiKeys];
 
-    if (!basicRes.ok) {
-      const errJson = await basicRes.json().catch(() => ({}));
-      return res.status(basicRes.status).json({
+    let basicData: any = null;
+    let lastError: string = '기본 정보 조회 실패';
+
+    for (const key of candidateKeys) {
+      const basicUrl = `https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(targetOcid.trim())}`;
+      const basicRes = await safeFetch(basicUrl, {
+        headers: { 'x-nxopen-api-key': key, 'Content-Type': 'application/json' },
+      }, 7000);
+
+      if (basicRes.ok) {
+        basicData = await basicRes.json();
+        ocidToApiKeyMap.set(targetOcid, key);
+        setCache(cacheKey, basicData, 10 * 60 * 1000);
+        break;
+      } else {
+        const errJson = await basicRes.json().catch(() => ({}));
+        lastError = errJson.error?.message || `상태 코드 ${basicRes.status}`;
+      }
+    }
+
+    if (!basicData) {
+      return res.status(400).json({
         success: false,
-        error: errJson.error?.message || '기본 정보 조회 실패',
+        error: lastError,
       });
     }
 
-    const basicData = await basicRes.json();
-    setCache(`basic_${targetOcid}`, basicData, 10 * 60 * 1000);
     return res.json({ success: true, ocid: targetOcid, basic: basicData });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message || '네트워크 오류' });
@@ -744,58 +767,12 @@ app.get('/api/nexon/account/characters', async (req, res) => {
       }
     }
 
-    // 3) 동시 5개 이하로 제한하여 순차/배치 조회 (빠른 응답 및 TLS 소켓 고갈 방지)
-    const enrichedList = await mapConcurrent(mergedRawList, 5, async ({ char, key }) => {
+    // 3) 계정 캐릭터 목록 기본 정보 및 프로필 사진 보강
+    // 넥슨 /character/list 응답의 원본 캐릭터(이름, 월드, 직업, 레벨, OCID)는 100% 보존하며,
+    // 프로필 사진(character_image)은 캐시 우선 및 동시 3개 이하 안전 조회로 채웁니다.
+    const enrichedList = await mapConcurrent(mergedRawList, 3, async ({ char, key }) => {
       const ocid = char.ocid;
-      const charCacheKey = `basic_${ocid}`;
-      const cachedBasic = ocid ? getFromCache(charCacheKey) : null;
-
-      if (cachedBasic) {
-        return {
-          ocid: char.ocid || '',
-          character_name: char.character_name || cachedBasic.character_name,
-          world_name: char.world_name || cachedBasic.world_name,
-          character_class: char.character_class || cachedBasic.character_class,
-          character_level: Number(char.character_level || cachedBasic.character_level) || 200,
-          character_image: cachedBasic.character_image || char.character_image || '',
-          character_gender: cachedBasic.character_gender || char.character_gender || '',
-          character_guild_name: cachedBasic.character_guild_name || char.character_guild_name || '',
-        };
-      }
-
-      // 이미지가 없거나 캐시가 없는 경우 basic 정보 안전 조회 (5초 타임아웃)
-      if (ocid && !char.character_image) {
-        try {
-          const bRes = await safeFetch(
-            `https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(ocid)}`,
-            {
-              headers: {
-                'x-nxopen-api-key': key,
-                'Content-Type': 'application/json',
-              },
-            },
-            5000
-          );
-          if (bRes.ok) {
-            const bData = await bRes.json();
-            setCache(charCacheKey, bData, 10 * 60 * 1000); // 10분 캐싱
-            return {
-              ocid: char.ocid,
-              character_name: char.character_name || bData.character_name,
-              world_name: char.world_name || bData.world_name,
-              character_class: char.character_class || bData.character_class,
-              character_level: Number(char.character_level || bData.character_level) || 200,
-              character_image: bData.character_image || '',
-              character_gender: bData.character_gender || '',
-              character_guild_name: bData.character_guild_name || '',
-            };
-          }
-        } catch (e) {
-          // 타임아웃이나 연결 실패 시 기본 정보로 안전 폴백
-        }
-      }
-
-      return {
+      const fallbackChar = {
         ocid: char.ocid || '',
         character_name: char.character_name || '',
         world_name: char.world_name || '메이플',
@@ -805,10 +782,60 @@ app.get('/api/nexon/account/characters', async (req, res) => {
         character_gender: char.character_gender || '',
         character_guild_name: char.character_guild_name || '',
       };
+
+      if (!ocid) return fallbackChar;
+
+      const charCacheKey = `basic_${ocid}`;
+      const cachedBasic = getFromCache(charCacheKey);
+
+      if (cachedBasic) {
+        return {
+          ...fallbackChar,
+          character_name: char.character_name || cachedBasic.character_name || fallbackChar.character_name,
+          world_name: char.world_name || cachedBasic.world_name || fallbackChar.world_name,
+          character_class: char.character_class || cachedBasic.character_class || fallbackChar.character_class,
+          character_level: Number(char.character_level || cachedBasic.character_level) || fallbackChar.character_level,
+          character_image: cachedBasic.character_image || fallbackChar.character_image,
+          character_gender: cachedBasic.character_gender || fallbackChar.character_gender,
+          character_guild_name: cachedBasic.character_guild_name || fallbackChar.character_guild_name,
+        };
+      }
+
+      // 캐시가 없는 경우 넥슨 /character/basic 안전 조회 (타임아웃 4초)
+      try {
+        const bRes = await safeFetch(
+          `https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(ocid)}`,
+          {
+            headers: {
+              'x-nxopen-api-key': key,
+              'Content-Type': 'application/json',
+            },
+          },
+          4000
+        );
+        if (bRes.ok) {
+          const bData = await bRes.json();
+          setCache(charCacheKey, bData, 15 * 60 * 1000); // 15분 캐싱
+          return {
+            ...fallbackChar,
+            character_name: char.character_name || bData.character_name || fallbackChar.character_name,
+            world_name: char.world_name || bData.world_name || fallbackChar.world_name,
+            character_class: char.character_class || bData.character_class || fallbackChar.character_class,
+            character_level: Number(char.character_level || bData.character_level) || fallbackChar.character_level,
+            character_image: bData.character_image || fallbackChar.character_image,
+            character_gender: bData.character_gender || fallbackChar.character_gender,
+            character_guild_name: bData.character_guild_name || fallbackChar.character_guild_name,
+          };
+        }
+      } catch (_) {
+        // 네트워크 지연 또는 429 발생 시에도 캐릭터가 절대 누락되지 않도록 fallbackChar 반환
+      }
+
+      return fallbackChar;
     });
 
-    // 레벨 높은 순으로 기본 정렬
-    enrichedList.sort((a, b) => (b.character_level || 0) - (a.character_level || 0));
+    // 레벨 높은 순으로 정렬
+    enrichedList.sort((a, b) => (Number(b.character_level) || 0) - (Number(a.character_level) || 0));
 
     setCache(cacheKey, enrichedList, 3 * 60 * 1000); // 3분 캐싱
     return res.json({
@@ -896,12 +923,12 @@ app.get('/api/nexon/character/scheduler', async (req, res) => {
         schedulerUrl += `&date=${encodeURIComponent(dateParam!)}`;
       }
 
-      let resAttempt = await safeFetch(schedulerUrl, { headers }, 4500).catch(() => null);
+      let resAttempt = await safeFetch(schedulerUrl, { headers }, 8000).catch(() => null);
 
       // 과거 날짜 조회 시 간혹 400 (조회 불가 날짜) 발생할 때만 실시간 최신 상태로 1회 재시도
       if (isPastDate && resAttempt && resAttempt.status === 400) {
         const fallbackUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(ocid)}`;
-        const fallbackRes = await safeFetch(fallbackUrl, { headers }, 3500).catch(() => null);
+        const fallbackRes = await safeFetch(fallbackUrl, { headers }, 6000).catch(() => null);
         if (fallbackRes && fallbackRes.ok) {
           resAttempt = fallbackRes;
         }
@@ -927,8 +954,18 @@ app.get('/api/nexon/character/scheduler', async (req, res) => {
 
     if (schedRes && schedRes.ok) {
       schedData = await schedRes.json().catch(() => null);
-    } else if (schedRes && schedStatus >= 500) {
-      console.error(`[Nexon Scheduler Server Error] status ${schedStatus}`);
+    } else if (schedRes && schedStatus >= 400) {
+      console.warn(`[Nexon Scheduler Warning] status ${schedStatus}`);
+    }
+
+    // 넥슨 스케줄러 조회가 실패했거나 데이터가 없는 경우, 클라이언트의 기존 클리어 상태를 보존하기 위해 명확히 에러 반환
+    if (!schedRes || !schedRes.ok || !schedData) {
+      return res.json({
+        success: false,
+        data: null,
+        isMockOrEmpty: true,
+        error: `넥슨 스케줄러 정보 조회 실패 (상태 코드: ${schedStatus})`,
+      });
     }
 
     // 2) 보조: 퀘스트 히스토리 API 호출 (/character/quest-history) - 퀘스트 히스토리는 date 파라미터 지원

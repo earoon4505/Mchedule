@@ -16,12 +16,8 @@ export function getCharacterAvatarUrl(rawUrl?: string | null): string {
     return trimmed;
   }
 
-  // 외래 URL(넥슨 Open API static 이미지 등)
+  // 외래 URL(넥슨 Open API static 이미지 등)은 CORS/보안 정책 우회를 위해 프록시 우선 사용
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    // 웹 환경에서는 백엔드 프록시 서버가 없으므로 원본 CDN 직접 사용
-    if (isWeb) {
-      return trimmed;
-    }
     return `/api/proxy/image?url=${encodeURIComponent(trimmed)}`;
   }
 
