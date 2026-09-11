@@ -55,6 +55,7 @@ import { ContentConfigModal } from './components/tasks/ContentConfigModal';
 import { ProgressPanel } from './components/stats/ProgressPanel';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { ApiKeyModal } from './components/settings/ApiKeyModal';
+import { LegalModal, LegalTab } from './components/legal/LegalModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
 import { 
@@ -145,8 +146,15 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
   const [configCharacterId, setConfigCharacterId] = useState<string | null>(null);
   const [toastFeedback, setToastFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleOpenLegalModal = (tab: LegalTab = 'terms') => {
+    setLegalModalTab(tab);
+    setIsLegalModalOpen(true);
+  };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToastFeedback({ message, type });
@@ -1630,6 +1638,7 @@ export default function App() {
             setConfigCharacterId(id);
           }}
           onSelectTab={(tab) => setActiveTab(tab)}
+          onOpenLegalModal={handleOpenLegalModal}
         />
 
         {/* 중앙: 선택된 캐릭터의 콘텐츠 관리 영역 */}
@@ -1859,6 +1868,7 @@ export default function App() {
         onExportData={handleExportData}
         onImportData={handleImportData}
         onResetAllData={handleResetAllData}
+        onOpenLegalModal={handleOpenLegalModal}
       />
 
       <ApiKeyModal
@@ -1867,6 +1877,13 @@ export default function App() {
         onKeyUpdated={(hasKey) => {
           setHasApiKey(hasKey);
         }}
+      />
+
+      {/* 이용약관 및 개인정보처리방침 법적 고지 모달 */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        onClose={() => setIsLegalModalOpen(false)}
+        initialTab={legalModalTab}
       />
 
       {/* 글로벌 토스트 알림 */}

@@ -28,7 +28,8 @@ import {
   Clock,
   ExternalLink,
   X,
-  Check
+  Check,
+  Scale
 } from 'lucide-react';
 import { AppSettings, PipDirection, PipSettings, NotificationSettings } from '../../types';
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
@@ -44,6 +45,7 @@ interface SettingsModalProps {
   onExportData: () => void;
   onImportData: (file: File) => void;
   onResetAllData: () => void;
+  onOpenLegalModal?: (tab?: 'terms' | 'privacy') => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -56,6 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportData,
   onImportData,
   onResetAllData,
+  onOpenLegalModal,
 }) => {
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [isDownloadingApp, setIsDownloadingApp] = useState(false);
@@ -860,6 +863,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>데이터 초기화</span>
               </button>
+            </div>
+          </div>
+
+          {/* 7. 운영 정책 및 법적 고지 */}
+          <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              운영 정책 및 라이선스
+            </h4>
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-orange-500" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    이용약관 및 개인정보처리방침
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenLegalModal?.('terms');
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 transition-colors shadow-2xs"
+                  >
+                    이용약관
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenLegalModal?.('privacy');
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 transition-colors shadow-2xs"
+                  >
+                    개인정보
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10.5px] text-slate-400 leading-relaxed">
+                Data based on NEXON Open API · MapleStory © NEXON Korea Corp.
+                <br />공식 문의: mchedule4505@gmail.com
+              </p>
             </div>
           </div>
         </div>
