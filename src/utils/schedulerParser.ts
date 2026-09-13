@@ -137,6 +137,7 @@ const KEYWORD_TASK_MAP: Array<{ keywords: string[]; taskId: string; isWeekly?: b
   { keywords: ['에픽던전하이마운틴', '하이마운틴', 'highmountain'], taskId: 'weekly_epic_high_mountain', isWeekly: true },
   { keywords: ['에픽던전앵글러컴퍼니', '앵글러컴퍼니'], taskId: 'weekly_epic_angler_company', isWeekly: true },
   { keywords: ['에픽던전악몽선경', '악몽선경'], taskId: 'weekly_epic_nightmare_fairyland', isWeekly: true },
+  { keywords: ['에픽던전아우룸레기스', '아우룸레기스', 'aurumregis', 'aurum'], taskId: 'weekly_epic_aurum_regis', isWeekly: true },
 
   // 4. 주간 아케인 퀘스트
   { keywords: ['에르다스펙트럼', '여로주간', '스펙트럼'], taskId: 'weekly_arcane_vanishing', isWeekly: true },

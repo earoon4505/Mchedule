@@ -10,7 +10,8 @@ import {
   Moon, 
   Sun,
   ShieldCheck,
-  Key
+  Key,
+  Megaphone
 } from 'lucide-react';
 import { CharacterInfo, CharacterProgressRecord } from '../../types';
 import { getFormattedKSTString } from '../../utils/time';
@@ -24,6 +25,7 @@ interface WindowHeaderProps {
   records: Record<string, CharacterProgressRecord>;
   onOpenSettings: () => void;
   onOpenApiKeyModal: () => void;
+  onOpenNoticeModal: () => void;
   onRefreshAll: () => void;
   isRefreshing: boolean;
   onSelectCharacter: (id: string) => void;
@@ -40,6 +42,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
   records,
   onOpenSettings,
   onOpenApiKeyModal,
+  onOpenNoticeModal,
   onRefreshAll,
   isRefreshing,
   onSelectCharacter,
@@ -126,7 +129,17 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
 
       {/* 3. 우측 컨트롤 영역 (고정 폭 정렬로 흔들림 차단) */}
       <div className="flex items-center justify-end gap-1.5 flex-shrink-0 titlebar-no-drag">
-        {/* 1. API 등록 / 관리 버튼 (자동갱신 왼쪽으로 배치) */}
+        {/* 1. 공지사항 버튼 (확성기 아이콘 - API 버튼 왼쪽 배치) */}
+        <button
+          id="btn-header-notice"
+          onClick={onOpenNoticeModal}
+          className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors border border-slate-200 dark:border-slate-700 flex-shrink-0 shadow-2xs hover:text-orange-500 dark:hover:text-orange-400"
+          title="공지사항"
+        >
+          <Megaphone className="w-3.5 h-3.5" />
+        </button>
+
+        {/* 2. API 등록 / 관리 버튼 */}
         <button
           id="btn-header-api-key"
           onClick={onOpenApiKeyModal}

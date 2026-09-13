@@ -55,6 +55,7 @@ import { ContentConfigModal } from './components/tasks/ContentConfigModal';
 import { ProgressPanel } from './components/stats/ProgressPanel';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { ApiKeyModal } from './components/settings/ApiKeyModal';
+import { NoticeModal } from './components/common/NoticeModal';
 import { LegalModal, LegalTab } from './components/legal/LegalModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
@@ -146,6 +147,7 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
   const [configCharacterId, setConfigCharacterId] = useState<string | null>(null);
@@ -501,6 +503,7 @@ export default function App() {
                   if (bRes.success && bRes.basic?.character_image) {
                     return {
                       id: char.id,
+                      ocid: bRes.newOcid || char.ocid,
                       image: bRes.basic.character_image,
                       level: Number(bRes.basic.character_level) || char.characterLevel,
                       cls: bRes.basic.character_class || char.characterClass,
@@ -520,6 +523,7 @@ export default function App() {
                     if (found) {
                       return {
                         ...char,
+                        ocid: found.ocid,
                         characterImage: found.image,
                         characterLevel: found.level,
                         characterClass: found.cls,
@@ -679,6 +683,7 @@ export default function App() {
                   if (bRes.success && bRes.basic?.character_image) {
                     return {
                       id: char.id,
+                      ocid: bRes.newOcid || char.ocid,
                       image: bRes.basic.character_image,
                       level: Number(bRes.basic.character_level) || char.characterLevel,
                       cls: bRes.basic.character_class || char.characterClass,
@@ -698,6 +703,7 @@ export default function App() {
                     if (found) {
                       return {
                         ...char,
+                        ocid: found.ocid,
                         characterImage: found.image,
                         characterLevel: found.level,
                         characterClass: found.cls,
@@ -813,22 +819,31 @@ export default function App() {
         const char = updatedChars[i];
         if (char.ocid && !char.ocid.startsWith('manual_')) {
           try {
-            // 캐릭터 기본 정보 최신화 (레벨업, 코디/프로필 사진 변경 실시간 반영, force=true로 캐시 우회)
+            // 캐릭터 기본 정보 최신화 (레벨업, 코디/프로필 사진 변경 실시간 반영, 월드리프 시 OCID/월드 자동 치유)
             const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName }, true);
+            let activeOcid = char.ocid;
+
             if (bRes.success && bRes.basic) {
               const newImage = bRes.basic.character_image || char.characterImage;
               const newLevel = Number(bRes.basic.character_level) || char.characterLevel;
               const newClass = bRes.basic.character_class || char.characterClass;
               const newWorld = bRes.basic.world_name || char.worldName;
+              const newOcid = bRes.newOcid || char.ocid;
+
+              if (newOcid !== char.ocid) {
+                activeOcid = newOcid;
+              }
 
               if (
                 newImage !== char.characterImage ||
                 newLevel !== char.characterLevel ||
                 newClass !== char.characterClass ||
-                newWorld !== char.worldName
+                newWorld !== char.worldName ||
+                newOcid !== char.ocid
               ) {
                 updatedChars[i] = {
                   ...char,
+                  ocid: newOcid,
                   characterImage: newImage,
                   characterLevel: newLevel,
                   characterClass: newClass,
@@ -838,7 +853,15 @@ export default function App() {
               }
             }
 
-            const schedRes = await fetchNexonSchedulerState(char.ocid, true);
+            const schedRes = await fetchNexonSchedulerState(activeOcid, true, undefined, char.characterName);
+            if (schedRes.newOcid && schedRes.newOcid !== updatedChars[i].ocid) {
+              updatedChars[i] = {
+                ...updatedChars[i],
+                ocid: schedRes.newOcid,
+              };
+              hasCharUpdate = true;
+            }
+
             if (schedRes.success && schedRes.data) {
               const prevRec = currentRecords[char.id] || {
                 characterId: char.id,
@@ -1609,6 +1632,7 @@ export default function App() {
         onSelectCharacter={handleSelectCharacter}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
+        onOpenNoticeModal={() => setIsNoticeModalOpen(true)}
         onRefreshAll={handleRefresh}
         isRefreshing={isRefreshing}
         hasApiKey={hasApiKey}
@@ -1877,6 +1901,12 @@ export default function App() {
         onKeyUpdated={(hasKey) => {
           setHasApiKey(hasKey);
         }}
+      />
+
+      {/* 공지사항 모달 (API 버튼 옆 확성기 아이콘 클릭 시 표시) */}
+      <NoticeModal
+        isOpen={isNoticeModalOpen}
+        onClose={() => setIsNoticeModalOpen(false)}
       />
 
       {/* 이용약관 및 개인정보처리방침 법적 고지 모달 */}

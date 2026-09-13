@@ -3,7 +3,7 @@
   "productName": "메케줄",
   "author": "MapleSchedule",
   "description": "메이플스토리 통합 스케줄러 & 보스 체크 데스크톱 앱",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "electron/main.cjs",
   "private": true,
   "type": "module",

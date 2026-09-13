@@ -1,5 +1,5 @@
 {
-  "name": "Remix 홈페이지에 올라간거Remix Remix web, app 통합 메케줄 1.0.4",
+  "name": "메케줄 1.0.5",
   "description": "NEXON Open API 연동 메이플스토리 스케줄러",
   "requestFramePermissions": [
     "notifications"

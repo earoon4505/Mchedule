@@ -16,6 +16,7 @@ export interface SyncSchedulerResult {
   data?: NexonSchedulerState;
   error?: string;
   isMockOrEmpty?: boolean;
+  newOcid?: string;
 }
 
 // 웹 모드 전용 LocalStorage API 키 헬퍼 (다른 사용자와 절대 공유되지 않는 브라우저별 로컬 저장)
@@ -444,7 +445,10 @@ export async function searchNexonCharacter(name: string): Promise<SearchCharacte
   }
 }
 
-export async function fetchCharacterBasic(ocidOrName: { ocid?: string; name?: string }, force = false): Promise<{ success: boolean; basic?: NexonCharacterBasic; error?: string }> {
+export async function fetchCharacterBasic(
+  ocidOrName: { ocid?: string; name?: string },
+  force = false
+): Promise<{ success: boolean; basic?: NexonCharacterBasic; newOcid?: string; error?: string }> {
   // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시 우선 호출
   if (!isWeb) {
     try {
@@ -461,7 +465,12 @@ export async function fetchCharacterBasic(ocidOrName: { ocid?: string; name?: st
       if (contentType.includes('application/json')) {
         const data = await res.json();
         if (res.ok && data.success && data.basic) {
-          return { success: true, basic: data.basic };
+          const freshOcid = data.newOcid || (data.ocid && ocidOrName.ocid && data.ocid !== ocidOrName.ocid ? data.ocid : undefined);
+          return {
+            success: true,
+            basic: data.basic,
+            newOcid: freshOcid,
+          };
         }
       }
     } catch (_) {
@@ -497,16 +506,56 @@ export async function fetchCharacterBasic(ocidOrName: { ocid?: string; name?: st
     }
 
     // 등록된 모든 키를 순회하여 성공하는 키로 기본 정보 조회
+    let basicData: NexonCharacterBasic | null = null;
     for (const k of keys) {
       try {
         const basicRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(targetOcid)}`, {
           headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
         });
         if (basicRes.ok) {
-          const basicData = await basicRes.json();
-          return { success: true, basic: basicData };
+          basicData = await basicRes.json();
+          break;
         }
       } catch (_) {}
+    }
+
+    let isOcidUpdated = false;
+    // 월드리프 등으로 기존 OCID가 만료되어 조회가 실패한 경우:
+    // 캐릭터명이 제공되어 있다면 닉네임으로 최신 OCID를 조회하여 자동 치유(Self-Healing)
+    if (!basicData && ocidOrName.name) {
+      for (const k of keys) {
+        try {
+          const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(ocidOrName.name.trim())}`, {
+            headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
+          });
+          if (idRes.ok) {
+            const idData = await idRes.json();
+            if (idData.ocid && idData.ocid !== targetOcid) {
+              const freshOcid = idData.ocid;
+              for (const k2 of keys) {
+                const retryRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(freshOcid)}`, {
+                  headers: { 'x-nxopen-api-key': k2.apiKey, 'Content-Type': 'application/json' },
+                });
+                if (retryRes.ok) {
+                  basicData = await retryRes.json();
+                  targetOcid = freshOcid;
+                  isOcidUpdated = true;
+                  break;
+                }
+              }
+              if (basicData) break;
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (basicData) {
+      return {
+        success: true,
+        basic: basicData,
+        newOcid: isOcidUpdated ? targetOcid : undefined,
+      };
     }
 
     return { success: false, error: '기본 정보 조회 실패' };
@@ -655,12 +704,18 @@ export async function fetchAccountCharacters(force = false): Promise<AccountChar
   }
 }
 
-export async function fetchNexonSchedulerState(ocid: string, force = false, customDate?: string): Promise<SyncSchedulerResult> {
+export async function fetchNexonSchedulerState(
+  ocid: string,
+  force = false,
+  customDate?: string,
+  characterName?: string
+): Promise<SyncSchedulerResult> {
   // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시를 통해 조회
   if (!isWeb) {
     try {
       const params = new URLSearchParams();
       params.set('ocid', ocid);
+      if (characterName) params.set('name', characterName);
       if (customDate) params.set('date', customDate);
       if (force) params.set('force', 'true');
       const headers = getRequestHeaders();
@@ -674,6 +729,7 @@ export async function fetchNexonSchedulerState(ocid: string, force = false, cust
             success: true,
             data: data.data,
             isMockOrEmpty: false,
+            newOcid: data.newOcid || (data.ocid && data.ocid !== ocid ? data.ocid : undefined),
           };
         }
         if (data.error) {
@@ -700,7 +756,7 @@ export async function fetchNexonSchedulerState(ocid: string, force = false, cust
   }
 
   const dateParam = customDate ? `&date=${encodeURIComponent(customDate)}` : '';
-  const targetUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(ocid)}${dateParam}`;
+  let targetUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(ocid)}${dateParam}`;
 
   let lastError = '스케줄러 상태 조회 실패';
   for (const k of keys) {
@@ -735,6 +791,43 @@ export async function fetchNexonSchedulerState(ocid: string, force = false, cust
       }
     } catch (err: any) {
       lastError = err.message || '네트워크 오류';
+    }
+  }
+
+  // 웹 환경에서 조회가 실패하고 characterName이 제공된 경우 (월드리프 등으로 OCID 만료 가능성):
+  // 닉네임으로 최신 OCID 조회 후 재시도 (자가 치유)
+  if (characterName) {
+    for (const k of keys) {
+      try {
+        const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(characterName.trim())}`, {
+          headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
+        });
+        if (idRes.ok) {
+          const idData = await idRes.json();
+          if (idData.ocid && idData.ocid !== ocid) {
+            const freshOcid = idData.ocid;
+            const freshUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(freshOcid)}${dateParam}`;
+            for (const k2 of keys) {
+              const res2 = await fetch(freshUrl, {
+                headers: { 'x-nxopen-api-key': k2.apiKey, 'Content-Type': 'application/json' },
+              });
+              const ct2 = res2.headers.get('content-type') || '';
+              if (ct2.includes('application/json')) {
+                const json2 = await res2.json();
+                if (res2.ok) {
+                  return {
+                    success: true,
+                    data: json2,
+                    isMockOrEmpty: false,
+                    newOcid: freshOcid,
+                  };
+                }
+              }
+            }
+            break;
+          }
+        }
+      } catch (_) {}
     }
   }
 

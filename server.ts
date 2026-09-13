@@ -676,6 +676,44 @@ app.get('/api/nexon/character/basic', async (req, res) => {
       }
     }
 
+    let isOcidUpdated = false;
+    let originalOcid = targetOcid;
+
+    // 월드리프(서버 이전) 등으로 기존 OCID가 만료되어 조회가 실패한 경우:
+    // 캐릭터명이 제공되어 있다면 닉네임으로 최신 OCID를 조회하여 자동 치유(Self-Healing)
+    if (!basicData && name) {
+      for (const key of apiKeys) {
+        try {
+          const idUrl = `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(name.trim())}`;
+          const idRes = await safeFetch(idUrl, {
+            headers: { 'x-nxopen-api-key': key, 'Content-Type': 'application/json' },
+          }, 6000);
+          if (idRes.ok) {
+            const idData = (await idRes.json()) as { ocid: string };
+            if (idData.ocid && idData.ocid !== originalOcid) {
+              const freshOcid = idData.ocid;
+              // 신규 발급된 OCID로 기본 정보 재조회
+              for (const k of apiKeys) {
+                const retryUrl = `https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(freshOcid.trim())}`;
+                const retryRes = await safeFetch(retryUrl, {
+                  headers: { 'x-nxopen-api-key': k, 'Content-Type': 'application/json' },
+                }, 7000);
+                if (retryRes.ok) {
+                  basicData = await retryRes.json();
+                  targetOcid = freshOcid;
+                  isOcidUpdated = true;
+                  ocidToApiKeyMap.set(freshOcid, k);
+                  setCache(`basic_${freshOcid}`, basicData, 10 * 60 * 1000);
+                  break;
+                }
+              }
+              if (basicData) break;
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
     if (!basicData) {
       return res.status(400).json({
         success: false,
@@ -683,7 +721,12 @@ app.get('/api/nexon/character/basic', async (req, res) => {
       });
     }
 
-    return res.json({ success: true, ocid: targetOcid, basic: basicData });
+    return res.json({
+      success: true,
+      ocid: targetOcid,
+      newOcid: isOcidUpdated ? targetOcid : undefined,
+      basic: basicData,
+    });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message || '네트워크 오류' });
   }
@@ -864,7 +907,8 @@ function getKSTDateString(): string {
 
 // 스케줄러 상태 조회 (/maplestory/v1/scheduler/character-state 및 /character/quest-history)
 app.get('/api/nexon/character/scheduler', async (req, res) => {
-  const ocid = req.query.ocid as string;
+  let ocid = req.query.ocid as string;
+  const characterName = (req.query.name as string)?.trim();
   const dateParam = (req.query.date as string)?.trim();
   const date = (dateParam || getKSTDateString()).trim();
   const force = req.query.force === 'true';
@@ -951,11 +995,51 @@ app.get('/api/nexon/character/scheduler', async (req, res) => {
 
     let schedData: any = null;
     let schedStatus = schedRes ? schedRes.status : 504;
+    let isOcidUpdated = false;
 
     if (schedRes && schedRes.ok) {
       schedData = await schedRes.json().catch(() => null);
     } else if (schedRes && schedStatus >= 400) {
       console.warn(`[Nexon Scheduler Warning] status ${schedStatus}`);
+    }
+
+    // 월드리프 등으로 기존 OCID가 만료되어 스케줄러 조회가 실패한 경우:
+    // 캐릭터명이 제공되어 있다면 닉네임으로 최신 OCID를 조회하여 자동 치유(Self-Healing)
+    if ((!schedRes || !schedRes.ok || !schedData) && characterName) {
+      for (const key of apiKeys) {
+        try {
+          const idUrl = `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(characterName.trim())}`;
+          const idRes = await safeFetch(idUrl, {
+            headers: { 'x-nxopen-api-key': key, 'Content-Type': 'application/json' },
+          }, 6000);
+          if (idRes.ok) {
+            const idData = (await idRes.json()) as { ocid: string };
+            if (idData.ocid && idData.ocid !== ocid) {
+              const freshOcid = idData.ocid;
+              // 신규 발급된 OCID로 스케줄러 재조회 시도
+              for (const k of apiKeys) {
+                const retryUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(freshOcid.trim())}${isPastDate ? `&date=${encodeURIComponent(dateParam!)}` : ''}`;
+                const retryRes = await safeFetch(retryUrl, {
+                  headers: { 'x-nxopen-api-key': k, 'Content-Type': 'application/json' },
+                }, 8000);
+                if (retryRes.ok) {
+                  schedData = await retryRes.json().catch(() => null);
+                  if (schedData) {
+                    schedRes = retryRes;
+                    schedStatus = retryRes.status;
+                    successfulKey = k;
+                    ocid = freshOcid;
+                    isOcidUpdated = true;
+                    ocidToApiKeyMap.set(freshOcid, k);
+                    break;
+                  }
+                }
+              }
+              if (schedData) break;
+            }
+          }
+        } catch (_) {}
+      }
     }
 
     // 넥슨 스케줄러 조회가 실패했거나 데이터가 없는 경우, 클라이언트의 기존 클리어 상태를 보존하기 위해 명확히 에러 반환
@@ -1011,7 +1095,12 @@ app.get('/api/nexon/character/scheduler', async (req, res) => {
 
     // 과거 날짜는 이미 종료되어 변하지 않는 데이터이므로 24시간 캐시, 실시간 오늘은 15초 캐시
     setCache(cacheKey, combinedData, isPastDate ? 24 * 60 * 60 * 1000 : 15 * 1000);
-    return res.json({ success: true, data: combinedData });
+    return res.json({
+      success: true,
+      data: combinedData,
+      ocid,
+      newOcid: isOcidUpdated ? ocid : undefined,
+    });
   } catch (err: any) {
     console.error('Scheduler fetch error:', err);
     return res.json({

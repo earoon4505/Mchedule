@@ -100,6 +100,10 @@ const ICON_NAME_MAP: Record<string, string> = {
   '악몽선경': '악몽 선경',
   '에픽 던전 : 악몽 선경': '악몽 선경',
   '에픽던전 : 악몽 선경': '악몽 선경',
+  '아우룸 레기스': '아우룸 레기스',
+  '아우룸레기스': '아우룸 레기스',
+  '에픽 던전 : 아우룸 레기스': '아우룸 레기스',
+  '에픽던전 : 아우룸 레기스': '아우룸 레기스',
 
   // 길드 및 기타
   '샤레니안의 지하 수로': '샤레니안의 지하 수로',
@@ -149,6 +153,7 @@ const TASK_ID_MAP: Record<string, string> = {
   'weekly_epic_high_mountain': '하이마운틴',
   'weekly_epic_angler_company': '앵글러 컴퍼니',
   'weekly_epic_nightmare_fairyland': '악몽 선경',
+  'weekly_epic_aurum_regis': '아우룸 레기스',
 
   // 길드 & 기타
   'weekly_sharenian_culvert': '샤레니안의 지하 수로',

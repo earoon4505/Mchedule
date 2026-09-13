@@ -45,6 +45,7 @@ export const EPIC_DUNGEONS: TaskItem[] = [
   { id: 'weekly_epic_high_mountain', name: '하이마운틴', category: 'epic_dungeon', type: 'boolean', minLevel: 260, icon: '⛰️', resetType: 'weekly_thu' },
   { id: 'weekly_epic_angler_company', name: '앵글러 컴퍼니', category: 'epic_dungeon', type: 'boolean', minLevel: 270, icon: '🤖', resetType: 'weekly_thu' },
   { id: 'weekly_epic_nightmare_fairyland', name: '악몽 선경', category: 'epic_dungeon', type: 'boolean', minLevel: 280, icon: '🦋', resetType: 'weekly_thu' },
+  { id: 'weekly_epic_aurum_regis', name: '아우룸 레기스', category: 'epic_dungeon', type: 'boolean', minLevel: 290, icon: '👑', resetType: 'weekly_thu' },
 ];
 
 export const WEEKLY_GUILD_AND_MISC: TaskItem[] = [

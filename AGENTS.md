@@ -92,4 +92,28 @@ All AI agents working on this project MUST strictly follow these rules:
    - `public/app-logo.png` (192x192 PWA 및 애플 터치 아이콘)
    - `index.html` 내 `<link rel="icon">`, `<link rel="shortcut icon">` 태그 보존 필수
 
+---
+
+## 📋 핵심 업데이트 및 개발 이력 (Changelog for AI Agents)
+
+### [v1.0.5] 월드리프 자동 치유(Self-Healing) 및 신규 에픽 던전 추가 (최신)
+1. **월드리프(서버 이전) 캐릭터 자동 치유 (Self-Healing) 시스템 구축**:
+   - **배경**: 메이플스토리 인게임에서 캐릭터가 월드리프(월드 이동)를 진행하면 기존 `ocid`가 만료되어 넥슨 Open API 조회 시 `400 Bad Request` 에러가 발생하고 캐릭터 데이터 동기화가 불가능해지는 현상 해결.
+   - **해결 방식**:
+     - **백엔드 프록시 (`server.ts`)**: `/api/nexon/character/basic` 및 `/api/nexon/character/scheduler`에서 기존 OCID 조회가 실패할 경우, 캐릭터명(`name`) 파라미터가 있으면 등록된 API 키로 넥슨 `/id?character_name=...` 엔드포인트를 호출하여 새 `ocid`를 즉시 재발급받은 뒤 데이터를 복구하여 `newOcid`와 함께 반환.
+     - **웹 환경 직접 통신 (`src/services/api.ts`)**: `fetchCharacterBasic` 및 `fetchNexonSchedulerState`에서도 동일하게 만료된 OCID 실패 시 닉네임 기반으로 최신 OCID를 자동 재조회하여 복구.
+     - **프론트엔드 상태 반영 (`src/App.tsx`)**: 캐릭터 내부 고유 키(`char.id`)는 그대로 유지하면서 `char.ocid`, `char.worldName`, `char.characterImage`, `char.characterLevel`, `char.characterClass`만 실시간 갱신. 기존 체크 내역, 주간 보스 설정, 커스텀 태스크 등이 100% 보존됨.
+2. **290레벨 신규 에픽 던전 '아우룸 레기스' 추가**:
+   - `src/data/defaultTasks.ts`: `weekly_epic_aurum_regis` (아우룸 레기스, 290레벨 이상, 목요일 초기화) 태스크 등록.
+   - `src/components/common/MapleIcon.tsx`: `public/icons/아우룸 레기스.png` 아이콘과 한글명 매핑(`ICON_NAME_MAP`, `TASK_ID_MAP`).
+   - `src/utils/schedulerParser.ts`: 넥슨 인게임 스케줄러 동기화 키워드(`에픽던전아우룸레기스`, `아우룸레기스`, `aurumregis`) 추가로 인게임 클리어 시 자동 체크 연동.
+3. **헤더 공지사항 모달 및 버튼 (`NoticeModal.tsx`, `WindowHeader.tsx`)**:
+   - 상단 헤더의 API 키 버튼 왼쪽 바로 옆에 확성기(`Megaphone`) 아이콘 버튼(`btn-header-notice`) 배치.
+   - 클릭 시 공지사항 모달을 띄우며, 불필요한 X 버튼 및 부가설명을 배제한 심플한 확인 팝업 구조 적용.
+   - 1번 공지: '일일 보스'(파란색), '검은 마법사'(검붉은 색) 데이터 갱신 불가 및 스케줄러 이용 불가 안내.
+   - 2번 공지: '닉네임 변경', '월드 리프'(검정색 강조) 동시 진행 시 새로고침 권장 및 괄호 안내 문구 줄바꿈 처리.
+   - 3번 공지: '월드 리프' 이전 기록들은 '월드 리프' 이후 갱신되지 않음 안내.
+4. **듀얼 플랫폼(Web & Desktop) 100% 호환성 유지 및 빌드 검증 완료**.
+
+
 
