@@ -830,7 +830,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             )}
 
-            {/* 메케줄 Window APP 다운로드 버튼 (웹 브라우저 환경에서만 노출, 데스크톱 앱 내부에서는 숨김) */}
+            {/* 메케줄 Window APP 다운로드 버튼 (임시 비활성화: 향후 재사용을 위해 관련 로직은 보존하고 버튼 렌더링만 임시 제외) */}
+            {/*
             {isWeb && (
               <div className="pt-2">
                 <button
@@ -851,6 +852,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               </div>
             )}
+            */}
 
             {/* 데이터 초기화 버튼 */}
             <div className="pt-1">

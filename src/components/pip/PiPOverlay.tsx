@@ -216,12 +216,15 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
       return null;
     }
 
-    // 1. 세로 모드일 때: 캐릭터 카드 맨 위에 가로 방향 일렬로 정렬 (너비: 캐릭터 카드 가로 길이 CARD_W = 240px 맞춤)
+    // 1. 세로 모드일 때: 캐릭터 카드 맨 위에 가로 방향 일렬로 정렬 (너비: 캐릭터 카드 가로 길이 CARD_W = 240px 맞춤, 5개 이상 적응형 크기)
     if (pip.direction === 'vertical') {
+      const isMany = activeCommonContents.length > 4;
       return (
         <div 
           id="pip-common-contents-top-bar"
-          className="w-[240px] min-w-[240px] max-w-[240px] h-[52px] min-h-[52px] max-h-[52px] p-1 flex items-center justify-center gap-2 bg-transparent border-0 shadow-none box-border pointer-events-auto flex-shrink-0"
+          className={`w-[240px] min-w-[240px] max-w-[240px] h-[52px] min-h-[52px] max-h-[52px] p-1 flex items-center justify-center ${
+            isMany ? 'gap-1.5' : 'gap-2'
+          } bg-transparent border-0 shadow-none box-border pointer-events-auto flex-shrink-0 overflow-x-auto no-scrollbar`}
         >
           {activeCommonContents.map((item) => {
             const isDone = isCommonTaskCompleted(item.id, characters, records);
@@ -236,7 +239,11 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
                 id={`pip-common-item-${item.id}`}
                 onClick={() => handleCommonTaskClick(item)}
                 title={`[계정 컨텐츠] ${item.name} (${item.type === 'daily' ? '일일' : '주간'})\n${isDone ? '완료됨 (클리어)' : '미완료'}\n(클릭하여 완료 토글)`}
-                className={`w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square rounded-xl border flex items-center justify-center p-1 transition-all cursor-pointer shadow-sm relative select-none ${
+                className={`${
+                  isMany 
+                    ? 'w-[38px] h-[38px] min-w-[38px] min-h-[38px] max-w-[38px] max-h-[38px] p-0.5' 
+                    : 'w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] p-1'
+                } aspect-square rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm relative select-none flex-shrink-0 ${
                   isItemAlerting
                     ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
                     : isDone
@@ -251,15 +258,15 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
                     name={item.name}
                     icon={item.icon}
                     fallback={item.fallbackIcon}
-                    className={`w-7 h-7 object-contain rounded-lg transition-all ${
+                    className={`${isMany ? 'w-6 h-6' : 'w-7 h-7'} object-contain rounded-lg transition-all ${
                       isDone ? 'grayscale-0 opacity-100 scale-105' : 'grayscale-50 opacity-60'
                     }`}
                   />
                   {isDone && (
-                    <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center shadow-xs text-[8px] font-bold ${
+                    <div className={`absolute -bottom-1 -right-1 ${isMany ? 'w-3 h-3 text-[7px]' : 'w-3.5 h-3.5 text-[8px]'} rounded-full text-white flex items-center justify-center shadow-xs font-bold ${
                       item.type === 'daily' ? 'bg-amber-500' : 'bg-rose-600'
                     }`}>
-                      <Check className="w-2 h-2 stroke-[3]" />
+                      <Check className={`${isMany ? 'w-1.5 h-1.5' : 'w-2 h-2'} stroke-[3]`} />
                     </div>
                   )}
                 </div>
@@ -270,61 +277,79 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
       );
     }
 
-    // 2. 가로 모드일 때: 가장 왼쪽에 두 개 두 개 씩 세로로 배치 (세로 길이: 캐릭터 카드 세로 높이 CARD_H = 104px 맞춤)
+    // 2. 가로 모드일 때: 2행 그리드 배치 (홀수 개수일 경우 왼쪽에 1개 단독 중앙 배치, 오른쪽에 나머지 2행 배치)
     const cols = Math.ceil(activeCommonContents.length / 2);
-    const boxWidth = cols === 1 ? 52 : 100;
+    const boxWidth = cols * 44 + (cols - 1) * 6 + 8;
+    const isOdd = activeCommonContents.length % 2 !== 0;
+
+    const renderCommonItemButton = (item: typeof activeCommonContents[0]) => {
+      const isDone = isCommonTaskCompleted(item.id, characters, records);
+      const isItemAlerting = !isDone && (
+        (item.type === 'daily' && !!effectiveAccountAlertStatus.dailyAlert) ||
+        (item.type === 'weekly' && !!effectiveAccountAlertStatus.weeklyAlert)
+      );
+      return (
+        <button
+          key={item.id}
+          type="button"
+          id={`pip-common-item-${item.id}`}
+          onClick={() => handleCommonTaskClick(item)}
+          title={`[계정 컨텐츠] ${item.name} (${item.type === 'daily' ? '일일' : '주간'})\n${isDone ? '완료됨 (클리어)' : '미완료'}\n(클릭하여 완료 토글)`}
+          className={`w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square rounded-xl border flex items-center justify-center p-1 transition-all cursor-pointer shadow-sm relative select-none flex-shrink-0 ${
+            isItemAlerting
+              ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
+              : isDone
+              ? item.type === 'daily'
+                ? 'bg-amber-50 dark:bg-amber-950/80 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
+                : 'bg-rose-50 dark:bg-rose-950/80 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
+              : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+          }`}
+        >
+          <div className="relative flex items-center justify-center">
+            <MapleIcon
+              name={item.name}
+              icon={item.icon}
+              fallback={item.fallbackIcon}
+              className={`w-7 h-7 object-contain rounded-lg transition-all ${
+                isDone ? 'grayscale-0 opacity-100 scale-105' : 'grayscale-50 opacity-60'
+              }`}
+            />
+            {isDone && (
+              <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center shadow-xs text-[8px] font-bold ${
+                item.type === 'daily' ? 'bg-amber-500' : 'bg-rose-600'
+              }`}>
+                <Check className="w-2 h-2 stroke-[3]" />
+              </div>
+            )}
+          </div>
+        </button>
+      );
+    };
 
     return (
       <div 
         id="pip-common-contents-left-bar"
         style={{ width: `${boxWidth}px`, height: `${CARD_H}px` }}
-        className="h-[104px] min-h-[104px] max-h-[104px] p-0.5 flex-shrink-0 bg-transparent border-0 shadow-none box-border pointer-events-auto flex items-center justify-center my-1"
+        className="h-[104px] min-h-[104px] max-h-[104px] p-1 flex-shrink-0 bg-transparent border-0 shadow-none box-border pointer-events-auto flex items-center justify-center my-1"
       >
-        <div className="grid grid-rows-2 grid-flow-col gap-2 h-full w-full items-center justify-center">
-          {activeCommonContents.map((item) => {
-            const isDone = isCommonTaskCompleted(item.id, characters, records);
-            const isItemAlerting = !isDone && (
-              (item.type === 'daily' && !!effectiveAccountAlertStatus.dailyAlert) ||
-              (item.type === 'weekly' && !!effectiveAccountAlertStatus.weeklyAlert)
-            );
-            return (
-              <button
-                key={item.id}
-                type="button"
-                id={`pip-common-item-${item.id}`}
-                onClick={() => handleCommonTaskClick(item)}
-                title={`[계정 컨텐츠] ${item.name} (${item.type === 'daily' ? '일일' : '주간'})\n${isDone ? '완료됨 (클리어)' : '미완료'}\n(클릭하여 완료 토글)`}
-                className={`w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square rounded-xl border flex items-center justify-center p-1 transition-all cursor-pointer shadow-sm relative select-none ${
-                  isItemAlerting
-                    ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
-                    : isDone
-                    ? item.type === 'daily'
-                      ? 'bg-amber-50 dark:bg-amber-950/80 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
-                      : 'bg-rose-50 dark:bg-rose-950/80 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
-                    : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-orange-300'
-                }`}
-              >
-                <div className="relative flex items-center justify-center">
-                  <MapleIcon
-                    name={item.name}
-                    icon={item.icon}
-                    fallback={item.fallbackIcon}
-                    className={`w-7 h-7 object-contain rounded-lg transition-all ${
-                      isDone ? 'grayscale-0 opacity-100 scale-105' : 'grayscale-50 opacity-60'
-                    }`}
-                  />
-                  {isDone && (
-                    <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center shadow-xs text-[8px] font-bold ${
-                      item.type === 'daily' ? 'bg-amber-500' : 'bg-rose-600'
-                    }`}>
-                      <Check className="w-2 h-2 stroke-[3]" />
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {isOdd ? (
+          <div className="flex items-center gap-1.5 h-full w-full justify-center">
+            {/* 홀수 개수일 때: 왼쪽에 첫 번째 아이템(몬스터파크 등) 1개만 수직 중앙 단독 배치 */}
+            <div className="flex flex-col items-center justify-center h-full flex-shrink-0">
+              {renderCommonItemButton(activeCommonContents[0])}
+            </div>
+            {/* 나머지 아이템들: 오른쪽에 2행 그리드로 2개씩 깔끔하게 정렬 */}
+            {activeCommonContents.length > 1 && (
+              <div className="grid grid-rows-2 grid-flow-col gap-1.5 h-full items-center justify-center">
+                {activeCommonContents.slice(1).map((item) => renderCommonItemButton(item))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-rows-2 grid-flow-col gap-1.5 h-full w-full items-center justify-center">
+            {activeCommonContents.map((item) => renderCommonItemButton(item))}
+          </div>
+        )}
       </div>
     );
   };
