@@ -1,11 +1,11 @@
 # MapleSchedule (메케줄) - Agent Guidelines
 
-## 📌 [핵심 원칙] 앞으로 꼭 지켜야 할 사항 (Core Developer Directives)
+## 📌 [핵심 원칙] 앞으로 꼭 지켜야 할 10대 수칙 (Core Developer Directives)
 모든 AI 에이전트는 다음 10가지 원칙을 예외 없이 철저히 준수해야 합니다:
 
 1. **요청한 작업만 정확히 수행**: 요청받은 범위만 진행하며, 다른 의견이나 아이디어가 있더라도 사용자 승인 없이 임의로 코드를 작성하거나 삭제하지 않는다.
 2. **사전 제안 및 승인 후 시행**: 더 좋은 방법이나 다른 의견이 있을 경우 먼저 설명하고 제안한 뒤, 사용자가 승인하면 시행한다.
-3. **코드 및 API 구조 정밀 분석**: 변경 전 관련 코드와 연동되는 API(Nexon Open API, Express 서버, Electron IPC 등)의 전체 구조와 데이터 흐름을 세밀히 파악한다.
+3. **작업 대상 및 연관 API 정밀 분석 (과도한 전체 탐색 금지)**: 변경 전 작업 대상 파일과 직접 연동되는 API(Nexon Open API, Express 서버, Electron IPC 등)의 데이터 흐름을 정밀 분석한다. 단, 무관한 전체 파일을 전수 조사하여 토큰 과부하를 유발하지 않는다.
 4. **이해 내용 및 작업 계획 사전 보고**: 사용자의 요청을 어떻게 이해했는지, 어떤 순서와 방식으로 처리할 것인지 명확히 보고한 후 진행한다.
 5. **기능 안전성 및 아키텍처 정합성 검증**: 새로운 기능 요청 시 기존 코드 구조 및 API 규격과의 충돌, 오류 발생 여부, 기존 기능 훼손 가능성을 철저히 확인하고 설계한다.
 6. **기존 기능 및 코드 영향 최소화**: 요청받은 내용 외의 기존 코드와 기능은 절대 손상되거나 변경되지 않도록 사이드 이펙트를 완벽히 방지한다.
@@ -16,122 +16,60 @@
 
 ---
 
-## ⚠️ CRITICAL INSTRUCTION: Desktop Application Preservation (1.0.3 기준)
-This project is an Electron-based **Windows Desktop Application** and Web Application.
-All AI agents working on this project MUST strictly follow these rules:
+## 🚨 [시스템 무결성 가드] 'An internal error occurred' 및 24KB 초과 방지 규칙
+AI Studio 플랫폼에서 토큰 한도 초과 및 세션 과부하로 인한 내부 500 오류가 재발하지 않도록 아래 규칙을 엄격히 준수합니다:
 
-1. **User's Exact Desktop Build Workflow**:
-   The user builds the Windows desktop app using these exact three commands in cmd:
+1. **`AGENTS.md` 크기 15KB 상한 유지**:
+   - `AGENTS.md`는 시스템 프롬프트에 자동 주입되며 24KB 초과 시 강제 절단(`TRUNCATED`)됩니다.
+   - 따라서 이 파일에는 **핵심 행동 원칙과 절대 보존 가드**만 압축하여 항상 **15KB 이하**로 가볍게 유지합니다.
+2. **세부 문서 및 변경 내역 분리 작성 원칙**:
+   - 장문의 변경 내역(Changelog)이나 데이터 명세는 `AGENTS.md`에 누적하지 말고, 반드시 `docs/` 내의 해당 목적별 마크다운 파일(예: `docs/changelogs/v1.0.X.md`)에 분리하여 작성합니다.
+3. **과도한 전수 파일 탐색 금지**:
+   - 수정 요청을 받았을 때 프로젝트 내 수십 개 파일이나 2,000줄 이상의 대형 파일(`App.tsx`) 전체를 무작정 한 번에 읽지 않습니다.
+   - 반드시 **수정과 직접 관련된 컴포넌트, 인터페이스, 유틸리티만 선별하여 정밀하게 확인**합니다.
+
+---
+
+## ⚠️ 데스크톱(Electron) 환경 보존 필수 규칙
+1. **데스크톱 빌드 명령어 보존**:
    ```cmd
    npm install
    npm install -D electron electron-builder
    npm run dist
    ```
-
-2. **Preserve `package.json` Build & Desktop Configuration**:
+2. **`package.json` 데스크톱 빌드 설정 보존**:
    - `"main": "electron/main.cjs"`
-   - `"scripts"`:
-     - `"dev": "tsx server.ts"`
-     - `"build": "node scripts/prepare-build.cjs && vite build && esbuild server.ts --bundle --platform=node --format=cjs --external:vite --sourcemap --outfile=dist/server.cjs"`
-     - `"dist": "npm run build && electron-builder --win nsis"`
-     - `"dist:win": "npm run build && electron-builder --win nsis"`
-     - `"dist:portable": "npm run build && electron-builder --win portable"`
-   - Keep `"build"` (electron-builder) configuration block intact with `nsis` and `portable` targets.
-   - Do NOT commit `electron` and `electron-builder` to `devDependencies` directly; the user installs them locally on Windows via `npm install -D electron electron-builder`.
-
-3. **DO NOT delete or alter Desktop / Electron configuration files**:
-   - `electron/main.cjs` (Window management, tray, PiP window, local server spawner)
-   - `electron/preload.cjs` (Electron ContextBridge IPC)
-   - `scripts/prepare-build.cjs` (Windows .ico generator)
-   - `BUILD_INSTALLER_GUIDE.md` (Windows .exe build documentation)
-   - `data/storage.json` (Local fallback storage)
-
-4. **Dual Compatibility (Web & Desktop)**:
-   - Any new feature or optimization must remain compatible with both the browser environment and Electron's desktop environment (`window.electronAPI`).
-   - Do NOT add unnecessary root files unless requested by the user. Keep the root structure clean and identical to standard conventions.
+   - `"scripts"`: `dev`, `build`, `dist`, `dist:win`, `dist:portable` 유지.
+   - `build` (electron-builder) 설정 블록 유지 (`nsis`, `portable` 타깃, 아이콘 설정).
+3. **데스크톱 파일 절대 보존**:
+   - `electron/main.cjs`, `electron/preload.cjs`, `scripts/prepare-build.cjs`, `BUILD_INSTALLER_GUIDE.md`, `data/storage.json`
 
 ---
 
-## 🚨 [절대 변경 금지] 웹(Vercel 정적 호스팅) & 데스크톱 듀얼 아키텍처 핵심 규칙 (1.0.4 기준)
-어떤 AI 에이전트도 다음 핵심 아키텍처와 방어 로직을 절대 임의로 제거하거나 변경해서는 안 됩니다:
-
-1. **정적 웹 호스팅(Vercel) 환경에서의 넥슨 Open API 직접 통신 보존 (`src/services/api.ts`)**:
-   - Vercel, Netlify, GitHub Pages 등 정적 웹 호스팅에서는 Node.js Express 백엔드(`server.ts`)가 구동되지 않습니다.
-   - 백엔드가 없는 환경에서 `/api/...`를 호출하면 호스팅 서버가 SPA 리라이트(`vercel.json`)로 인해 `index.html`(`<!doctype html>...`)을 반환하며, 이를 `res.json()`으로 파싱하면 **`Unexpected token '<', "<!doctype "... is not valid JSON`** 치명적 에러가 발생합니다.
-   - 따라서 `fetchNexonSchedulerState`, `fetchCharacterBasic`, `fetchAccountCharacters`는 다음 듀얼 구조를 **영구히 유지**해야 합니다:
-     - **데스크톱(Electron)**: 고성능 로컬 Express 프록시(`/api/nexon/...`) 우선 호출.
-     - **웹(Vercel 등 정적 웹)**: 브라우저가 직접 넥슨 공식 Open API(`https://open.api.nexon.com/...`)를 호출.
-     - 모든 `/api/...` fetch 응답에 대해 `contentType.includes('application/json')` 안전 가드를 필수 유지하여 HTML 응답 파싱 에러를 원천 차단할 것.
-
-2. **이미지 URL 듀얼 처리 불변 규칙 (`src/utils/image.ts`)**:
-   - 데스크톱(Electron): CORS 회피 및 디스크 캐싱을 위해 로컬 프록시(`/api/proxy/image?url=...`) 사용.
-   - 웹(Vercel 등): 프록시 서버가 없으므로 **넥슨 원본 CDN URL(`trimmed`)을 그대로 직접 반환**해야 합니다. 이를 임의로 다시 프록시 경로로 통일하면 웹에서 캐릭터 아바타 사진이 100% 엑박(깨짐) 처리됩니다.
-
-3. **웹 환경 캐릭터 등록 시 프로필 사진 보강 로직 (`src/services/api.ts`)**:
-   - 넥슨의 `/character/list` API는 응답에 캐릭터 이름/레벨만 제공하며 `character_image` 필드가 없습니다.
-   - 따라서 웹 폴백 시 캐릭터 목록을 받아온 뒤, 상위 캐릭터들에 대해 브라우저가 직접 `/character/basic`을 호출하여 프로필 사진을 채워주고 `sessionStorage`에 캐시하는 로직을 절대 삭제하지 마십시오.
-
-4. **인게임 스케줄러 동기화 시 기존 클리어 기록 보호 가드 (`src/utils/schedulerParser.ts`)**:
-   - 넥슨 스케줄러 API가 일시적 지연이나 빈 데이터(`[]`)를 응답하더라도, 유저가 기존에 체크해둔 클리어 기록(일일/주간/보스)을 일괄 false로 날려버리지 않는 2중 안전 가드(`rawDaily.length === 0 && ...` 가드)를 절대 제거하지 마십시오.
-
-5. **캐릭터 새로고침 직렬(Sequential) 구조 유지**:
-   - 넥슨 Open API의 Rate Limit(초당 호출 제한) 초과로 인한 HTTP 429 에러 및 캐릭터 누락을 방지하기 위해, 캐릭터 새로고침은 반드시 안전한 순차 처리 방식을 유지해야 합니다.
+## 🚨 [절대 변경 금지] 웹(Vercel) & 데스크톱 듀얼 핵심 가드
+1. **Vercel 정적 호스팅 넥슨 API 직접 통신 (`src/services/api.ts`)**:
+   - 데스크톱은 로컬 Express 프록시 우선, 웹은 브라우저에서 `https://open.api.nexon.com` 직접 통신. `contentType.includes('application/json')` 방어 가드 필수.
+2. **이미지 URL 듀얼 분기 (`src/utils/image.ts`)**:
+   - 데스크톱은 `/api/proxy/image` 프록시, 웹은 넥슨 원본 CDN URL 직접 반환.
+3. **인게임 스케줄러 동기화 클리어 기록 보호 가드 (`src/utils/schedulerParser.ts`)**:
+   - 넥슨 API 빈 데이터(`[]`) 응답 시 기존 체크 기록 일괄 초기화 방지 2중 가드 보존.
+4. **다계정 분리 및 계정 공통 컨텐츠 독립 격리**:
+   - 몬스터파크/에픽던전 체크 시 활성 계정(`apiKeyId`) 캐릭터들만 격리 업데이트.
+5. **월드리프(서버 이전) 캐릭터 자동 치유 (Self-Healing)**:
+   - 만료된 OCID 발생 시 닉네임으로 최신 OCID 자동 재발급 및 캐릭터 고유 ID/기록 100% 보존.
+6. **`public/icons/` 에셋 보존 및 공백 2중 파일 유지 (아이콘 깨짐 방지)**:
+   - `public/icons/` 내 보스/심볼 아이콘(공백 포함 및 공백 제거 2벌 파일)과 로고 에셋(`메케줄 아이콘(투명).png` 등)은 절대 임의 삭제 금지.
+   - `MapleIcon.tsx`에서 Windows Electron과 웹 간 URL 디코딩/인코딩 차이로 인한 이미지 깨짐을 방지하는 2중 폴백(`encoded` ➔ `compactEncoded`) 구조로 설계되어 있으므로 영구 보존.
 
 ---
 
-## 🌐 Vercel 웹 호스팅 배포 및 파비콘 규격
-1. **Vercel 배포 세부 설정**:
-   - Framework Preset: `Vite`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
-   - SPA 라우팅 리라이트: `vercel.json` 유지 필수
-2. **브라우저 파비콘(Favicon) & 아이콘 리소스**:
-   - `public/favicon.ico` (브라우저 기본 요청 대응)
-   - `public/favicon.png` (32x32 고해상도 PNG 파비콘)
-   - `public/app-logo.png` (192x192 PWA 및 애플 터치 아이콘)
-   - `index.html` 내 `<link rel="icon">`, `<link rel="shortcut icon">` 태그 보존 필수
+## 📚 프로젝트 세부 문서 체계 (Reference Docs)
+자세한 기술 명세, 데이터 모델 및 개발 이력은 아래 전용 문서를 참조하십시오:
 
----
-
-## 📋 핵심 업데이트 및 개발 이력 (Changelog for AI Agents)
-
-### [1.0.5 업데이트] PiP 모드 계정 컨텐츠 배치 수정, 앱 다운로드 버튼 임시 삭제, PiP 토글 지원 (최신)
-1. **[수정] PiP 모드 계정 공통 컨텐츠 짤림 현상 배치 수정 (`StandalonePiPView.tsx`, `PiPOverlay.tsx`)**:
-   - **원인 분석**: 신규 에픽 던전 '아우룸 레기스' 추가로 계정 공통 컨텐츠가 총 5개(몬파 1 + 에픽던전 4)로 증가함에 따라, 기존 4개 기준으로 하드코딩된 너비/열 수 계산에서 5번째 아이템이 밖으로 잘리거나 윈도우 크기를 벗어나는 현상 발생.
-   - **가로 모드 (Horizontal) 개선**:
-     - 2행 그리드에서 열 수(`cols = Math.ceil(len / 2)`)에 따라 컨테이너 너비와 Electron 윈도우 너비(`setPiPSize`)가 유연하게 계산(`cols * 44 + (cols - 1) * 6 + 8`)되도록 수정. 3열(5~6개) 이상에서도 짤림 없이 100% 정상 노출.
-   - **세로 모드 (Vertical) 개선**:
-     - 캐릭터 카드 너비(240px) 내에서 5개 이상의 아이템이 한 줄에 짤림 없이 균등하게 배치되도록 적응형 크기 로직 적용 (4개 이하: 44px / 5개 이상: 38px, `gap-1.5`, 내부 아이콘 24px).
-     - `overflow-x-auto no-scrollbar` 안전 가드를 추가하여 컨텐츠 추가 시에도 레이아웃 파손 방지.
-2. **[삭제/임시 비활성화] 설정 모달 내 데스크톱 앱 다운로드 버튼 임시 제외 (`SettingsModal.tsx`)**:
-   - 향후 재사용을 위해 다운로드 핸들러 함수(`handleDownloadOrInstallApp`) 및 관련 상태 로직은 100% 온전히 보존.
-   - 설정 모달 내 '메케줄 Windows 데스크톱 앱 (.exe) 다운로드' 버튼 JSX 렌더링 블록만 임시 주석 처리하여 화면에서 제외.
-3. **[수정] PiP 가로 모드 계정 컨텐츠 홀수 개수 배치 개선 (`StandalonePiPView.tsx`, `PiPOverlay.tsx`)**:
-   - 가로 모드에서 계정 컨텐츠 개수가 홀수(5개 등)일 때, 단독 1개 아이템이 우측 끝에 배치되던 방식을 반대로 변경.
-   - 왼쪽에 1개(몬스터파크 등)를 단독으로 수직 중앙에 배치하고, 오른쪽에 나머지 컨텐츠들(에픽 던전 4개 등)을 2행 그리드로 2개씩 균형 있게 배치.
-4. **듀얼 플랫폼(Web & Desktop) 100% 호환성 유지 및 무결성 검증 완료**.
-
----
-
-### [v1.0.5] 월드리프 자동 치유(Self-Healing) 및 신규 에픽 던전 추가
-1. **월드리프(서버 이전) 캐릭터 자동 치유 (Self-Healing) 시스템 구축**:
-   - **배경**: 메이플스토리 인게임에서 캐릭터가 월드리프(월드 이동)를 진행하면 기존 `ocid`가 만료되어 넥슨 Open API 조회 시 `400 Bad Request` 에러가 발생하고 캐릭터 데이터 동기화가 불가능해지는 현상 해결.
-   - **해결 방식**:
-     - **백엔드 프록시 (`server.ts`)**: `/api/nexon/character/basic` 및 `/api/nexon/character/scheduler`에서 기존 OCID 조회가 실패할 경우, 캐릭터명(`name`) 파라미터가 있으면 등록된 API 키로 넥슨 `/id?character_name=...` 엔드포인트를 호출하여 새 `ocid`를 즉시 재발급받은 뒤 데이터를 복구하여 `newOcid`와 함께 반환.
-     - **웹 환경 직접 통신 (`src/services/api.ts`)**: `fetchCharacterBasic` 및 `fetchNexonSchedulerState`에서도 동일하게 만료된 OCID 실패 시 닉네임 기반으로 최신 OCID를 자동 재조회하여 복구.
-     - **프론트엔드 상태 반영 (`src/App.tsx`)**: 캐릭터 내부 고유 키(`char.id`)는 그대로 유지하면서 `char.ocid`, `char.worldName`, `char.characterImage`, `char.characterLevel`, `char.characterClass`만 실시간 갱신. 기존 체크 내역, 주간 보스 설정, 커스텀 태스크 등이 100% 보존됨.
-2. **290레벨 신규 에픽 던전 '아우룸 레기스' 추가**:
-   - `src/data/defaultTasks.ts`: `weekly_epic_aurum_regis` (아우룸 레기스, 290레벨 이상, 목요일 초기화) 태스크 등록.
-   - `src/components/common/MapleIcon.tsx`: `public/icons/아우룸 레기스.png` 아이콘과 한글명 매핑(`ICON_NAME_MAP`, `TASK_ID_MAP`).
-   - `src/utils/schedulerParser.ts`: 넥슨 인게임 스케줄러 동기화 키워드(`에픽던전아우룸레기스`, `아우룸레기스`, `aurumregis`) 추가로 인게임 클리어 시 자동 체크 연동.
-3. **헤더 공지사항 모달 및 버튼 (`NoticeModal.tsx`, `WindowHeader.tsx`)**:
-   - 상단 헤더의 API 키 버튼 왼쪽 바로 옆에 확성기(`Megaphone`) 아이콘 버튼(`btn-header-notice`) 배치.
-   - 클릭 시 공지사항 모달을 띄우며, 불필요한 X 버튼 및 부가설명을 배제한 심플한 확인 팝업 구조 적용.
-   - 1번 공지: '일일 보스'(파란색), '검은 마법사'(검붉은 색) 데이터 갱신 불가 및 스케줄러 이용 불가 안내.
-   - 2번 공지: '닉네임 변경', '월드 리프'(검정색 강조) 동시 진행 시 새로고침 권장 및 괄호 안내 문구 줄바꿈 처리.
-   - 3번 공지: '월드 리프' 이전 기록들은 '월드 리프' 이후 갱신되지 않음 안내.
-4. **듀얼 플랫폼(Web & Desktop) 100% 호환성 유지 및 빌드 검증 완료**.
-
-
-
+1. **[규칙 및 핵심 아키텍처]**: `docs/RULES_AND_CORE.md`
+2. **[데이터 구조 명세서]**: `docs/DATA_STRUCTURE.md`
+3. **[기능 설명 요약서]**: `docs/FEATURES_SUMMARY.md`
+4. **[코딩 스타일 및 개발 지침]**: `docs/CODING_STYLE.md`
+5. **[버전별 업데이트 상세 내역]**:
+   - v1.0.5 상세 내역: `docs/changelogs/v1.0.5.md`
+   - v1.0.4 상세 내역: `docs/changelogs/v1.0.4.md`

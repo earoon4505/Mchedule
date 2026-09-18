@@ -34,6 +34,7 @@ import {
 import { AppSettings, PipDirection, PipSettings, NotificationSettings } from '../../types';
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
 import { supportsPiP, supportsAutoStart, supportsFileBackup, isWeb } from '../../utils/platform';
+import { SwitchToggle } from '../common/SwitchToggle';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -252,19 +253,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </span>
               </div>
 
-              <button
+              <SwitchToggle
                 id="btn-settings-darkmode-toggle"
-                onClick={() => onUpdateSettings({ darkMode: !settings.darkMode })}
-                className={`w-12 h-6 rounded-full transition-colors relative ${
-                  settings.darkMode ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.darkMode ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+                checked={!!settings.darkMode}
+                onChange={(checked) => onUpdateSettings({ darkMode: checked })}
+                activeColor="bg-orange-500"
+                ariaLabel={settings.darkMode ? '다크 모드' : '라이트 모드'}
+              />
             </div>
           </div>
 
@@ -282,25 +277,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               {/* PiP 모드 ON/OFF 토글 */}
-              <button
+              <SwitchToggle
                 id="btn-settings-pip-toggle"
-                onClick={() => {
-                  const nextEnabled = !pip.enabled;
+                checked={!!pip.enabled}
+                onChange={(checked) => {
                   if ((window as any).electronAPI?.togglePiPWindow) {
                     (window as any).electronAPI.togglePiPWindow();
                   }
-                  updatePipSettings({ enabled: nextEnabled });
+                  updatePipSettings({ enabled: checked });
                 }}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  pip.enabled ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                    pip.enabled ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+                activeColor="bg-orange-500"
+                ariaLabel="PiP모드 토글"
+              />
             </div>
 
             {/* 프로필 사진만 나오게 축소 (onlyAvatar) */}
@@ -310,18 +298,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>프로필 사진만 표시</span>
               </div>
 
-              <button
-                onClick={() => updatePipSettings({ onlyAvatar: !pip.onlyAvatar })}
-                className={`w-11 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                  pip.onlyAvatar ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-3.5 h-3.5 rounded-full bg-white transition-transform ${
-                    pip.onlyAvatar ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <SwitchToggle
+                id="switch-pip-only-avatar"
+                checked={!!pip.onlyAvatar}
+                onChange={(checked) => updatePipSettings({ onlyAvatar: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="프로필 사진만 표시"
+              />
             </div>
 
             {/* 모든 스케줄 완료 시 해당 캐릭터 카드 pip 안 보이게 하기 */}
@@ -331,18 +315,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>완료된 캐릭터 숨기기</span>
               </div>
 
-              <button
-                onClick={() => updatePipSettings({ hideCompleted: !pip.hideCompleted })}
-                className={`w-11 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                  pip.hideCompleted ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-3.5 h-3.5 rounded-full bg-white transition-transform ${
-                    pip.hideCompleted ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <SwitchToggle
+                id="switch-pip-hide-completed"
+                checked={!!pip.hideCompleted}
+                onChange={(checked) => updatePipSettings({ hideCompleted: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="완료된 캐릭터 숨기기"
+              />
             </div>
 
             {/* 즐겨찾기 한 캐릭터 카드만 PiP에 표시 */}
@@ -352,18 +332,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>즐겨찾기만 표시</span>
               </div>
 
-              <button
-                onClick={() => updatePipSettings({ onlyFavorites: !pip.onlyFavorites })}
-                className={`w-11 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                  pip.onlyFavorites ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-3.5 h-3.5 rounded-full bg-white transition-transform ${
-                    pip.onlyFavorites ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <SwitchToggle
+                id="switch-pip-only-favorites"
+                checked={!!pip.onlyFavorites}
+                onChange={(checked) => updatePipSettings({ onlyFavorites: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="즐겨찾기만 표시"
+              />
             </div>
 
             {/* 계정 컨텐츠 표시 */}
@@ -373,18 +349,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>계정 컨텐츠 표시</span>
               </div>
 
-              <button
-                onClick={() => updatePipSettings({ showCommonContent: !pip.showCommonContent })}
-                className={`w-11 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                  pip.showCommonContent ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-3.5 h-3.5 rounded-full bg-white transition-transform ${
-                    pip.showCommonContent ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <SwitchToggle
+                id="switch-pip-show-common-content"
+                checked={!!pip.showCommonContent}
+                onChange={(checked) => updatePipSettings({ showCommonContent: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="계정 컨텐츠 표시"
+              />
             </div>
 
             {/* 정렬 방법 : 가로 or 세로 */}
@@ -529,21 +501,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
 
                 {/* 알림이 토글 스위치 */}
-                <button
-                  type="button"
+                <SwitchToggle
                   id="btn-settings-notifier-toggle"
-                  onClick={() => updateNotifier({ enabled: !notifier.enabled })}
-                  className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                    notifier.enabled ? 'bg-rose-500' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                  title={notifier.enabled ? '알림이 끄기' : '알림이 켜기'}
-                >
-                  <span
-                    className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                      notifier.enabled ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                  checked={!!notifier.enabled}
+                  onChange={(checked) => updateNotifier({ enabled: checked })}
+                  activeColor="bg-rose-500"
+                  ariaLabel={notifier.enabled ? '알림이 끄기' : '알림이 켜기'}
+                />
               </div>
             </div>
 
@@ -701,24 +665,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span className="text-xs font-bold text-slate-900 dark:text-white">Windows 시작 시 자동 실행</span>
                 </div>
 
-                <button
-                  onClick={() => {
-                    const nextVal = !settings.autoStart;
-                    onUpdateSettings({ autoStart: nextVal });
+                <SwitchToggle
+                  id="switch-settings-auto-start"
+                  checked={!!settings.autoStart}
+                  onChange={(checked) => {
+                    onUpdateSettings({ autoStart: checked });
                     if (typeof window !== 'undefined' && (window as any).electronAPI?.setAutoStart) {
-                      (window as any).electronAPI.setAutoStart(nextVal);
+                      (window as any).electronAPI.setAutoStart(checked);
                     }
                   }}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    settings.autoStart ? 'bg-sky-500' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                      settings.autoStart ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                  activeColor="bg-sky-500"
+                  ariaLabel="Windows 시작 시 자동 실행"
+                />
               </div>
             )}
 
@@ -729,18 +687,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span className="text-xs font-bold text-slate-900 dark:text-white">체크 사운드 효과음</span>
               </div>
 
-              <button
-                onClick={() => onUpdateSettings({ soundEnabled: !settings.soundEnabled })}
-                className={`w-12 h-6 rounded-full transition-colors relative ${
-                  settings.soundEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.soundEnabled ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <SwitchToggle
+                id="switch-settings-sound"
+                checked={!!settings.soundEnabled}
+                onChange={(checked) => onUpdateSettings({ soundEnabled: checked })}
+                activeColor="bg-emerald-500"
+                ariaLabel="체크 사운드 효과음"
+              />
             </div>
           </div>
 
@@ -760,20 +713,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span className="text-xs font-bold text-slate-900 dark:text-white">검은 마법사 포함</span>
               </div>
 
-              <button
+              <SwitchToggle
                 id="btn-settings-include-black-mage"
-                type="button"
-                onClick={() => onUpdateSettings({ includeBlackMageInCompletion: !settings.includeBlackMageInCompletion })}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  settings.includeBlackMageInCompletion ? 'bg-red-600' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.includeBlackMageInCompletion ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+                checked={!!settings.includeBlackMageInCompletion}
+                onChange={(checked) => onUpdateSettings({ includeBlackMageInCompletion: checked })}
+                activeColor="bg-red-600"
+                ariaLabel="검은 마법사 포함"
+              />
             </div>
 
             {/* 커스텀 스케줄 포함 여부 */}
@@ -783,20 +729,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span className="text-xs font-bold text-slate-900 dark:text-white">커스텀 스케줄 포함</span>
               </div>
 
-              <button
+              <SwitchToggle
                 id="btn-settings-include-custom"
-                type="button"
-                onClick={() => onUpdateSettings({ includeCustomInCompletion: !settings.includeCustomInCompletion })}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  settings.includeCustomInCompletion ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-slate-200 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-4 h-4 rounded-full ${settings.includeCustomInCompletion ? 'bg-white dark:bg-zinc-900' : 'bg-white'} transition-transform ${
-                    settings.includeCustomInCompletion ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+                checked={!!settings.includeCustomInCompletion}
+                onChange={(checked) => onUpdateSettings({ includeCustomInCompletion: checked })}
+                activeColor="bg-zinc-900 dark:bg-zinc-100"
+                ariaLabel="커스텀 스케줄 포함"
+              />
             </div>
           </div>
 

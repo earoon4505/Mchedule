@@ -43,9 +43,12 @@ export interface CharacterInfo {
   selectedBossIds: string[]; // 캐릭터별 선택된 주간 보스 ID 목록
   selectedDailyBossIds?: string[]; // 캐릭터별 선택된 일일 보스 ID 목록
   selectedBlackMageId?: string; // 선택된 검은 마법사 난이도 ('boss_hard_black_mage' | 'boss_extreme_black_mage')
+  apiKeyId?: string; // 소속된 API 키 식별자 (다계정 분리 지원)
   customTasks?: CustomTask[]; // 캐릭터별 커스텀 스케줄 목록
   weeklyBossThreshold?: number; // 주간 보스 완료 기준 마리수 (기본 12, 0~12)
   lastSyncedAt?: string;
+  syncError?: boolean; // 캐릭터 정보 갱신(OCID/닉네임/서버) 실패 여부
+  syncErrorMessage?: string; // 실패 사유 안내 메시지
 }
 
 export interface TaskProgressState {
@@ -171,4 +174,6 @@ export interface NexonAccountCharacter {
   character_image?: string;
   character_gender?: string;
   character_guild_name?: string;
+  apiKeyId?: string; // 소속된 API 키 고유 ID
+  apiKeyAlias?: string; // 소속된 API 키 별칭 (예: 본계정, 부계정)
 }

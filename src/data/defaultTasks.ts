@@ -217,7 +217,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
     icon: '👹',
     difficulties: [
       { id: 'boss_easy_kaling', difficulty: 'easy', label: '이지', mesoValue: 320000000 },
-      { id: 'boss_normal_kaling', difficulty: 'normal', label: '노말', mesoValue: 576000000 },
+      { id: 'boss_normal_kaling', difficulty: 'normal', label: '노말', mesoValue: 593000000 },
       { id: 'boss_hard_kaling', difficulty: 'hard', label: '하드', mesoValue: 1560000000 },
       { id: 'boss_extreme_kaling', difficulty: 'extreme', label: '익스트림', mesoValue: 5387000000 },
     ],
@@ -226,7 +226,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
     baseName: '찬란한 흉성',
     icon: '☄️',
     difficulties: [
-      { id: 'boss_normal_radiant_star', difficulty: 'normal', label: '노말', mesoValue: 593000000 },
+      { id: 'boss_normal_radiant_star', difficulty: 'normal', label: '노말', mesoValue: 576000000 },
       { id: 'boss_hard_radiant_star', difficulty: 'hard', label: '하드', mesoValue: 2678000000 },
     ],
   },

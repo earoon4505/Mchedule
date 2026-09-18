@@ -8,6 +8,7 @@ export const isElectron: boolean =
 
 export const isWeb: boolean = !isElectron;
 
+// PiP(미니 모드) 지원 여부: 데스크톱(Electron) 환경 전용
 export const supportsPiP: boolean = isElectron;
 export const supportsWindowControls: boolean = isElectron;
 export const supportsAutoStart: boolean = isElectron;

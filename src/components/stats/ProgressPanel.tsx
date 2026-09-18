@@ -19,17 +19,24 @@ import {
   Tv
 } from 'lucide-react';
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
-import { CharacterInfo, CharacterProgressRecord, AppSettings, PipSettings } from '../../types';
+import { CharacterInfo, CharacterProgressRecord, AppSettings, PipSettings, ApiKeyItem } from '../../types';
 import { WEEKLY_BOSSES, EPIC_DUNGEONS, DAILY_BOSSES, BLACK_MAGE_BOSS } from '../../data/defaultTasks';
 import { MapleIcon } from '../common/MapleIcon';
 import { 
   ALL_COMMON_CONTENTS, 
   DEFAULT_COMMON_CONTENT_IDS, 
+  getStoredCommonContentsMap,
   getStoredCommonContentIds,
+  saveStoredCommonContentIds,
   CommonContentItem
 } from '../../utils/commonContents';
 import { AccountAlertStatus } from '../../utils/alertNotifier';
 import { supportsPiP } from '../../utils/platform';
+import { getStoredApiKeys, buildAccountIndicatorItems } from '../../utils/accountHelper';
+import { fetchApiKeys } from '../../services/api';
+import { subscribeToApiKeys, subscribeToCommonContents } from '../../utils/syncChannel';
+import { motion, AnimatePresence } from 'motion/react';
+import { SwitchToggle } from '../common/SwitchToggle';
 
 export type ProgressPanelSectionId =
   | 'total_rate'
@@ -106,10 +113,12 @@ interface ProgressPanelProps {
   onRefresh: () => void;
   isRefreshing: boolean;
   autoSyncCountdown: number;
-  onToggleCommonTask?: (taskId: string, completed: boolean, count?: number) => void;
+  onToggleCommonTask?: (taskId: string, completed: boolean, count?: number, targetApiKeyId?: string, targetCharacterId?: string) => void;
   settings?: AppSettings;
   accountAlertStatus?: AccountAlertStatus;
   onUpdateSettings?: (newSettings: Partial<AppSettings>) => void;
+  apiKeys?: ApiKeyItem[];
+  characterSelectTrigger?: number;
 }
 
 export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
@@ -123,6 +132,8 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   settings,
   accountAlertStatus,
   onUpdateSettings,
+  apiKeys: initialApiKeys,
+  characterSelectTrigger,
 }) => {
   // 즐겨찾기 캐릭터만 필터링 여부
   const [onlyFavorites, setOnlyFavorites] = useState<boolean>(() => {
@@ -133,13 +144,85 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
     }
   });
 
-  // 계정 공통 컨텐츠 편집 모달 및 활성화된 목록 (기본값: 전부 포함)
+  // 계정 공통 컨텐츠 편집 모달 및 활성화된 목록 맵 (API별 독립 격리)
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [enabledCommonIds, setEnabledCommonIds] = useState<string[]>(getStoredCommonContentIds);
+  const [commonContentsMap, setCommonContentsMap] = useState<Record<string, string[]>>(getStoredCommonContentsMap);
+  const [modalEditingApiKeyId, setModalEditingApiKeyId] = useState<string>('default');
 
   // 진행 현황 UI 항목 순서 및 노출 편집 모달 상태
   const [isEditUiModalOpen, setIsEditUiModalOpen] = useState(false);
   const [panelSections, setPanelSections] = useState<ProgressPanelSectionConfig[]>(getStoredProgressSections);
+
+  // 다중 계정 API 키 목록 및 계정별 선택 상태 (실시간 동기화 지원)
+  const [knownApiKeys, setKnownApiKeys] = useState<ApiKeyItem[]>(() => initialApiKeys || getStoredApiKeys());
+
+  useEffect(() => {
+    if (initialApiKeys && Array.isArray(initialApiKeys)) {
+      setKnownApiKeys(initialApiKeys);
+    }
+  }, [initialApiKeys]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchApiKeys().then((keys) => {
+      if (isMounted && Array.isArray(keys)) {
+        setKnownApiKeys(keys);
+      }
+    }).catch(() => {});
+
+    // 실시간 API 키 변경(추가/삭제/별칭 수정) 즉각(0ms) 구독
+    const unsubscribe = subscribeToApiKeys((updatedKeys) => {
+      if (isMounted && Array.isArray(updatedKeys)) {
+        setKnownApiKeys(updatedKeys);
+      }
+    });
+
+    const handleStorage = () => {
+      if (isMounted) {
+        setKnownApiKeys(getStoredApiKeys());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [characters]);
+
+  // 계정 인디케이터 아이템 목록 생성 (등록 순서 보장, 2개 이상일 때만 활성화)
+  const accountIndicatorItems = useMemo(() => {
+    return buildAccountIndicatorItems(characters, activeCharacter?.id || null, knownApiKeys);
+  }, [characters, activeCharacter?.id, knownApiKeys]);
+
+  // 사용자가 선택한 계정 API 키 ID
+  const [selectedCommonApiKeyId, setSelectedCommonApiKeyId] = useState<string | null>(null);
+
+  // 캐릭터를 클릭하거나 활성 캐릭터가 변경될 때, 계정 컨텐츠를 해당 캐릭터가 속한 API 키(계정)로 즉시 동기화
+  useEffect(() => {
+    if (activeCharacter) {
+      setSelectedCommonApiKeyId(activeCharacter.apiKeyId || 'default');
+    }
+  }, [activeCharacter?.id, activeCharacter?.apiKeyId, characterSelectTrigger]);
+
+  // API 키가 삭제되거나 변경되었을 때, 선택된 계정 ID가 더 이상 유효하지 않으면 활성 캐릭터의 계정으로 자동 갱신
+  useEffect(() => {
+    if (selectedCommonApiKeyId && !knownApiKeys.some((k) => k.id === selectedCommonApiKeyId)) {
+      setSelectedCommonApiKeyId(activeCharacter?.apiKeyId || 'default');
+    }
+  }, [knownApiKeys, selectedCommonApiKeyId, activeCharacter?.apiKeyId]);
+
+  // 최종 적용할 계정 API 키 ID
+  const effectiveApiKeyId = useMemo(() => {
+    if (selectedCommonApiKeyId && accountIndicatorItems.some((acc) => acc.id === selectedCommonApiKeyId)) {
+      return selectedCommonApiKeyId;
+    }
+    if (activeCharacter?.apiKeyId && accountIndicatorItems.some((acc) => acc.id === activeCharacter.apiKeyId)) {
+      return activeCharacter.apiKeyId;
+    }
+    return accountIndicatorItems[0]?.id || (activeCharacter?.apiKeyId || 'default');
+  }, [selectedCommonApiKeyId, activeCharacter?.apiKeyId, accountIndicatorItems]);
 
   // 웹 모드(!supportsPiP)일 때 PIP 토글 섹션 제외
   const filteredSections = useMemo(() => {
@@ -147,12 +230,30 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   }, [panelSections]);
 
   useEffect(() => {
+    const unsubscribeCommon = subscribeToCommonContents((map) => {
+      if (map && typeof map === 'object') {
+        setCommonContentsMap(map);
+      }
+    });
     const handleStorage = () => {
-      setEnabledCommonIds(getStoredCommonContentIds());
+      setCommonContentsMap(getStoredCommonContentsMap());
     };
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    return () => {
+      unsubscribeCommon();
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
+
+  // 현재 선택된 계정(effectiveApiKeyId)에 활성화된 계정 공통 컨텐츠 ID 목록
+  const currentEnabledCommonIds = useMemo(() => {
+    return commonContentsMap[effectiveApiKeyId] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
+  }, [commonContentsMap, effectiveApiKeyId]);
+
+  // 편집 모달에서 현재 선택된 API의 계정 공통 컨텐츠 ID 목록
+  const modalEditingEnabledIds = useMemo(() => {
+    return commonContentsMap[modalEditingApiKeyId] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
+  }, [commonContentsMap, modalEditingApiKeyId]);
 
   const handleToggleFavorites = () => {
     const next = !onlyFavorites;
@@ -215,21 +316,14 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   };
 
   const handleToggleCommonContent = (id: string) => {
-    const next = enabledCommonIds.includes(id)
-      ? enabledCommonIds.filter((item) => item !== id)
-      : [...enabledCommonIds, id];
+    const targetKey = modalEditingApiKeyId || effectiveApiKeyId || 'default';
+    const currentIds = commonContentsMap[targetKey] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
+    const next = currentIds.includes(id)
+      ? currentIds.filter((item) => item !== id)
+      : [...currentIds, id];
 
-    setEnabledCommonIds(next);
-    try {
-      localStorage.setItem('mapleschedule_common_content_ids', JSON.stringify(next));
-    } catch (e) {}
-
-    // 비동기 큐로 안전하게 이벤트 발송 (React 렌더링 주기 충돌 방지)
-    setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage'));
-      }
-    }, 0);
+    const updated = saveStoredCommonContentIds(targetKey, next);
+    setCommonContentsMap(updated);
   };
 
   // 대상 캐릭터 목록 (전체 또는 즐겨찾기)
@@ -241,12 +335,20 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   // ----------------------------------------------------
   // 계정/월드 공통 컨텐츠 및 통합 통계 계산 (불필요한 초 단위 재연산 방지)
+  // 계정 공통 컨텐츠는 현재 선택된 캐릭터의 계정(apiKeyId)을 기준으로 독립 평가
   // ----------------------------------------------------
   const stats = useMemo(() => {
-    // 1. 몬스터파크 (일일 2회 이상 클리어 시 완료)
+    // 현재 선택된 계정(effectiveApiKeyId) 소속 캐릭터 목록 필터링
+    const hasAnyApiKey = targetCharacters.some((c) => !!c.apiKeyId);
+    const accountChars = (hasAnyApiKey && effectiveApiKeyId)
+      ? targetCharacters.filter((c) => (c.apiKeyId || 'default') === effectiveApiKeyId)
+      : targetCharacters;
+    const effectiveCommonChars = accountChars.length > 0 ? accountChars : targetCharacters;
+
+    // 1. 몬스터파크 (현재 계정의 캐릭터 중 일일 2회 이상 클리어 시 완료)
     let maxMonsterParkCount = 0;
     let isMonsterParkCompleted = false;
-    targetCharacters.forEach((char) => {
+    effectiveCommonChars.forEach((char) => {
       const rec = records?.[char.id];
       const mpState = rec?.dailyTasks?.['daily_monster_park'];
       const count = mpState?.currentCount ?? (mpState?.completed ? 2 : 0);
@@ -254,9 +356,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       if (mpState?.completed || count >= 2) isMonsterParkCompleted = true;
     });
 
-    // 2. 에픽 던전들
+    // 2. 에픽 던전들 (현재 계정의 캐릭터 중 클리어 여부 확인)
     const epicDungeonList = EPIC_DUNGEONS.map((epic) => {
-      const isDone = targetCharacters.some((char) => {
+      const isDone = effectiveCommonChars.some((char) => {
         const rec = records?.[char.id];
         return !!rec?.weeklyTasks?.[epic.id]?.completed;
       });
@@ -354,13 +456,13 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
     // 사용자가 활성화한 공통 컨텐츠만 진행 현황 통계에 반영 (몬스터파크: 일일, 에픽던전: 주간)
     if (targetCharacters.length > 0) {
-      if (enabledCommonIds.includes('daily_monster_park')) {
+      if (currentEnabledCommonIds.includes('daily_monster_park')) {
         totalDailyTasks += 1;
         if (isMonsterParkCompleted) doneDailyTasks += 1;
       }
 
       epicDungeonList.forEach((epic) => {
-        if (enabledCommonIds.includes(epic.id)) {
+        if (currentEnabledCommonIds.includes(epic.id)) {
           totalWeeklyTasks += 1;
           if (epic.isCompleted) doneWeeklyTasks += 1;
         }
@@ -409,13 +511,15 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       grandDone,
       grandPct,
       isGrandCompleted,
+      effectiveCommonChars,
     };
-  }, [targetCharacters, records, enabledCommonIds]);
+  }, [targetCharacters, records, currentEnabledCommonIds, activeCharacter, effectiveApiKeyId]);
 
   const {
     maxMonsterParkCount,
     isMonsterParkCompleted,
     epicDungeonList,
+    effectiveCommonChars,
     totalDailyTasks,
     doneDailyTasks,
     totalDailyBossTasks,
@@ -445,8 +549,8 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   // 표시할 계정 공통 컨텐츠 필터링
   const displayedCommonContents = useMemo(() => {
-    return ALL_COMMON_CONTENTS.filter((item) => enabledCommonIds.includes(item.id));
-  }, [enabledCommonIds]);
+    return ALL_COMMON_CONTENTS.filter((item) => currentEnabledCommonIds.includes(item.id));
+  }, [currentEnabledCommonIds]);
 
   const pip: PipSettings = settings?.pip || {
     enabled: false,
@@ -747,13 +851,49 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               
               <button
                 type="button"
-                onClick={() => setIsConfigOpen(true)}
+                onClick={() => {
+                  setModalEditingApiKeyId(effectiveApiKeyId);
+                  setIsConfigOpen(true);
+                }}
                 className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs cursor-pointer"
                 title="계정 컨텐츠 항목 편집"
               >
                 <Settings2 className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* 다계정 등록 시: '계정 컨텐츠' 바로 아래 줄에 등록된 API 별칭 표시 및 클릭 시 전환 (줄바꿈 wrap 지원 + Seamless Motion) */}
+            {accountIndicatorItems.length >= 2 && (
+              <div 
+                className="flex flex-wrap items-center gap-1.5 py-1 select-none relative"
+                title="등록된 계정 목록 (클릭하여 해당 계정의 계정 컨텐츠 현황 보기)"
+              >
+                {accountIndicatorItems.map((acc) => {
+                  const isSelected = acc.id === effectiveApiKeyId;
+                  return (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => setSelectedCommonApiKeyId(acc.id)}
+                      className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-colors ${
+                        isSelected
+                          ? 'text-white'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {isSelected && (
+                        <motion.div
+                          layoutId="activeProgressAccountPill"
+                          className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 shadow-xs"
+                          transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                        />
+                      )}
+                      <span className="relative z-10">{acc.alias}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {displayedCommonContents.length === 0 ? (
               <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-xs">
@@ -774,7 +914,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                     return (
                       <div
                         key={item.id}
-                        onClick={() => onToggleCommonTask?.('daily_monster_park', !isMonsterParkCompleted)}
+                        onClick={() => onToggleCommonTask?.('daily_monster_park', !isMonsterParkCompleted, undefined, effectiveApiKeyId, effectiveCommonChars[0]?.id)}
                         className={`p-3 rounded-2xl border transition-all flex items-center justify-between shadow-xs cursor-pointer select-none hover:opacity-90 ${
                           isMpAlert
                             ? 'border-2 border-red-500 shadow-md alert-pulse-red bg-red-50/20 dark:bg-red-950/20'
@@ -825,7 +965,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                   return (
                     <div
                       key={item.id}
-                      onClick={() => onToggleCommonTask?.(item.id, !isDone)}
+                      onClick={() => onToggleCommonTask?.(item.id, !isDone, undefined, effectiveApiKeyId, effectiveCommonChars[0]?.id)}
                       className={`p-3 rounded-2xl border transition-all flex items-center justify-between shadow-xs cursor-pointer select-none hover:opacity-90 ${
                         isEpicAlert
                           ? 'border-2 border-red-500 shadow-md alert-pulse-red bg-red-50/20 dark:bg-red-950/20'
@@ -883,26 +1023,13 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               PIP
             </span>
 
-            <button
-              type="button"
-              onClick={handleTogglePip}
-              role="switch"
-              aria-checked={pip.enabled}
-              title={pip.enabled ? 'PIP 끄기' : 'PIP 켜기'}
-              className="p-1 focus:outline-hidden cursor-pointer select-none"
-            >
-              <div
-                className={`w-8 h-4.5 rounded-full transition-colors relative flex-shrink-0 ${
-                  pip.enabled ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-3.5 h-3.5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                    pip.enabled ? 'translate-x-[16px]' : 'translate-x-[2px]'
-                  }`}
-                />
-              </div>
-            </button>
+            <SwitchToggle
+              id="switch-pip-toggle-panel"
+              checked={!!pip.enabled}
+              onChange={handleTogglePip}
+              size="sm"
+              ariaLabel={pip.enabled ? 'PIP 끄기' : 'PIP 켜기'}
+            />
           </div>
         );
 
@@ -1115,10 +1242,35 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               </div>
             </div>
 
+            {/* 다계정 등록 시: 계정 컨텐츠 편집 대상 API 선택 탭 (줄바꿈 wrap 지원) */}
+            {accountIndicatorItems.length >= 2 && (
+              <div className="px-4 pt-3 pb-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {accountIndicatorItems.map((acc) => {
+                    const isSelected = modalEditingApiKeyId === acc.id;
+                    return (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onClick={() => setModalEditingApiKeyId(acc.id)}
+                        className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs scale-105'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {acc.alias}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 모달 본문 */}
             <div className="p-4 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
               {ALL_COMMON_CONTENTS.map((item) => {
-                const isSelected = enabledCommonIds.includes(item.id);
+                const isSelected = modalEditingEnabledIds.includes(item.id);
                 return (
                   <div
                     key={item.id}

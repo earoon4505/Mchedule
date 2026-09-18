@@ -1,5 +1,6 @@
 import { CharacterInfo, CharacterProgressRecord } from '../types';
 import { EPIC_DUNGEONS } from '../data/defaultTasks';
+import { broadcastCommonContents } from './syncChannel';
 
 export interface CommonContentItem {
   id: string;
@@ -38,15 +39,77 @@ export const ALL_COMMON_CONTENTS: CommonContentItem[] = [
 
 export const DEFAULT_COMMON_CONTENT_IDS: string[] = ALL_COMMON_CONTENTS.map((c) => c.id);
 
-export function getStoredCommonContentIds(): string[] {
+/**
+ * 저장된 API별 계정 공통 컨텐츠 맵 조회 (하위 호환 지원)
+ */
+export function getStoredCommonContentsMap(): Record<string, string[]> {
   try {
     const saved = localStorage.getItem('mapleschedule_common_content_ids');
     if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) {
+        // 기존 단일 배열 포맷 하위 호환
+        return { default: parsed };
+      } else if (parsed && typeof parsed === 'object') {
+        return parsed as Record<string, string[]>;
+      }
     }
   } catch (e) {}
+  return { default: DEFAULT_COMMON_CONTENT_IDS };
+}
+
+/**
+ * 특정 API(또는 기본 계정)에 활성화된 계정 공통 컨텐츠 ID 목록 조회
+ */
+export function getStoredCommonContentIds(apiKeyId?: string | null): string[] {
+  const map = getStoredCommonContentsMap();
+  const key = apiKeyId || 'default';
+  if (map[key] && Array.isArray(map[key])) {
+    return map[key];
+  }
+  if (map['default'] && Array.isArray(map['default'])) {
+    return map['default'];
+  }
   return DEFAULT_COMMON_CONTENT_IDS;
+}
+
+/**
+ * 특정 API(또는 기본 계정)에 대한 계정 공통 컨텐츠 목록 저장 및 즉각 브로드캐스트
+ */
+export function saveStoredCommonContentIds(
+  apiKeyId: string | null | undefined,
+  ids: string[]
+): Record<string, string[]> {
+  const targetKey = apiKeyId || 'default';
+  const map = getStoredCommonContentsMap();
+  map[targetKey] = ids;
+  // default 키가 없거나 targetKey가 default인 경우 함께 보존
+  if (targetKey !== 'default' && !map['default']) {
+    map['default'] = ids;
+  }
+
+  try {
+    localStorage.setItem('mapleschedule_common_content_ids', JSON.stringify(map));
+  } catch (e) {}
+
+  // 0ms 실시간 브로드캐스트 통지
+  broadcastCommonContents(map);
+
+  return map;
+}
+
+/**
+ * 삭제된 API 키의 계정 공통 컨텐츠 맞춤 설정 정리
+ */
+export function removeStoredCommonContentId(apiKeyId: string): void {
+  const map = getStoredCommonContentsMap();
+  if (map[apiKeyId]) {
+    delete map[apiKeyId];
+    try {
+      localStorage.setItem('mapleschedule_common_content_ids', JSON.stringify(map));
+    } catch (e) {}
+    broadcastCommonContents(map);
+  }
 }
 
 export function isCommonTaskCompleted(

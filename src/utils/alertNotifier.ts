@@ -175,12 +175,20 @@ export function evaluateAccountAlerts(
   characters: CharacterInfo[],
   records: Record<string, CharacterProgressRecord>,
   activeMap: ResetAlertActiveMap,
-  settings?: AppSettings
+  settings?: AppSettings,
+  targetApiKeyId?: string
 ): AccountAlertStatus {
   // 등록된 캐릭터가 없으면 알림 없음
   if (!characters || characters.length === 0) {
     return { hasAlert: false, incompleteTasks: [], dailyAlert: false, weeklyAlert: false };
   }
+
+  // targetApiKeyId가 지정된 경우 동일 계정 캐릭터 목록 기준으로 판별
+  const hasAnyApiKey = characters.some((c) => !!c.apiKeyId);
+  const targetCharacters = (hasAnyApiKey && targetApiKeyId)
+    ? characters.filter((c) => c.apiKeyId === targetApiKeyId)
+    : characters;
+  const effectiveChars = targetCharacters.length > 0 ? targetCharacters : characters;
 
   const enabledIds = getStoredCommonContentIds();
   const incompleteTasks: CommonContentItem[] = [];
@@ -190,7 +198,7 @@ export function evaluateAccountAlerts(
   for (const item of ALL_COMMON_CONTENTS) {
     if (!enabledIds.includes(item.id)) continue;
 
-    const isDone = isCommonTaskCompleted(item.id, characters, records);
+    const isDone = isCommonTaskCompleted(item.id, effectiveChars, records);
     if (!isDone) {
       if (item.type === 'daily' && activeMap.daily) {
         dailyAlert = true;

@@ -52,6 +52,7 @@ function getRequestHeaders(extra: Record<string, string> = {}): Record<string, s
     if (keys.length > 0) {
       headers['x-nxopen-api-key'] = keys[0].apiKey;
       headers['x-user-api-keys'] = JSON.stringify(keys.map((k) => k.apiKey));
+      headers['x-user-api-key-items'] = JSON.stringify(keys);
     }
   }
   return headers;
@@ -187,36 +188,58 @@ export async function addApiKey(apiKey: string, alias?: string): Promise<{ succe
   }
 }
 
-// API 키 별칭 수정
-export async function updateApiKeyAlias(id: string, alias: string): Promise<{ success: boolean; keys?: ApiKeyItem[]; message?: string; error?: string }> {
+// API 키 정보(alias, apiKey) 수정
+export async function updateApiKey(
+  id: string,
+  updates: { alias?: string; apiKey?: string }
+): Promise<{ success: boolean; keys?: ApiKeyItem[]; message?: string; error?: string }> {
+  const { alias, apiKey } = updates;
+  if (!alias && !apiKey) {
+    return { success: false, error: '변경할 별칭 또는 API 키를 입력해주세요.' };
+  }
+
   if (isWeb) {
-    if (!alias || typeof alias !== 'string' || alias.trim().length === 0) {
-      return { success: false, error: '변경할 별칭을 입력해주세요.' };
-    }
     const keys = getWebLocalApiKeys();
     const idx = keys.findIndex((k) => k.id === id);
     if (idx === -1) {
       return { success: false, error: '해당 API 키를 찾을 수 없습니다.' };
     }
-    keys[idx].alias = alias.trim();
+
+    if (alias && alias.trim().length > 0) {
+      keys[idx].alias = alias.trim();
+    }
+
+    if (apiKey && apiKey.trim().length > 0) {
+      const trimmedKey = apiKey.trim();
+      if (keys.some((k, i) => i !== idx && k.apiKey === trimmedKey)) {
+        return { success: false, error: '이미 다른 항목에 등록되어 있는 API 키입니다.' };
+      }
+      keys[idx].apiKey = trimmedKey;
+    }
+
     saveWebLocalApiKeys(keys);
-    return { success: true, keys, message: '별칭이 성공적으로 변경되었습니다.' };
+    return { success: true, keys, message: 'API 키 정보가 성공적으로 변경되었습니다.' };
   }
 
   try {
     const res = await fetch(`/api/nexon/keys/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alias }),
+      body: JSON.stringify({ alias, apiKey }),
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
-      return { success: false, error: json.error || '별칭 수정에 실패했습니다.' };
+      return { success: false, error: json.error || 'API 키 정보 수정에 실패했습니다.' };
     }
     return { success: true, keys: json.keys, message: json.message };
   } catch (e: any) {
     return { success: false, error: e.message || '네트워크 오류가 발생했습니다.' };
   }
+}
+
+// API 키 별칭 수정 (호환성 유지)
+export async function updateApiKeyAlias(id: string, alias: string): Promise<{ success: boolean; keys?: ApiKeyItem[]; message?: string; error?: string }> {
+  return updateApiKey(id, { alias });
 }
 
 // 특정 API 키 삭제
@@ -324,10 +347,23 @@ export async function testApiKey(apiKey?: string): Promise<{ success: boolean; m
           'Content-Type': 'application/json',
         },
       });
-      if (res.status === 401 || res.status === 403) {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errName = data?.error?.name || '';
+        const errMsg = data?.error?.message || '';
+
+        // 캐릭터명이 없는 경우(OPENAPI00004)는 API 키 자체는 유효한 것임
+        if (errName === 'OPENAPI00004') {
+          return {
+            success: true,
+            message: 'NEXON Open API 연결 테스트에 성공했습니다!',
+          };
+        }
+
+        // 400, 401, 403 및 키 관련 에러코드(OPENAPI00005, OPENAPI00003, OPENAPI00001 등)
         return {
           success: false,
-          error: '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
+          error: errMsg || '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
         };
       }
       return {
@@ -447,7 +483,8 @@ export async function searchNexonCharacter(name: string): Promise<SearchCharacte
 
 export async function fetchCharacterBasic(
   ocidOrName: { ocid?: string; name?: string },
-  force = false
+  force = false,
+  apiKeyId?: string
 ): Promise<{ success: boolean; basic?: NexonCharacterBasic; newOcid?: string; error?: string }> {
   // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시 우선 호출
   if (!isWeb) {
@@ -455,6 +492,7 @@ export async function fetchCharacterBasic(
       const params = new URLSearchParams();
       if (ocidOrName.ocid) params.set('ocid', ocidOrName.ocid);
       if (ocidOrName.name) params.set('name', ocidOrName.name);
+      if (apiKeyId) params.set('apiKeyId', apiKeyId);
       if (force) params.set('force', 'true');
 
       const headers = getRequestHeaders();
@@ -485,9 +523,12 @@ export async function fetchCharacterBasic(
       return { success: false, error: '등록된 API 키가 없습니다.' };
     }
 
+    const preferredKey = apiKeyId ? keys.find((k) => k.id === apiKeyId) : undefined;
+    const orderedKeys = preferredKey ? [preferredKey, ...keys.filter((k) => k.id !== apiKeyId)] : keys;
+
     let targetOcid = ocidOrName.ocid;
     if (!targetOcid && ocidOrName.name) {
-      for (const k of keys) {
+      for (const k of orderedKeys) {
         try {
           const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(ocidOrName.name.trim())}`, {
             headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
@@ -505,9 +546,9 @@ export async function fetchCharacterBasic(
       return { success: false, error: '캐릭터 OCID를 찾을 수 없습니다.' };
     }
 
-    // 등록된 모든 키를 순회하여 성공하는 키로 기본 정보 조회
+    // 등록된 모든 키를 순회하여 성공하는 키로 기본 정보 조회 (선호 키 최우선)
     let basicData: NexonCharacterBasic | null = null;
-    for (const k of keys) {
+    for (const k of orderedKeys) {
       try {
         const basicRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(targetOcid)}`, {
           headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
@@ -523,7 +564,7 @@ export async function fetchCharacterBasic(
     // 월드리프 등으로 기존 OCID가 만료되어 조회가 실패한 경우:
     // 캐릭터명이 제공되어 있다면 닉네임으로 최신 OCID를 조회하여 자동 치유(Self-Healing)
     if (!basicData && ocidOrName.name) {
-      for (const k of keys) {
+      for (const k of orderedKeys) {
         try {
           const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(ocidOrName.name.trim())}`, {
             headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
@@ -532,7 +573,7 @@ export async function fetchCharacterBasic(
             const idData = await idRes.json();
             if (idData.ocid && idData.ocid !== targetOcid) {
               const freshOcid = idData.ocid;
-              for (const k2 of keys) {
+              for (const k2 of orderedKeys) {
                 const retryRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(freshOcid)}`, {
                   headers: { 'x-nxopen-api-key': k2.apiKey, 'Content-Type': 'application/json' },
                 });
@@ -626,7 +667,12 @@ export async function fetchAccountCharacters(force = false): Promise<AccountChar
           } else if (Array.isArray(listData)) {
             rawList = listData;
           }
-          return rawList.map((c) => ({ ...c, _key: k.apiKey }));
+          return rawList.map((c) => ({
+            ...c,
+            _key: k.apiKey,
+            apiKeyId: k.id,
+            apiKeyAlias: k.alias,
+          }));
         } catch (_) {
           return [];
         }
@@ -661,6 +707,8 @@ export async function fetchAccountCharacters(force = false): Promise<AccountChar
         character_image: c.character_image || cachedImg || '',
         character_gender: c.character_gender || '',
         character_guild_name: c.character_guild_name || '',
+        apiKeyId: c.apiKeyId,
+        apiKeyAlias: c.apiKeyAlias,
         _key: c._key,
       };
     });
@@ -708,7 +756,8 @@ export async function fetchNexonSchedulerState(
   ocid: string,
   force = false,
   customDate?: string,
-  characterName?: string
+  characterName?: string,
+  apiKeyId?: string
 ): Promise<SyncSchedulerResult> {
   // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시를 통해 조회
   if (!isWeb) {
@@ -717,6 +766,7 @@ export async function fetchNexonSchedulerState(
       params.set('ocid', ocid);
       if (characterName) params.set('name', characterName);
       if (customDate) params.set('date', customDate);
+      if (apiKeyId) params.set('apiKeyId', apiKeyId);
       if (force) params.set('force', 'true');
       const headers = getRequestHeaders();
       const url = `/api/nexon/character/scheduler?${params.toString()}`;
@@ -755,11 +805,14 @@ export async function fetchNexonSchedulerState(
     };
   }
 
+  const preferredKey = apiKeyId ? keys.find((k) => k.id === apiKeyId) : undefined;
+  const orderedKeys = preferredKey ? [preferredKey, ...keys.filter((k) => k.id !== apiKeyId)] : keys;
+
   const dateParam = customDate ? `&date=${encodeURIComponent(customDate)}` : '';
   let targetUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(ocid)}${dateParam}`;
 
   let lastError = '스케줄러 상태 조회 실패';
-  for (const k of keys) {
+  for (const k of orderedKeys) {
     try {
       const res = await fetch(targetUrl, {
         headers: {
@@ -797,7 +850,7 @@ export async function fetchNexonSchedulerState(
   // 웹 환경에서 조회가 실패하고 characterName이 제공된 경우 (월드리프 등으로 OCID 만료 가능성):
   // 닉네임으로 최신 OCID 조회 후 재시도 (자가 치유)
   if (characterName) {
-    for (const k of keys) {
+    for (const k of orderedKeys) {
       try {
         const idRes = await fetch(`https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(characterName.trim())}`, {
           headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
@@ -807,7 +860,7 @@ export async function fetchNexonSchedulerState(
           if (idData.ocid && idData.ocid !== ocid) {
             const freshOcid = idData.ocid;
             const freshUrl = `https://open.api.nexon.com/maplestory/v1/scheduler/character-state?ocid=${encodeURIComponent(freshOcid)}${dateParam}`;
-            for (const k2 of keys) {
+            for (const k2 of orderedKeys) {
               const res2 = await fetch(freshUrl, {
                 headers: { 'x-nxopen-api-key': k2.apiKey, 'Content-Type': 'application/json' },
               });

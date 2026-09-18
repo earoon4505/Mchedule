@@ -83,9 +83,45 @@ function saveApiKeys(keys: ApiKeyRecord[]): void {
   apiCache.clear();
 }
 
-// API 키 가져오기 (클라이언트 요청 헤더 우선, 없을 시 등록된 키 목록 중 첫 번째, 환경변수)
+// 등록된 모든 유효 API 키 레코드 반환 (클라이언트 요청 헤더 우선)
+function getActiveApiKeyRecords(req?: express.Request): ApiKeyRecord[] {
+  if (req) {
+    const itemsHeader = req.headers['x-user-api-key-items'] as string;
+    if (itemsHeader) {
+      try {
+        const parsed = JSON.parse(itemsHeader);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const valid = parsed.filter(
+            (item: any) => item && typeof item.apiKey === 'string' && item.apiKey.trim().length > 0
+          );
+          if (valid.length > 0) return valid;
+        }
+      } catch (_) {}
+    }
+  }
+  const saved = getSavedApiKeys();
+  if (saved.length > 0) return saved;
+  const envKey = (process.env.NEXON_API_KEY || '').trim();
+  if (envKey) {
+    return [{
+      id: 'env_key_default',
+      alias: '기본 API',
+      apiKey: envKey,
+      createdAt: new Date().toISOString(),
+    }];
+  }
+  return [];
+}
+
+// API 키 가져오기 (특정 apiKeyId 우선 -> 클라이언트 요청 헤더 우선 -> 첫 번째 키 -> 환경변수)
 function getActiveApiKey(req?: express.Request): string {
   if (req) {
+    const requestedKeyId = (req.query?.apiKeyId as string) || (req.headers['x-api-key-id'] as string);
+    if (requestedKeyId) {
+      const records = getActiveApiKeyRecords(req);
+      const matched = records.find((r) => r.id === requestedKeyId);
+      if (matched && matched.apiKey) return matched.apiKey.trim();
+    }
     const headerKey = (req.headers['x-nxopen-api-key'] as string) || (req.headers['x-user-api-key'] as string);
     if (headerKey && headerKey.trim().length > 0) {
       return headerKey.trim();
@@ -100,30 +136,11 @@ function getActiveApiKey(req?: express.Request): string {
 
 // 등록된 모든 유효 API 키 반환 (클라이언트 요청 헤더 우선)
 function getAllActiveApiKeys(req?: express.Request): string[] {
-  if (req) {
-    const userKeysHeader = req.headers['x-user-api-keys'] as string;
-    if (userKeysHeader) {
-      try {
-        const parsed = JSON.parse(userKeysHeader);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const valid = parsed.map((k: any) => String(k || '').trim()).filter((k: string) => k.length > 0);
-          if (valid.length > 0) return Array.from(new Set(valid));
-        }
-      } catch (_) {}
-    }
-    const headerKey = (req.headers['x-nxopen-api-key'] as string) || (req.headers['x-user-api-key'] as string);
-    if (headerKey && headerKey.trim().length > 0) {
-      return [headerKey.trim()];
-    }
+  const records = getActiveApiKeyRecords(req);
+  if (records.length > 0) {
+    return Array.from(new Set(records.map((r) => r.apiKey.trim()).filter((k) => k.length > 0)));
   }
-  const keys = getSavedApiKeys()
-    .map((k) => k.apiKey.trim())
-    .filter((k) => k.length > 0);
-  if (keys.length > 0) {
-    return Array.from(new Set(keys));
-  }
-  const envKey = (process.env.NEXON_API_KEY || '').trim();
-  return envKey ? [envKey] : [];
+  return [];
 }
 
 // OCID -> API Key 매핑 캐시 (스케줄러 조회 시 해당 캐릭터를 보유한 계정의 키로 즉시 라우팅)
@@ -346,14 +363,14 @@ app.post('/api/nexon/keys', (req, res) => {
   }
 });
 
-// API 키 별칭(alias) 수정 (API 키 자체는 변경 불가, 별칭만 변경)
+// API 키 정보(alias 및 apiKey) 수정
 app.put('/api/nexon/keys/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { alias } = req.body || {};
+    const { alias, apiKey } = req.body || {};
 
-    if (!alias || typeof alias !== 'string' || alias.trim().length === 0) {
-      return res.status(400).json({ success: false, error: '변경할 별칭을 입력해주세요.' });
+    if (!alias && !apiKey) {
+      return res.status(400).json({ success: false, error: '변경할 별칭 또는 API 키를 입력해주세요.' });
     }
 
     const keys = getSavedApiKeys();
@@ -362,17 +379,30 @@ app.put('/api/nexon/keys/:id', (req, res) => {
       return res.status(404).json({ success: false, error: '해당 API 키를 찾을 수 없습니다.' });
     }
 
-    keys[targetIndex].alias = alias.trim();
+    if (alias && typeof alias === 'string' && alias.trim().length > 0) {
+      keys[targetIndex].alias = alias.trim();
+    }
+
+    if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
+      const trimmedKey = apiKey.trim();
+      // 다른 키와 중복 여부 확인
+      if (keys.some((k, idx) => idx !== targetIndex && k.apiKey === trimmedKey)) {
+        return res.status(400).json({ success: false, error: '이미 다른 항목에 등록되어 있는 API 키입니다.' });
+      }
+      keys[targetIndex].apiKey = trimmedKey;
+      ocidToApiKeyMap.clear();
+    }
+
     saveApiKeys(keys);
 
     return res.json({
       success: true,
       keys,
-      message: '별칭이 성공적으로 변경되었습니다.',
+      message: 'API 키 정보가 성공적으로 변경되었습니다.',
     });
   } catch (err: any) {
-    console.error('Failed to update API key alias:', err);
-    return res.status(500).json({ success: false, error: err.message || '별칭 수정 실패' });
+    console.error('Failed to update API key:', err);
+    return res.status(500).json({ success: false, error: err.message || 'API 키 수정 실패' });
   }
 });
 
@@ -510,10 +540,23 @@ app.post('/api/nexon/key/test', async (req, res) => {
       },
     }, 7000);
 
-    if (testRes.status === 401 || testRes.status === 403) {
+    const testJson = await testRes.json().catch(() => ({}));
+
+    if (!testRes.ok) {
+      const errName = testJson?.error?.name || '';
+      const errMsg = testJson?.error?.message || '';
+
+      // 캐릭터명이 없는 경우(OPENAPI00004)는 API 키 자체는 유효함
+      if (errName === 'OPENAPI00004') {
+        return res.json({
+          success: true,
+          message: 'NEXON Open API 연결 테스트에 성공했습니다!',
+        });
+      }
+
       return res.status(400).json({
         success: false,
-        error: '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
+        error: errMsg || '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
       });
     }
 
@@ -651,9 +694,13 @@ app.get('/api/nexon/character/basic', async (req, res) => {
       }
     }
 
-    // 캐릭터를 보유한 키가 매핑되어 있으면 우선 사용
-    const candidateKeys = ocidToApiKeyMap.has(targetOcid)
-      ? [ocidToApiKeyMap.get(targetOcid)!, ...apiKeys.filter((k) => k !== ocidToApiKeyMap.get(targetOcid)!)]
+    // 요청된 apiKeyId 또는 캐릭터를 보유한 키가 매핑되어 있으면 우선 사용
+    const requestedKey = (req.query.apiKeyId as string)
+      ? getActiveApiKeyRecords(req).find((r) => r.id === req.query.apiKeyId)?.apiKey
+      : undefined;
+    const preferredKey = requestedKey || ocidToApiKeyMap.get(targetOcid);
+    const candidateKeys = preferredKey
+      ? [preferredKey, ...apiKeys.filter((k) => k !== preferredKey)]
       : [...apiKeys];
 
     let basicData: any = null;
@@ -735,8 +782,8 @@ app.get('/api/nexon/character/basic', async (req, res) => {
 // API 계정 내 전체 캐릭터 목록 조회 (/maplestory/v1/character/list)
 // 등록된 모든 API 키의 계정에서 캐릭터를 병렬로 수집하여 통합 제공
 app.get('/api/nexon/account/characters', async (req, res) => {
-  const apiKeys = getAllActiveApiKeys(req);
-  if (apiKeys.length === 0) {
+  const apiKeyRecords = getActiveApiKeyRecords(req);
+  if (apiKeyRecords.length === 0) {
     return res.status(400).json({
       success: false,
       error: 'NEXON API 키가 등록되지 않았습니다. 상단 [API 등록] 버튼을 눌러 먼저 키를 등록해주세요.',
@@ -745,7 +792,7 @@ app.get('/api/nexon/account/characters', async (req, res) => {
 
   const force = req.query.force === 'true';
   // 등록된 키 목록 기반 결합 캐시 키
-  const cacheKey = `account_chars_${apiKeys.map((k) => k.slice(-6)).sort().join('_')}`;
+  const cacheKey = `account_chars_${apiKeyRecords.map((r) => `${r.id}_${r.apiKey.slice(-6)}`).sort().join('_')}`;
   if (!force) {
     const cached = getFromCache(cacheKey);
     if (cached) {
@@ -758,16 +805,16 @@ app.get('/api/nexon/account/characters', async (req, res) => {
 
     // 1) 등록된 모든 API 키에 대해 병렬로 캐릭터 목록 조회
     const accountResults = await Promise.all(
-      apiKeys.map(async (key) => {
+      apiKeyRecords.map(async (record) => {
         try {
           const listRes = await safeFetch(listUrl, {
             headers: {
-              'x-nxopen-api-key': key,
+              'x-nxopen-api-key': record.apiKey,
               'Content-Type': 'application/json',
             },
           }, 8000);
 
-          if (!listRes.ok) return { key, characters: [] };
+          if (!listRes.ok) return { record, characters: [] };
           const listData = await listRes.json();
           let rawList: any[] = [];
 
@@ -786,26 +833,26 @@ app.get('/api/nexon/account/characters', async (req, res) => {
           // 해당 API 키가 소유한 OCID 매핑 기록 (스케줄러 조회 시 즉시 해당 키 사용)
           for (const c of rawList) {
             if (c && c.ocid) {
-              ocidToApiKeyMap.set(c.ocid, key);
+              ocidToApiKeyMap.set(c.ocid, record.apiKey);
             }
           }
 
-          return { key, characters: rawList };
+          return { record, characters: rawList };
         } catch (e) {
-          return { key, characters: [] };
+          return { record, characters: [] };
         }
       })
     );
 
     // 2) 중복 방지 병합 (동일 캐릭터가 중복 등록된 경우 방지)
     const seenOcids = new Set<string>();
-    const mergedRawList: { char: any; key: string }[] = [];
+    const mergedRawList: { char: any; record: ApiKeyRecord }[] = [];
     for (const resItem of accountResults) {
       for (const char of resItem.characters) {
         const idKey = char.ocid || char.character_name;
         if (idKey && !seenOcids.has(idKey)) {
           seenOcids.add(idKey);
-          mergedRawList.push({ char, key: resItem.key });
+          mergedRawList.push({ char, record: resItem.record });
         }
       }
     }
@@ -813,7 +860,7 @@ app.get('/api/nexon/account/characters', async (req, res) => {
     // 3) 계정 캐릭터 목록 기본 정보 및 프로필 사진 보강
     // 넥슨 /character/list 응답의 원본 캐릭터(이름, 월드, 직업, 레벨, OCID)는 100% 보존하며,
     // 프로필 사진(character_image)은 캐시 우선 및 동시 3개 이하 안전 조회로 채웁니다.
-    const enrichedList = await mapConcurrent(mergedRawList, 3, async ({ char, key }) => {
+    const enrichedList = await mapConcurrent(mergedRawList, 3, async ({ char, record }) => {
       const ocid = char.ocid;
       const fallbackChar = {
         ocid: char.ocid || '',
@@ -824,6 +871,8 @@ app.get('/api/nexon/account/characters', async (req, res) => {
         character_image: char.character_image || '',
         character_gender: char.character_gender || '',
         character_guild_name: char.character_guild_name || '',
+        apiKeyId: record.id,
+        apiKeyAlias: record.alias,
       };
 
       if (!ocid) return fallbackChar;
@@ -841,6 +890,8 @@ app.get('/api/nexon/account/characters', async (req, res) => {
           character_image: cachedBasic.character_image || fallbackChar.character_image,
           character_gender: cachedBasic.character_gender || fallbackChar.character_gender,
           character_guild_name: cachedBasic.character_guild_name || fallbackChar.character_guild_name,
+          apiKeyId: record.id,
+          apiKeyAlias: record.alias,
         };
       }
 
@@ -850,7 +901,7 @@ app.get('/api/nexon/account/characters', async (req, res) => {
           `https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(ocid)}`,
           {
             headers: {
-              'x-nxopen-api-key': key,
+              'x-nxopen-api-key': record.apiKey,
               'Content-Type': 'application/json',
             },
           },
@@ -868,6 +919,8 @@ app.get('/api/nexon/account/characters', async (req, res) => {
             character_image: bData.character_image || fallbackChar.character_image,
             character_gender: bData.character_gender || fallbackChar.character_gender,
             character_guild_name: bData.character_guild_name || fallbackChar.character_guild_name,
+            apiKeyId: record.id,
+            apiKeyAlias: record.alias,
           };
         }
       } catch (_) {
@@ -932,9 +985,13 @@ app.get('/api/nexon/character/scheduler', async (req, res) => {
     });
   }
 
-  // 매핑된 키가 있으면 그 키를 최우선 후보로, 없으면 등록된 모든 키를 후보로 지정
-  const candidateKeys = ocidToApiKeyMap.has(ocid)
-    ? [ocidToApiKeyMap.get(ocid)!, ...apiKeys.filter((k) => k !== ocidToApiKeyMap.get(ocid)!)]
+  // 매핑된 키 또는 요청된 apiKeyId가 있으면 최우선 후보로 지정
+  const requestedKey = (req.query.apiKeyId as string)
+    ? getActiveApiKeyRecords(req).find((r) => r.id === req.query.apiKeyId)?.apiKey
+    : undefined;
+  const preferredKey = requestedKey || ocidToApiKeyMap.get(ocid);
+  const candidateKeys = preferredKey
+    ? [preferredKey, ...apiKeys.filter((k) => k !== preferredKey)]
     : [...apiKeys];
 
   // 오늘 날짜인지 과거 날짜인지 판별하여 캐시 키 및 캐시 수명 차별화

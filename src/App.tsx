@@ -4,7 +4,8 @@ import {
   CharacterProgressRecord, 
   AppSettings, 
   AppDataPayload,
-  CustomTask
+  CustomTask,
+  ApiKeyItem
 } from './types';
 import { 
   getKSTDailyKey, 
@@ -24,7 +25,8 @@ import {
   deleteApiKey,
   fetchNexonSchedulerState, 
   searchNexonCharacter,
-  fetchCharacterBasic
+  fetchCharacterBasic,
+  fetchApiKeys
 } from './services/api';
 import { 
   getDefaultEnabledTasksForLevel, 
@@ -40,7 +42,9 @@ import {
 } from './utils/schedulerParser';
 import { sendWindowsNotification, playCheckSound } from './utils/notifications';
 import { APP_LOGO_SRC, onLogoError } from './utils/image';
-import { broadcastAppData, subscribeToBroadcast } from './utils/syncChannel';
+import { broadcastAppData, subscribeToBroadcast, subscribeToApiKeys } from './utils/syncChannel';
+import { getStoredApiKeys } from './utils/accountHelper';
+import { getStoredCommonContentsMap, removeStoredCommonContentId } from './utils/commonContents';
 
 import { WindowHeader } from './components/common/WindowHeader';
 import { CharacterSidebar } from './components/character/CharacterSidebar';
@@ -59,6 +63,7 @@ import { NoticeModal } from './components/common/NoticeModal';
 import { LegalModal, LegalTab } from './components/legal/LegalModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
+import { AdSenseBanner } from './components/common/AdSenseBanner';
 import { 
   CharacterAlertStatus, 
   AccountAlertStatus,
@@ -105,7 +110,6 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export default function App() {
-  const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI;
   const [characters, setCharacters] = useState<CharacterInfo[]>([]);
   const [records, setRecords] = useState<Record<string, CharacterProgressRecord>>({});
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(null);
@@ -131,16 +135,19 @@ export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(() => getStoredApiKeys());
   const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
   const [autoSyncCountdown, setAutoSyncCountdown] = useState<number>(300);
 
   // 중앙 탭: 'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom'
   const [activeTab, setActiveTab] = useState<'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom'>('all');
   const [collapseTrigger, setCollapseTrigger] = useState<number>(0);
+  const [characterSelectTrigger, setCharacterSelectTrigger] = useState<number>(0);
 
   const handleSelectCharacter = (id: string) => {
     setActiveCharacterId(id);
     setCollapseTrigger((prev) => prev + 1);
+    setCharacterSelectTrigger((prev) => prev + 1);
   };
 
   // 모달 상태
@@ -411,7 +418,7 @@ export default function App() {
       for (const pDate of missingDates) {
         try {
           // force=false로 하여 24시간 장기 캐시 적극 활용
-          const pastRes = await fetchNexonSchedulerState(char.ocid, false, pDate);
+          const pastRes = await fetchNexonSchedulerState(char.ocid, false, pDate, char.characterName, char.apiKeyId);
           if (pastRes.success && pastRes.data) {
             const completedBossIds = extractCompletedDailyBossIdsFromData(pastRes.data);
             currentWeeklyLog[pDate] = completedBossIds;
@@ -499,7 +506,7 @@ export default function App() {
             if (missingAvatarChars.length > 0) {
               const fetchTasks = missingAvatarChars.map(async (char) => {
                 try {
-                  const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName });
+                  const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName }, false, char.apiKeyId);
                   if (bRes.success && bRes.basic?.character_image) {
                     return {
                       id: char.id,
@@ -679,7 +686,7 @@ export default function App() {
             if (missingAvatarChars.length > 0) {
               const fetchTasks = missingAvatarChars.map(async (char) => {
                 try {
-                  const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName });
+                  const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName }, false, char.apiKeyId);
                   if (bRes.success && bRes.basic?.character_image) {
                     return {
                       id: char.id,
@@ -732,6 +739,130 @@ export default function App() {
   }, []);
 
   // ----------------------------------------------------
+  // 실시간 API 키 변경 핸들러 및 구독
+  // 키 삭제 시 해당 API 키와 연동된 캐릭터 전체 일괄 삭제
+  // ----------------------------------------------------
+  const handleApplyUpdatedApiKeys = useCallback((hasKey: boolean, updatedKeys?: ApiKeyItem[]) => {
+    setHasApiKey(hasKey);
+    if (updatedKeys) {
+      setApiKeys(updatedKeys);
+      const validKeyIds = new Set(updatedKeys.map((k) => k.id));
+      const aliasMap = new Map(updatedKeys.map((k) => [k.id, k.alias]));
+
+      // 1. 등록된 API 키가 0개인 경우: 모든 캐릭터 및 진행도 기록 완전 삭제
+      if (updatedKeys.length === 0) {
+        setCharacters([]);
+        setRecords({});
+        setActiveCharacterId(null);
+        persistData([], {}, settingsRef.current, null, true);
+        try {
+          localStorage.removeItem('mapleschedule_common_content_ids');
+        } catch (_) {}
+        return;
+      }
+
+      // 2. API 키가 남아있는 경우:
+      // 삭제된 API 키에 소속된 캐릭터를 전부 삭제(filter)하고, 유효한 키에 소속된 캐릭터만 보존
+      setCharacters((prev) => {
+        let changed = false;
+        const kept: CharacterInfo[] = [];
+
+        for (const c of prev) {
+          if (c.apiKeyId) {
+            if (validKeyIds.has(c.apiKeyId)) {
+              // 유효한 키에 소속된 캐릭터: 보존 및 최신 별칭 동기화
+              const newAlias = aliasMap.get(c.apiKeyId);
+              if (newAlias && c.apiKeyAlias !== newAlias) {
+                changed = true;
+                kept.push({ ...c, apiKeyAlias: newAlias });
+              } else {
+                kept.push(c);
+              }
+            } else {
+              // 소속된 API 키가 삭제된 캐릭터: 완전 삭제
+              changed = true;
+            }
+          } else {
+            // apiKeyId가 없는 레거시 캐릭터: 유효 키가 정확히 1개일 때만 자동 연결하여 보존, 아니면 삭제
+            if (updatedKeys.length === 1) {
+              changed = true;
+              kept.push({
+                ...c,
+                apiKeyId: updatedKeys[0].id,
+                apiKeyAlias: updatedKeys[0].alias,
+              });
+            } else {
+              changed = true;
+            }
+          }
+        }
+
+        // 삭제된 API 키의 계정 공통 컨텐츠 맞춤 설정 정리
+        try {
+          const commonMap = getStoredCommonContentsMap();
+          Object.keys(commonMap).forEach((kId) => {
+            if (kId !== 'default' && !validKeyIds.has(kId)) {
+              removeStoredCommonContentId(kId);
+            }
+          });
+        } catch (_) {}
+
+        if (changed) {
+          // 삭제된 캐릭터들의 진행 기록(records) 정리
+          const keptIds = new Set(kept.map((c) => c.id));
+          const currentRecords = recordsRef.current;
+          let recordsChanged = false;
+          const nextRecords: Record<string, CharacterProgressRecord> = {};
+          for (const cid of Object.keys(currentRecords)) {
+            if (keptIds.has(cid) && currentRecords[cid]) {
+              nextRecords[cid] = currentRecords[cid];
+            } else {
+              recordsChanged = true;
+            }
+          }
+          if (recordsChanged) {
+            setRecords(nextRecords);
+          }
+
+          // 활성 캐릭터가 삭제되었으면 첫 번째 남은 캐릭터로 전환하거나 null 처리
+          let nextActiveId = activeCharacterIdRef.current;
+          if (nextActiveId && !keptIds.has(nextActiveId)) {
+            nextActiveId = kept[0]?.id || null;
+            setActiveCharacterId(nextActiveId);
+          }
+
+          persistData(kept, recordsChanged ? nextRecords : currentRecords, settingsRef.current, nextActiveId, true);
+          return kept;
+        }
+
+        return prev;
+      });
+    }
+  }, [persistData]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchApiKeys().then((res: any) => {
+      const keys = Array.isArray(res) ? res : res?.keys;
+      if (isMounted && Array.isArray(keys)) {
+        setApiKeys(keys);
+        setHasApiKey(keys.length > 0);
+      }
+    }).catch(() => {});
+
+    const unsubscribe = subscribeToApiKeys((updatedKeys) => {
+      if (isMounted && Array.isArray(updatedKeys)) {
+        handleApplyUpdatedApiKeys(updatedKeys.length > 0, updatedKeys);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [handleApplyUpdatedApiKeys]);
+
+  // ----------------------------------------------------
   // 알림이 (초기화 임박 알림) 평가 및 팝업 트리거
   // ----------------------------------------------------
   useEffect(() => {
@@ -760,7 +891,8 @@ export default function App() {
         }
       }
 
-      const accAlert = evaluateAccountAlerts(characters, records, activeMap, settings);
+      const activeChar = characters.find((c) => c.id === activeCharacterId);
+      const accAlert = evaluateAccountAlerts(characters, records, activeMap, settings, activeChar?.apiKeyId);
 
       setCharacterAlertMap(newMap);
       setIncompleteAlertList(newIncomplete);
@@ -820,7 +952,7 @@ export default function App() {
         if (char.ocid && !char.ocid.startsWith('manual_')) {
           try {
             // 캐릭터 기본 정보 최신화 (레벨업, 코디/프로필 사진 변경 실시간 반영, 월드리프 시 OCID/월드 자동 치유)
-            const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName }, true);
+            const bRes = await fetchCharacterBasic({ ocid: char.ocid, name: char.characterName }, true, char.apiKeyId);
             let activeOcid = char.ocid;
 
             if (bRes.success && bRes.basic) {
@@ -839,7 +971,8 @@ export default function App() {
                 newLevel !== char.characterLevel ||
                 newClass !== char.characterClass ||
                 newWorld !== char.worldName ||
-                newOcid !== char.ocid
+                newOcid !== char.ocid ||
+                char.syncError
               ) {
                 updatedChars[i] = {
                   ...char,
@@ -848,12 +981,24 @@ export default function App() {
                   characterLevel: newLevel,
                   characterClass: newClass,
                   worldName: newWorld,
+                  syncError: false,
+                  syncErrorMessage: undefined,
+                };
+                hasCharUpdate = true;
+              }
+            } else if (!bRes.success) {
+              // 닉네임 변경이나 서버 이전 등으로 OCID 재발급까지 실패한 경우
+              if (!char.syncError) {
+                updatedChars[i] = {
+                  ...char,
+                  syncError: true,
+                  syncErrorMessage: bRes.error || '캐릭터 정보를 찾을 수 없습니다. (닉네임/서버 변경 확인 필요)',
                 };
                 hasCharUpdate = true;
               }
             }
 
-            const schedRes = await fetchNexonSchedulerState(activeOcid, true, undefined, char.characterName);
+            const schedRes = await fetchNexonSchedulerState(activeOcid, true, undefined, char.characterName, char.apiKeyId);
             if (schedRes.newOcid && schedRes.newOcid !== updatedChars[i].ocid) {
               updatedChars[i] = {
                 ...updatedChars[i],
@@ -1019,7 +1164,13 @@ export default function App() {
     });
   };
 
-  const handleToggleCommonTask = (taskId: string, completed: boolean, count?: number) => {
+  const handleToggleCommonTask = (
+    taskId: string,
+    completed: boolean,
+    count?: number,
+    targetApiKeyId?: string,
+    targetCharacterId?: string
+  ) => {
     if (completed && settings.soundEnabled) {
       playCheckSound();
     }
@@ -1031,8 +1182,25 @@ export default function App() {
       const weeklyThuKey = getKSTWeeklyThuKey();
       const weeklySunKey = getKSTWeeklySunKey();
 
-      // 계정 공통 태스크는 모든 캐릭터에 걸쳐 일관되게 토글/해제
-      characters.forEach((char) => {
+      // 대상 계정 키(apiKeyId) 결정: targetApiKeyId -> targetCharacterId 기준 -> activeCharacter 기준
+      let resolvedApiKeyId = targetApiKeyId;
+      if (!resolvedApiKeyId && targetCharacterId) {
+        const c = characters.find((char) => char.id === targetCharacterId);
+        if (c) resolvedApiKeyId = c.apiKeyId;
+      }
+      if (!resolvedApiKeyId && activeCharacterId) {
+        const c = characters.find((char) => char.id === activeCharacterId);
+        if (c) resolvedApiKeyId = c.apiKeyId;
+      }
+
+      // 등록된 apiKeyId가 존재하는 다중 계정 환경인 경우, 동일 apiKeyId를 가진 캐릭터들만 업데이트
+      // 다른 계정에 속한 캐릭터들의 레코드는 완벽히 보존
+      const hasAnyApiKey = characters.some((c) => !!c.apiKeyId);
+      const targetChars = (hasAnyApiKey && resolvedApiKeyId)
+        ? characters.filter((c) => c.apiKeyId === resolvedApiKeyId)
+        : characters;
+
+      targetChars.forEach((char) => {
         const charId = char.id;
         const currentRec = nextRecords[charId] || {
           characterId: charId,
@@ -1373,7 +1541,13 @@ export default function App() {
     // 캐릭터 등록 시 인게임 스케줄러 상태 및 진행/완료 기록을 즉시 가져와 반영
     if (formattedChar.ocid && !formattedChar.ocid.startsWith('manual_')) {
       try {
-        const schedRes = await fetchNexonSchedulerState(formattedChar.ocid, true);
+        const schedRes = await fetchNexonSchedulerState(
+          formattedChar.ocid,
+          true,
+          undefined,
+          formattedChar.characterName,
+          formattedChar.apiKeyId
+        );
         if (schedRes.success && schedRes.data) {
           if (!formattedChar.selectedBlackMageId) {
             const { selectedBlackMageId } = extractInGameRegisteredTasks(schedRes.data);
@@ -1650,6 +1824,7 @@ export default function App() {
           characters={characters}
           records={records}
           activeCharacterId={activeCharacterId}
+          apiKeys={apiKeys}
           settings={settings}
           characterAlertMap={characterAlertMap}
           onSelectCharacter={handleSelectCharacter}
@@ -1842,6 +2017,9 @@ export default function App() {
               </button>
             </div>
           )}
+
+          {/* 중앙 하단: 구글 애드센스 가로형 디스플레이 광고 영역 (스케줄 목록과 분리된 독립 칸, 웹 전용) */}
+          <AdSenseBanner />
         </section>
 
         {/* 우측 진행률 패널 */}
@@ -1849,6 +2027,8 @@ export default function App() {
           characters={characters}
           records={records}
           activeCharacter={activeCharacter}
+          apiKeys={apiKeys}
+          characterSelectTrigger={characterSelectTrigger}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           autoSyncCountdown={autoSyncCountdown}
@@ -1866,6 +2046,7 @@ export default function App() {
         onAddCharacter={handleAddCharacter}
         existingCharacters={characters}
         hasApiKey={hasApiKey}
+        apiKeys={apiKeys}
         onOpenApiKeyModal={() => {
           setIsAddModalOpen(false);
           setIsApiKeyModalOpen(true);
@@ -1898,9 +2079,7 @@ export default function App() {
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}
-        onKeyUpdated={(hasKey) => {
-          setHasApiKey(hasKey);
-        }}
+        onKeyUpdated={handleApplyUpdatedApiKeys}
       />
 
       {/* 공지사항 모달 (API 버튼 옆 확성기 아이콘 클릭 시 표시) */}
@@ -1938,8 +2117,8 @@ export default function App() {
         onSelectCharacter={handleSelectCharacter}
       />
 
-      {/* 웹 환경 전용 인앱 PiP 오버레이 (데스크톱 Electron 환경에서는 별도 독립 윈도우로 뜨므로 메인 창에는 렌더링하지 않음) */}
-      {!isElectron && settings.pip?.enabled && (
+      {/* 웹 환경 전용 인앱 PiP 오버레이 (임시 웹 PiP 숨김 처리: 데스크톱만 지원하도록 보호하며 코드는 100% 보존) */}
+      {supportsPiP && !isElectron && settings.pip?.enabled && (
         <PiPOverlay
           characters={characters}
           records={records}

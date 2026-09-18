@@ -235,7 +235,13 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
               }`}
               title={isCollapsed ? '목록 펼치기' : '목록 접기'}
             >
-              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              <motion.div
+                animate={{ rotate: isCollapsed ? 180 : 0 }}
+                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-center justify-center"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </motion.div>
             </button>
           )}
         </div>
@@ -246,15 +252,31 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
         {!isCollapsed && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{
-              height: { duration: 0.28, ease: [0.33, 1, 0.68, 1] },
-              opacity: { duration: 0.2, ease: 'easeOut' },
+            animate={{ 
+              height: 'auto', 
+              opacity: 1,
+              transition: {
+                height: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                opacity: { duration: 0.25, delay: 0.05, ease: 'easeOut' },
+              }
+            }}
+            exit={{ 
+              height: 0, 
+              opacity: 0,
+              transition: {
+                height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+                opacity: { duration: 0.18, ease: 'easeIn' },
+              }
             }}
             className="overflow-hidden"
           >
-            <div className="pt-3.5 space-y-4">
+            <motion.div
+              initial={{ y: -8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -8, opacity: 0 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="pt-3.5 space-y-4"
+            >
               {/* 1. 등록된 일일 보스 항목 */}
           {selectedBosses.length > 0 && (
             <div className="space-y-2.5">
@@ -287,7 +309,7 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
               </div>
             </div>
           )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

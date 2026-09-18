@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
   Star, 
@@ -11,10 +12,11 @@ import {
   Flame,
   Check,
   X,
-  ShieldAlert
+  ShieldAlert,
+  AlertCircle
 } from 'lucide-react';
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
-import { CharacterInfo, CharacterProgressRecord, AppSettings } from '../../types';
+import { CharacterInfo, CharacterProgressRecord, AppSettings, ApiKeyItem } from '../../types';
 import { APP_LOGO_SRC, onLogoError } from '../../utils/image';
 import { WEEKLY_BOSSES } from '../../data/defaultTasks';
 import { CharacterAvatar } from './CharacterAvatar';
@@ -25,6 +27,7 @@ interface CharacterSidebarProps {
   characters: CharacterInfo[];
   records: Record<string, CharacterProgressRecord>;
   activeCharacterId: string | null;
+  apiKeys?: ApiKeyItem[];
   settings?: AppSettings;
   characterAlertMap?: Record<string, CharacterAlertStatus>;
   onSelectCharacter: (id: string) => void;
@@ -41,6 +44,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
   characters,
   records,
   activeCharacterId,
+  apiKeys = [],
   settings,
   characterAlertMap,
   onSelectCharacter,
@@ -54,6 +58,40 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
 }) => {
   // 인라인 삭제 확인 상태 (캐릭터 ID)
   const [deletingCharId, setDeletingCharId] = useState<string | null>(null);
+  // 계정 필터 상태 ('all' 또는 특정 apiKeyId)
+  const [selectedApiKeyFilter, setSelectedApiKeyFilter] = useState<string>('all');
+
+  // 등록된 API 키의 ID -> 별칭 맵 생성
+  const accountAliasMap = useMemo(() => {
+    const map = new Map<string, string>();
+    apiKeys.forEach((key, idx) => {
+      if (key.id) {
+        map.set(key.id, key.alias?.trim() || `계정 ${idx + 1}`);
+      }
+    });
+    return map;
+  }, [apiKeys]);
+
+  // 캐릭터가 속한 계정 목록 추출 (2개 이상의 계정이 있을 때만 필터 및 뱃지 표시)
+  const availableAccountList = useMemo(() => {
+    const keySet = new Set<string>();
+    characters.forEach((char) => {
+      if (char.apiKeyId && accountAliasMap.has(char.apiKeyId)) {
+        keySet.add(char.apiKeyId);
+      }
+    });
+    return apiKeys.filter((key) => key.id && keySet.has(key.id));
+  }, [characters, apiKeys, accountAliasMap]);
+
+  const hasMultipleAccounts = availableAccountList.length >= 2;
+
+  // 선택된 계정 필터 적용 캐릭터 목록
+  const displayedCharacters = useMemo(() => {
+    if (!hasMultipleAccounts || selectedApiKeyFilter === 'all') {
+      return characters;
+    }
+    return characters.filter((c) => c.apiKeyId === selectedApiKeyFilter);
+  }, [characters, hasMultipleAccounts, selectedApiKeyFilter]);
 
   const handleConfirmDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,7 +110,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
       className="w-full lg:w-72 lg:min-w-[280px] lg:max-w-[288px] bg-slate-50/90 dark:bg-slate-950/80 border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-shrink-0 select-none overflow-hidden"
     >
       {/* 사이드바 헤더 */}
-      <div className="p-3.5 pb-2 flex items-center justify-end flex-shrink-0">
+      <div className="p-3.5 pb-2 flex flex-col gap-2 flex-shrink-0">
         <button
           id="btn-add-character"
           onClick={onOpenAddModal}
@@ -82,11 +120,47 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
           <Plus className="w-4 h-4" />
           <span>캐릭터 추가</span>
         </button>
+
+        {/* 다계정 등록 시: 계정별 캐릭터 필터 탭 */}
+        {hasMultipleAccounts && (
+          <div className="flex flex-wrap items-center gap-1 pt-1">
+            <button
+              type="button"
+              onClick={() => setSelectedApiKeyFilter('all')}
+              className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold transition-all cursor-pointer ${
+                selectedApiKeyFilter === 'all'
+                  ? 'bg-orange-500 text-white shadow-2xs'
+                  : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              전체
+            </button>
+            {availableAccountList.map((acc, idx) => {
+              const alias = acc.alias?.trim() || `계정 ${idx + 1}`;
+              const isSelected = selectedApiKeyFilter === acc.id;
+              return (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() => setSelectedApiKeyFilter(acc.id)}
+                  className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold transition-all cursor-pointer truncate max-w-[100px] ${
+                    isSelected
+                      ? 'bg-orange-500 text-white shadow-2xs'
+                      : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                  title={alias}
+                >
+                  {alias}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 캐릭터 목록 스크롤 뷰 */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
-        {characters.length === 0 ? (
+        {displayedCharacters.length === 0 ? (
           <div className="text-center py-10 px-4 text-slate-400">
             <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-900/40 flex items-center justify-center p-2 shadow-xs">
               <img
@@ -97,55 +171,61 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
               />
             </div>
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-              등록된 캐릭터가 없습니다
+              {characters.length === 0 ? '등록된 캐릭터가 없습니다' : '해당 계정에 등록된 캐릭터가 없습니다'}
             </p>
           </div>
         ) : (
-          characters.map((char, index) => {
-            const isActive = char.id === activeCharacterId;
-            const isDeletingThis = deletingCharId === char.id;
-            const rec = records?.[char.id];
+          <AnimatePresence mode="popLayout" initial={false}>
+            {displayedCharacters.map((char, index) => {
+              const isActive = char.id === activeCharacterId;
+              const isDeletingThis = deletingCharId === char.id;
+              const rec = records?.[char.id];
 
-            const status = getCharacterCompletionStatus(char, rec, {
-              includeCustom: settings?.includeCustomInCompletion,
-              includeBlackMage: settings?.includeBlackMageInCompletion,
-            });
-            const { 
-              dailyTotal, 
-              dailyDone, 
-              dailyBossTotal,
-              dailyBossDone,
-              weeklyTotal, 
-              weeklyDone, 
-              bossThreshold, 
-              clearedBossCount, 
-              isDailyAllDone, 
-              isDailyBossAllDone,
-              isWeeklyAllDone, 
-              isBossAllDone, 
-              isAllCompleted 
-            } = status;
+              const status = getCharacterCompletionStatus(char, rec, {
+                includeCustom: settings?.includeCustomInCompletion,
+                includeBlackMage: settings?.includeBlackMageInCompletion,
+              });
+              const { 
+                dailyTotal, 
+                dailyDone, 
+                dailyBossTotal,
+                dailyBossDone,
+                weeklyTotal, 
+                weeklyDone, 
+                bossThreshold, 
+                clearedBossCount, 
+                isDailyAllDone, 
+                isDailyBossAllDone,
+                isWeeklyAllDone, 
+                isBossAllDone, 
+                isAllCompleted 
+              } = status;
 
-            const charAlert = characterAlertMap?.[char.id];
-            const isCardAlerting = !!charAlert?.hasAnyAlert;
+              const charAlert = characterAlertMap?.[char.id];
+              const isCardAlerting = !!charAlert?.hasAnyAlert;
 
-            return (
-              <div
-                key={char.id}
-                id={`character-card-${char.id}`}
-                onClick={() => onSelectCharacter(char.id)}
-                className={`group relative p-3 rounded-2xl border transition-all cursor-pointer ${
-                  isCardAlerting
-                    ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
-                    : isAllCompleted
-                    ? isActive
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
-                      : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/80 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/90 dark:hover:bg-emerald-950/50 shadow-xs'
-                    : isActive
-                    ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500/80 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
-                    : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800/90 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/80 shadow-xs hover:shadow-sm'
-                }`}
-              >
+              return (
+                <motion.div
+                  key={char.id}
+                  id={`character-card-${char.id}`}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 460, damping: 28 }}
+                  onClick={() => onSelectCharacter(char.id)}
+                  className={`group relative p-3 rounded-2xl border transition-colors cursor-pointer ${
+                    isCardAlerting
+                      ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
+                      : isAllCompleted
+                      ? isActive
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
+                        : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/80 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/90 dark:hover:bg-emerald-950/50 shadow-xs'
+                      : isActive
+                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500/80 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
+                      : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800/90 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/80 shadow-xs hover:shadow-sm'
+                  }`}
+                >
                 {/* 1. 캐릭터 기본 헤더 (프로필 사진과 닉네임/정보를 세로 중앙 정렬) */}
                 <div className="flex items-center gap-3">
                   {/* 프로필 사진 컨테이너 */}
@@ -158,8 +238,9 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                   />
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 min-w-0">
+                    {/* 1행: 캐릭터 이름 / 완료 뱃지 (좌) & 레벨 뱃지 (우) */}
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <h3 className={`text-sm font-bold truncate ${
                           isAllCompleted ? 'text-emerald-950 dark:text-emerald-300' : 'text-slate-900 dark:text-white'
                         }`}>
@@ -170,8 +251,18 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                             완료
                           </span>
                         )}
+                        {char.syncError && (
+                          <span 
+                            title={char.syncErrorMessage || '캐릭터 정보를 불러올 수 없습니다. 닉네임이나 서버 변경 여부를 확인해주세요.'}
+                            className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-500 text-white flex-shrink-0 shadow-xs flex items-center gap-0.5"
+                          >
+                            <AlertCircle className="w-2.5 h-2.5" />
+                            <span>연결 실패</span>
+                          </span>
+                        )}
                       </div>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
                         isAllCompleted
                           ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
@@ -180,9 +271,17 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                      {char.worldName} · {char.characterClass || '직업 미지정'}
-                    </p>
+                    {/* 2행: 서버 및 직업 정보 (좌) & 다중 계정 식별 뱃지 (우) - 동일한 2번째 줄 양 끝 배치 */}
+                    <div className="flex items-center justify-between gap-1.5 mt-1 min-w-0">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate min-w-0">
+                        {char.worldName} · {char.characterClass || '직업 미지정'}
+                      </p>
+                      {hasMultipleAccounts && char.apiKeyId && accountAliasMap.has(char.apiKeyId) && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-100/80 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 tracking-tight whitespace-nowrap flex-shrink-0 max-w-[80px] truncate">
+                          {accountAliasMap.get(char.apiKeyId)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -424,9 +523,10 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     </div>
                   </div>
                 )}
-              </div>
-            );
-          })
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         )}
       </div>
 
