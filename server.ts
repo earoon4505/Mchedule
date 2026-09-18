@@ -16,27 +16,85 @@ app.get('/api/health', (req, res) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.text({ type: ['text/*', 'application/json'], limit: '10mb' }));
 
-// 서버 파일 영구 저장소 경로 결정 (Windows APPDATA 또는 로컬 폴더)
+// 서버 파일 영구 저장소 경로 결정 (Windows APPDATA / Electron userData 또는 로컬 폴더)
 function resolveDataDir(): string {
-  if (process.env.APPDATA) {
-    const p = path.join(process.env.APPDATA, 'MapleSchedule', 'data');
-    if (!fs.existsSync(p)) {
-      try { fs.mkdirSync(p, { recursive: true }); } catch (e) {}
+  let targetDir = '';
+
+  // 1. Electron 메인 프로세스가 전달한 사용자 영구 저장소 경로 최우선 (업데이트/재설치 시에도 영구 보존)
+  if (process.env.MAPLE_USER_DATA_PATH) {
+    targetDir = path.join(process.env.MAPLE_USER_DATA_PATH, 'data');
+  } else if (process.env.APPDATA) {
+    // 2. Windows APPDATA 표준 경로 (Roaming)
+    targetDir = path.join(process.env.APPDATA, 'maple-schedule', 'data');
+  } else if (process.env.HOME) {
+    // 3. Linux/Mac 홈 디렉토리
+    targetDir = path.join(process.env.HOME, '.mapleschedule', 'data');
+  } else {
+    // 4. 로컬 디렉토리 폴백
+    targetDir = path.join(process.cwd(), 'data');
+  }
+
+  if (!fs.existsSync(targetDir)) {
+    try { fs.mkdirSync(targetDir, { recursive: true }); } catch (e) {}
+  }
+
+  // 구버전(설치 폴더 등)에서 새로운 영구 저장소로 기존 데이터 자동 안전 마이그레이션
+  migrateLegacyStorage(targetDir);
+
+  return targetDir;
+}
+
+// 구버전 경로에 존재하던 데이터 파일 자동 복사 (업데이트 시 데이터 유실 방지)
+function migrateLegacyStorage(targetDataDir: string) {
+  try {
+    const targetStorage = path.join(targetDataDir, 'storage.json');
+    const targetApiKey = path.join(targetDataDir, 'api_key.json');
+
+    // 마이그레이션 대상 후보 구버전 디렉토리들
+    const legacyCandidates = [
+      path.join(process.cwd(), 'data'),
+      path.join(currentDirname, 'data'),
+      path.join(currentDirname, '../data'),
+      process.env.APPDATA ? path.join(process.env.APPDATA, 'MapleSchedule', 'data') : null,
+      process.env.APPDATA ? path.join(process.env.APPDATA, 'maple-schedule', 'data') : null,
+    ].filter((p): p is string => Boolean(p) && fs.existsSync(p) && p !== targetDataDir);
+
+    // 1. storage.json 마이그레이션 (타깃이 없거나 비어있을 때)
+    const needStorage = !fs.existsSync(targetStorage) || fs.statSync(targetStorage).size < 10;
+    if (needStorage) {
+      for (const candDir of legacyCandidates) {
+        const candFile = path.join(candDir, 'storage.json');
+        if (fs.existsSync(candFile) && fs.statSync(candFile).size > 10) {
+          try {
+            fs.copyFileSync(candFile, targetStorage);
+            console.log(`[Storage Migration] Copied storage.json from ${candFile} to ${targetStorage}`);
+            break;
+          } catch (e) {
+            console.error('[Storage Migration] Error copying storage.json:', e);
+          }
+        }
+      }
     }
-    return p;
-  }
-  if (process.env.HOME) {
-    const p = path.join(process.env.HOME, '.mapleschedule', 'data');
-    if (!fs.existsSync(p)) {
-      try { fs.mkdirSync(p, { recursive: true }); } catch (e) {}
+
+    // 2. api_key.json 마이그레이션 (타깃이 없거나 비어있을 때)
+    const needApiKey = !fs.existsSync(targetApiKey) || fs.statSync(targetApiKey).size < 10;
+    if (needApiKey) {
+      for (const candDir of legacyCandidates) {
+        const candFile = path.join(candDir, 'api_key.json');
+        if (fs.existsSync(candFile) && fs.statSync(candFile).size > 10) {
+          try {
+            fs.copyFileSync(candFile, targetApiKey);
+            console.log(`[Storage Migration] Copied api_key.json from ${candFile} to ${targetApiKey}`);
+            break;
+          } catch (e) {
+            console.error('[Storage Migration] Error copying api_key.json:', e);
+          }
+        }
+      }
     }
-    return p;
+  } catch (err) {
+    console.error('[Storage Migration Check Error]:', err);
   }
-  const local = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(local)) {
-    try { fs.mkdirSync(local, { recursive: true }); } catch (e) {}
-  }
-  return local;
 }
 
 const DATA_DIR = resolveDataDir();

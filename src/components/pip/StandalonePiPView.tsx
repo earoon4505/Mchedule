@@ -80,7 +80,7 @@ export const StandalonePiPView: React.FC = () => {
     autoSyncIntervalSec: 120,
     pip: {
       enabled: true,
-      opacity: 90,
+      opacity: 100,
       direction: 'horizontal',
       align: 'right',
       position: 'top',
@@ -134,6 +134,36 @@ export const StandalonePiPView: React.FC = () => {
     return buildAccountIndicatorItems(characters, activeCharacterId, apiKeys);
   }, [characters, activeCharacterId, apiKeys]);
 
+  // 등록된 API 키의 ID -> 별칭 맵 생성 (메인화면과 100% 동일한 별칭 매핑)
+  const accountAliasMap = useMemo(() => {
+    const map = new Map<string, string>();
+    apiKeys.forEach((key, idx) => {
+      if (key.id) {
+        map.set(key.id, key.alias?.trim() || `계정 ${idx + 1}`);
+      }
+    });
+    // 캐릭터 객체 내 별칭 정보로부터 자가 치유 폴백
+    characters.forEach((c) => {
+      if (c.apiKeyId && !map.has(c.apiKeyId) && c.apiKeyAlias) {
+        map.set(c.apiKeyId, c.apiKeyAlias);
+      }
+    });
+    return map;
+  }, [apiKeys, characters]);
+
+  // 2개 이상의 계정이 등록되어 있는지 여부 판단
+  const hasMultipleAccounts = useMemo(() => {
+    if (accountIndicatorItems.length > 1 || apiKeys.length >= 2) return true;
+    const keySet = new Set<string>();
+    characters.forEach((c) => {
+      if (c.apiKeyId) keySet.add(c.apiKeyId);
+    });
+    return keySet.size >= 2;
+  }, [accountIndicatorItems, apiKeys, characters]);
+
+  // 가장 최근에 브로드캐스트된 데이터 타임스탬프 (서버 지연 응답으로 인한 구버전 덮어쓰기 방지)
+  const lastBroadcastTimestampRef = useRef<number>(0);
+
   // 1. 데이터 동기화 (서버 + 로컬스토리지)
   const syncData = useCallback(async () => {
     try {
@@ -152,11 +182,16 @@ export const StandalonePiPView: React.FC = () => {
         } catch (e) {}
       }
 
+      // 로컬 스토리지에 데이터가 없거나 오래되었을 때만 서버에서 불러옴
       if (!data) {
         data = await loadServerAppData();
       }
 
       if (data) {
+        // 브로드캐스트로 수신한 최신 상태가 이미 있으면 구버전 서버 데이터로 덮어쓰지 않음
+        if (Date.now() - lastBroadcastTimestampRef.current < 2000) {
+          return;
+        }
         if (data.characters) setCharacters(data.characters);
         if (data.records) setRecords(data.records);
         if (data.settings) {
@@ -189,6 +224,7 @@ export const StandalonePiPView: React.FC = () => {
 
     const unsubscribe = subscribeToBroadcast((payload) => {
       if (payload) {
+        lastBroadcastTimestampRef.current = Date.now();
         if (payload.characters) setCharacters(payload.characters);
         if (payload.records) setRecords(payload.records);
         if (payload.settings) {
@@ -207,6 +243,16 @@ export const StandalonePiPView: React.FC = () => {
       }
     });
 
+    // Electron 환경에서 메인 창에서 캐릭터 선택 시 PiP 창 즉각 0ms 동기화
+    let unsubscribeActiveChar: (() => void) | undefined;
+    if ((window as any).electronAPI?.onActiveCharacterChanged) {
+      unsubscribeActiveChar = (window as any).electronAPI.onActiveCharacterChanged((charId: string) => {
+        if (charId) {
+          setActiveCharacterId(charId);
+        }
+      });
+    }
+
     const handleFocus = () => {
       syncData();
       setApiKeys(getStoredApiKeys());
@@ -220,6 +266,7 @@ export const StandalonePiPView: React.FC = () => {
       unsubscribeKeys();
       unsubscribe();
       unsubscribeCommon();
+      if (unsubscribeActiveChar) unsubscribeActiveChar();
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('visibilitychange', handleFocus);
       window.removeEventListener('storage', handleFocus);
@@ -252,7 +299,7 @@ export const StandalonePiPView: React.FC = () => {
 
   const pip = {
     enabled: true,
-    opacity: 90,
+    opacity: 100,
     direction: 'horizontal' as const,
     align: 'right' as const,
     position: 'top' as const,
@@ -263,6 +310,15 @@ export const StandalonePiPView: React.FC = () => {
     showCommonContent: false,
     ...settings.pip,
   };
+
+  // 데스크톱(Electron) OS 차원의 창 투명도 네이티브 IPC 연동
+  useEffect(() => {
+    const rawOpacity = typeof pip.opacity === 'number' ? pip.opacity : 100;
+    const normalized = Math.max(0.1, Math.min(1.0, rawOpacity / 100));
+    if ((window as any).electronAPI?.setPiPOpacity) {
+      (window as any).electronAPI.setPiPOpacity(normalized);
+    }
+  }, [pip.opacity]);
 
   // 2. 캐릭터 필터링 (완료 숨김 + 즐겨찾기 필터)
   const safeCharacters = Array.isArray(characters) ? characters : [];
@@ -338,6 +394,11 @@ export const StandalonePiPView: React.FC = () => {
       localStorage.setItem(APP_DATA_STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {}
     broadcastAppData(payload);
+
+    // Electron 환경 메인 창으로 0ms 실시간 IPC 전송
+    if ((window as any).electronAPI?.sendActiveCharacter) {
+      (window as any).electronAPI.sendActiveCharacter(id);
+    }
 
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -450,10 +511,13 @@ export const StandalonePiPView: React.FC = () => {
   const GAP = 8;
   const INNER_PAD = 8;
   const WINDOW_EXTRA = 16;
-  const showAccountIndicator = accountIndicatorItems.length > 1 && Boolean(pip.showCommonContent);
+  const showAccountIndicator = accountIndicatorItems.length > 1;
   const INDICATOR_HEIGHT = showAccountIndicator ? 28 : 0;
 
-  // Electron 윈도우 크기 자동 조절 연동 (실제 카드 개수에 딱 맞게 크기 축소 -> 빈 투명 영역 원천 제거)
+  const lastSentSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+  const resizeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Electron 윈도우 크기 자동 조절 연동 (실제 카드 개수에 딱 맞게 크기 축소 -> 빈 투명 영역 원천 제거 및 떨림 방지)
   useEffect(() => {
     if ((window as any).electronAPI?.setPiPSize) {
       let targetW = 250;
@@ -493,8 +557,27 @@ export const StandalonePiPView: React.FC = () => {
         }
       }
 
-      (window as any).electronAPI.setPiPSize(targetW, targetH);
+      // 이전 전송 크기와 2px 이하 차이라면 전송을 생략하여 무한 렌더링/떨림 루프 완벽 차단
+      const last = lastSentSizeRef.current;
+      if (Math.abs(last.w - targetW) <= 2 && Math.abs(last.h - targetH) <= 2) {
+        return;
+      }
+
+      if (resizeTimerRef.current) {
+        clearTimeout(resizeTimerRef.current);
+      }
+
+      resizeTimerRef.current = setTimeout(() => {
+        lastSentSizeRef.current = { w: targetW, h: targetH };
+        (window as any).electronAPI.setPiPSize(targetW, targetH);
+      }, 50);
     }
+
+    return () => {
+      if (resizeTimerRef.current) {
+        clearTimeout(resizeTimerRef.current);
+      }
+    };
   }, [maxVisibleCount, displayAvatarCount, displayCharacterCount, pip.direction, pip.onlyAvatar, pip.showCommonContent, activeCommonContents.length, visibleCharacters.length, CARD_W, CARD_H, GAP, WINDOW_EXTRA, showAccountIndicator, INDICATOR_HEIGHT]);
 
   // 마우스 드래그를 통한 윈도우 이동 핸들러
@@ -655,9 +738,9 @@ export const StandalonePiPView: React.FC = () => {
                     ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
                     : isDone
                     ? item.type === 'daily'
-                      ? 'bg-amber-50 dark:bg-amber-950/80 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
-                      : 'bg-rose-50 dark:bg-rose-950/80 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
-                    : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+                      ? 'bg-amber-50 dark:bg-amber-950 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
+                      : 'bg-rose-50 dark:bg-rose-950 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300'
                 }`}
               >
                 <div className="relative flex items-center justify-center pointer-events-none select-none">
@@ -715,9 +798,9 @@ export const StandalonePiPView: React.FC = () => {
               ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
               : isDone
               ? item.type === 'daily'
-                ? 'bg-amber-50 dark:bg-amber-950/80 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
-                : 'bg-rose-50 dark:bg-rose-950/80 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
-              : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+                ? 'bg-amber-50 dark:bg-amber-950 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
+                : 'bg-rose-50 dark:bg-rose-950 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
+              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300'
           }`}
         >
           <div className="relative flex items-center justify-center pointer-events-none select-none">
@@ -780,7 +863,7 @@ export const StandalonePiPView: React.FC = () => {
       onDragStart={(e) => e.preventDefault()}
       className="w-full h-full bg-transparent select-none overflow-hidden flex flex-col items-center justify-center p-0.5"
       style={{
-        opacity: (pip.opacity ?? 90) / 100,
+        opacity: (window as any).electronAPI?.setPiPOpacity ? 1 : (pip.opacity ?? 100) / 100,
         background: 'transparent',
         WebkitUserDrag: 'none',
         userSelect: 'none',
@@ -984,11 +1067,11 @@ export const StandalonePiPView: React.FC = () => {
                       ? 'border-red-500 alert-pulse-red bg-red-50 dark:bg-slate-900'
                       : isAllCompleted
                       ? isActive
-                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
-                        : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/80 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/90 dark:hover:bg-emerald-950/50 shadow-xs'
+                        ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
+                        : 'bg-emerald-50 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 shadow-xs'
                       : isActive
-                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500/80 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
-                      : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800/90 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/80 shadow-xs hover:shadow-sm'
+                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs hover:shadow-sm'
                   }`}
                 >
                   {/* 1. 상단 캐릭터 기본 헤더 (프로필 사진과 닉네임/정보를 세로 중앙 정렬) */}
@@ -1024,9 +1107,17 @@ export const StandalonePiPView: React.FC = () => {
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                        {char.worldName} · {char.characterClass || '직업 미지정'}
-                      </p>
+                      {/* 2행: 서버 및 직업 정보 (좌) & 다중 계정 식별 뱃지 (우) - 메인화면과 동일하게 직업명 옆, 레벨 아래 배치 */}
+                      <div className="flex items-center justify-between gap-1.5 mt-1 min-w-0">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate min-w-0">
+                          {char.worldName} · {char.characterClass || '직업 미지정'}
+                        </p>
+                        {hasMultipleAccounts && char.apiKeyId && (accountAliasMap.get(char.apiKeyId) || char.apiKeyAlias) && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-100/80 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 tracking-tight whitespace-nowrap flex-shrink-0 max-w-[80px] truncate">
+                            {accountAliasMap.get(char.apiKeyId) || char.apiKeyAlias}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

@@ -70,7 +70,7 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
 
   const pip: PipSettings = settings.pip || {
     enabled: false,
-    opacity: 90,
+    opacity: 100,
     direction: 'horizontal',
     align: 'right',
     position: 'top',
@@ -135,6 +135,30 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
     const key = currentActiveChar?.apiKeyId || 'default';
     return commonContentsMap[key] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
   }, [commonContentsMap, currentActiveChar?.apiKeyId]);
+
+  // 등록된 API 키의 ID -> 별칭 맵 생성 (메인화면과 100% 동일한 별칭 매핑)
+  const accountAliasMap = useMemo(() => {
+    const map = new Map<string, string>();
+    apiKeys.forEach((key, idx) => {
+      if (key.id) {
+        map.set(key.id, key.alias?.trim() || `계정 ${idx + 1}`);
+      }
+    });
+    safeCharacters.forEach((c) => {
+      if (c.apiKeyId && !map.has(c.apiKeyId) && c.apiKeyAlias) {
+        map.set(c.apiKeyId, c.apiKeyAlias);
+      }
+    });
+    return map;
+  }, [apiKeys, safeCharacters]);
+
+  const hasMultipleAccounts = useMemo(() => {
+    const ids = new Set<string>();
+    safeCharacters.forEach((c) => {
+      ids.add(c.apiKeyId || 'default');
+    });
+    return ids.size > 1;
+  }, [safeCharacters]);
 
   const activeCommonContents = useMemo(() => {
     if (!pip.showCommonContent) return [];
@@ -436,7 +460,7 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
       onDragStart={(e) => e.preventDefault()}
       className="fixed top-4 right-4 z-40 pointer-events-none transition-all flex flex-col items-end select-none"
       style={{
-        opacity: (pip.opacity ?? 90) / 100,
+        opacity: (pip.opacity ?? 100) / 100,
         WebkitUserDrag: 'none',
         userSelect: 'none',
       }}
@@ -617,11 +641,11 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
                       ? 'border-red-500 alert-pulse-red bg-red-50 dark:bg-slate-900'
                       : isAllCompleted
                       ? isActive
-                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
-                        : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/80 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/90 dark:hover:bg-emerald-950/50 shadow-xs'
+                        ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
+                        : 'bg-emerald-50 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 shadow-xs'
                       : isActive
-                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500/80 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
-                      : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800/90 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/80 shadow-xs hover:shadow-sm'
+                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs hover:shadow-sm'
                   }`}
                 >
                   {/* 1. 상단 캐릭터 기본 헤더 (프로필 사진과 닉네임/정보를 세로 중앙 정렬) */}
@@ -657,9 +681,17 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-1">
-                        {char.worldName} · {char.characterClass || '직업 미지정'}
-                      </p>
+                      {/* 2행: 서버 및 직업 정보 (좌) & 다중 계정 식별 뱃지 (우) */}
+                      <div className="flex items-center justify-between gap-1.5 mt-1 min-w-0">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate min-w-0">
+                          {char.worldName} · {char.characterClass || '직업 미지정'}
+                        </p>
+                        {hasMultipleAccounts && char.apiKeyId && (accountAliasMap.get(char.apiKeyId) || char.apiKeyAlias) && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-100/80 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 tracking-tight whitespace-nowrap flex-shrink-0 max-w-[80px] truncate">
+                            {accountAliasMap.get(char.apiKeyId) || char.apiKeyAlias}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

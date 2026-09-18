@@ -44,6 +44,7 @@ export interface CharacterInfo {
   selectedDailyBossIds?: string[]; // 캐릭터별 선택된 일일 보스 ID 목록
   selectedBlackMageId?: string; // 선택된 검은 마법사 난이도 ('boss_hard_black_mage' | 'boss_extreme_black_mage')
   apiKeyId?: string; // 소속된 API 키 식별자 (다계정 분리 지원)
+  apiKeyAlias?: string; // 소속된 API 키 별칭 캐시 (PiP 및 오프라인 고속 표시 지원)
   customTasks?: CustomTask[]; // 캐릭터별 커스텀 스케줄 목록
   weeklyBossThreshold?: number; // 주간 보스 완료 기준 마리수 (기본 12, 0~12)
   lastSyncedAt?: string;

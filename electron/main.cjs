@@ -59,6 +59,10 @@ function checkServerHealthy(port) {
 }
 
 async function startServer() {
+  // 데스크톱 앱 업데이트 및 재설치 시에도 사용자 데이터가 절대 초기화되지 않도록 AppData 경로 주입
+  const userDataPath = app.getPath('userData');
+  process.env.MAPLE_USER_DATA_PATH = userDataPath;
+
   const serverPathCandidates = [
     path.join(__dirname, '../dist/server.cjs'),
     path.join(process.cwd(), 'dist/server.cjs'),
@@ -212,15 +216,23 @@ function createPiPWindow() {
   // 메이플 게임 화면 위에서도 항상 최상단에 뜨도록 레벨 설정
   pipWindow.setAlwaysOnTop(true, 'screen-saver');
 
+  if (state.opacity !== undefined) {
+    try {
+      const op = Math.max(0.1, Math.min(1.0, Number(state.opacity)));
+      pipWindow.setOpacity(op);
+    } catch (e) {}
+  }
+
   const pipUrl = `http://127.0.0.1:${PORT}/?pip=standalone`;
   pipWindow.loadURL(pipUrl);
 
   saveWindowState({ pip: { ...state, isOpen: true } });
 
   const handleSavePipState = () => {
-    if (!pipWindow) return;
+    if (!pipWindow || pipWindow.isDestroyed()) return;
     const bounds = pipWindow.getBounds();
-    saveWindowState({ pip: { ...bounds, isOpen: true } });
+    const currentPipState = loadWindowState().pip || {};
+    saveWindowState({ pip: { ...currentPipState, ...bounds, isOpen: true } });
   };
 
   pipWindow.on('resize', handleSavePipState);
@@ -326,7 +338,11 @@ ipcMain.on('set-pip-size', (event, { width, height }) => {
     try {
       const w = Math.max(80, Math.min(3200, Math.round(width)));
       const h = Math.max(80, Math.min(2400, Math.round(height)));
-      pipWindow.setSize(w, h);
+      const [currentW, currentH] = pipWindow.getSize();
+      // 현재 크기와 차이가 2px 이상 날 때만 크기를 변경하여 떨림/깜빡임 루프 완벽 차단
+      if (Math.abs(currentW - w) > 2 || Math.abs(currentH - h) > 2) {
+        pipWindow.setSize(w, h);
+      }
     } catch (e) {}
   }
 });
@@ -340,8 +356,29 @@ ipcMain.on('move-pip-window', (event, { deltaX, deltaY }) => {
   }
 });
 
+// PiP 창 투명도 네이티브 OS 조절
+ipcMain.on('set-pip-opacity', (event, opacity) => {
+  if (pipWindow && !pipWindow.isDestroyed()) {
+    try {
+      const val = typeof opacity === 'number' ? Math.max(0.1, Math.min(1.0, opacity)) : 1.0;
+      pipWindow.setOpacity(val);
+      saveWindowState({ pip: { ...loadWindowState().pip, opacity: val } });
+    } catch (e) {}
+  }
+});
+
 ipcMain.on('open-main-window', () => {
   createMainWindow();
+});
+
+// 메인 윈도우 ↔ PiP 윈도우 간 활성 캐릭터 즉시 동기화 IPC 중계
+ipcMain.on('active-character-change', (event, characterId) => {
+  if (mainWindow && !mainWindow.isDestroyed() && event.sender !== mainWindow.webContents) {
+    mainWindow.webContents.send('active-character-changed', characterId);
+  }
+  if (pipWindow && !pipWindow.isDestroyed() && event.sender !== pipWindow.webContents) {
+    pipWindow.webContents.send('active-character-changed', characterId);
+  }
 });
 
 // 시스템 트레이 설정

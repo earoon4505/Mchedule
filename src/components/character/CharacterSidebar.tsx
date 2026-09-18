@@ -61,7 +61,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
   // 계정 필터 상태 ('all' 또는 특정 apiKeyId)
   const [selectedApiKeyFilter, setSelectedApiKeyFilter] = useState<string>('all');
 
-  // 등록된 API 키의 ID -> 별칭 맵 생성
+  // 등록된 API 키의 ID -> 별칭 맵 생성 (캐릭터 객체 내 apiKeyAlias 자가 치유 폴백 지원)
   const accountAliasMap = useMemo(() => {
     const map = new Map<string, string>();
     apiKeys.forEach((key, idx) => {
@@ -69,8 +69,14 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
         map.set(key.id, key.alias?.trim() || `계정 ${idx + 1}`);
       }
     });
+    // 캐릭터에 기록된 apiKeyAlias로부터 초고속 폴백 채우기
+    characters.forEach((c) => {
+      if (c.apiKeyId && !map.has(c.apiKeyId) && c.apiKeyAlias) {
+        map.set(c.apiKeyId, c.apiKeyAlias);
+      }
+    });
     return map;
-  }, [apiKeys]);
+  }, [apiKeys, characters]);
 
   // 캐릭터가 속한 계정 목록 추출 (2개 이상의 계정이 있을 때만 필터 및 뱃지 표시)
   const availableAccountList = useMemo(() => {
@@ -80,7 +86,14 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
         keySet.add(char.apiKeyId);
       }
     });
-    return apiKeys.filter((key) => key.id && keySet.has(key.id));
+    const fromApiKeys = apiKeys.filter((key) => key.id && keySet.has(key.id));
+    if (fromApiKeys.length > 0) return fromApiKeys;
+    return Array.from(keySet).map((id, idx) => ({
+      id,
+      alias: accountAliasMap.get(id) || `계정 ${idx + 1}`,
+      apiKey: '',
+      createdAt: '',
+    }));
   }, [characters, apiKeys, accountAliasMap]);
 
   const hasMultipleAccounts = availableAccountList.length >= 2;
@@ -219,11 +232,11 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                       ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
                       : isAllCompleted
                       ? isActive
-                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
-                        : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/80 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-50/90 dark:hover:bg-emerald-950/50 shadow-xs'
+                        ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
+                        : 'bg-emerald-50 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 shadow-xs'
                       : isActive
-                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500/80 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
-                      : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800/90 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/80 shadow-xs hover:shadow-sm'
+                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs hover:shadow-sm'
                   }`}
                 >
                 {/* 1. 캐릭터 기본 헤더 (프로필 사진과 닉네임/정보를 세로 중앙 정렬) */}

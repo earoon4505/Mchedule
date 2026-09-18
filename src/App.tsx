@@ -58,12 +58,12 @@ import { CustomTaskList } from './components/tasks/CustomTaskList';
 import { ContentConfigModal } from './components/tasks/ContentConfigModal';
 import { ProgressPanel } from './components/stats/ProgressPanel';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { AdSenseBanner } from './components/ads/AdSenseBanner';
 import { ApiKeyModal } from './components/settings/ApiKeyModal';
 import { NoticeModal } from './components/common/NoticeModal';
 import { LegalModal, LegalTab } from './components/legal/LegalModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
-import { AdSenseBanner } from './components/common/AdSenseBanner';
 import { 
   CharacterAlertStatus, 
   AccountAlertStatus,
@@ -97,7 +97,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
   pip: {
     enabled: false,
-    opacity: 90,
+    opacity: 100,
     direction: 'horizontal',
     align: 'right',
     position: 'top',
@@ -148,6 +148,12 @@ export default function App() {
     setActiveCharacterId(id);
     setCollapseTrigger((prev) => prev + 1);
     setCharacterSelectTrigger((prev) => prev + 1);
+    // 메인 창 캐릭터 선택 즉시 로컬 스토리지 저장 및 PiP로 0ms 브로드캐스트
+    persistData(charactersRef.current, recordsRef.current, settingsRef.current, id, false);
+    // 데스크톱 Electron IPC 실시간 0ms 동기화
+    if ((window as any).electronAPI?.sendActiveCharacter) {
+      (window as any).electronAPI.sendActiveCharacter(id);
+    }
   };
 
   // 모달 상태
@@ -317,9 +323,22 @@ export default function App() {
       });
     }
 
+    // Electron 환경에서 PiP 창에서 캐릭터 선택 시 메인 창 즉각 0ms 동기화
+    let unsubscribeActiveChar: (() => void) | undefined;
+    if ((window as any).electronAPI?.onActiveCharacterChanged) {
+      unsubscribeActiveChar = (window as any).electronAPI.onActiveCharacterChanged((charId: string) => {
+        if (charId && charId !== activeCharacterIdRef.current) {
+          setActiveCharacterId(charId);
+          setCollapseTrigger((prev) => prev + 1);
+          setCharacterSelectTrigger((prev) => prev + 1);
+        }
+      });
+    }
+
     return () => {
       unsubscribe();
       if (unsubscribePiPClosed) unsubscribePiPClosed();
+      if (unsubscribeActiveChar) unsubscribeActiveChar();
     };
   }, [persistData]);
 
@@ -847,6 +866,9 @@ export default function App() {
       if (isMounted && Array.isArray(keys)) {
         setApiKeys(keys);
         setHasApiKey(keys.length > 0);
+        try {
+          localStorage.setItem('mapleschedule_cached_apikeys_v1', JSON.stringify(keys));
+        } catch (_) {}
       }
     }).catch(() => {});
 
@@ -1607,7 +1629,7 @@ export default function App() {
       c.id === id ? { ...c, favorite: !c.favorite } : c
     );
     setCharacters(nextChars);
-    persistData(nextChars, records, settings, activeCharacterId);
+    persistData(nextChars, records, settings, activeCharacterId, true);
   };
 
   const handleMoveCharacter = (id: string, direction: 'up' | 'down', e: React.MouseEvent) => {
@@ -2018,8 +2040,15 @@ export default function App() {
             </div>
           )}
 
-          {/* 중앙 하단: 구글 애드센스 가로형 디스플레이 광고 영역 (스케줄 목록과 분리된 독립 칸, 웹 전용) */}
-          <AdSenseBanner />
+          {/* 중앙 하단: 구글 애드센스 광고 분리 영역 (웹 전용: 스케줄 목록과 분리된 독립 칸) */}
+          {isWeb && (
+            <div 
+              id="main-bottom-adsense-footer"
+              className="px-4 py-2 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/40 flex-shrink-0 flex items-center justify-center select-none"
+            >
+              <AdSenseBanner />
+            </div>
+          )}
         </section>
 
         {/* 우측 진행률 패널 */}

@@ -17,9 +17,23 @@
     <meta property="og:image" content="/app-logo.png" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9376850026832369"
-      crossorigin="anonymous"></script>
+
+    <!-- Google AdSense (웹 브라우저 환경에서만 실행되며 데스크톱 Electron 앱에서는 로드되지 않음) -->
+    <script>
+      (function() {
+        var isElectronApp = typeof window !== 'undefined' && (
+          !!window.electronAPI || 
+          (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.indexOf('Electron') !== -1)
+        );
+        if (!isElectronApp) {
+          var adScript = document.createElement('script');
+          adScript.async = true;
+          adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9376850026832369';
+          adScript.crossOrigin = 'anonymous';
+          document.head.appendChild(adScript);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

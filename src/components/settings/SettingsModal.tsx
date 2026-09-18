@@ -149,7 +149,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const pip: PipSettings = {
     enabled: false,
-    opacity: 90,
+    opacity: 100,
     direction: 'horizontal',
     align: 'right',
     position: 'top',

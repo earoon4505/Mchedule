@@ -164,9 +164,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   useEffect(() => {
     let isMounted = true;
-    fetchApiKeys().then((keys) => {
-      if (isMounted && Array.isArray(keys)) {
-        setKnownApiKeys(keys);
+    fetchApiKeys().then((res: any) => {
+      if (isMounted && res?.success && Array.isArray(res.keys)) {
+        setKnownApiKeys(res.keys);
       }
     }).catch(() => {});
 
@@ -208,7 +208,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   // API 키가 삭제되거나 변경되었을 때, 선택된 계정 ID가 더 이상 유효하지 않으면 활성 캐릭터의 계정으로 자동 갱신
   useEffect(() => {
-    if (selectedCommonApiKeyId && !knownApiKeys.some((k) => k.id === selectedCommonApiKeyId)) {
+    if (selectedCommonApiKeyId && selectedCommonApiKeyId !== 'default' && !knownApiKeys.some((k) => k.id === selectedCommonApiKeyId)) {
       setSelectedCommonApiKeyId(activeCharacter?.apiKeyId || 'default');
     }
   }, [knownApiKeys, selectedCommonApiKeyId, activeCharacter?.apiKeyId]);
@@ -339,11 +339,12 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   // ----------------------------------------------------
   const stats = useMemo(() => {
     // 현재 선택된 계정(effectiveApiKeyId) 소속 캐릭터 목록 필터링
-    const hasAnyApiKey = targetCharacters.some((c) => !!c.apiKeyId);
+    // 계정 공통 컨텐츠는 캐릭터 개별 즐겨찾기 여부와 상관없이 등록된 전체 캐릭터(characters)를 기준으로 항상 평가
+    const hasAnyApiKey = characters.some((c) => !!c.apiKeyId);
     const accountChars = (hasAnyApiKey && effectiveApiKeyId)
-      ? targetCharacters.filter((c) => (c.apiKeyId || 'default') === effectiveApiKeyId)
-      : targetCharacters;
-    const effectiveCommonChars = accountChars.length > 0 ? accountChars : targetCharacters;
+      ? characters.filter((c) => (c.apiKeyId || 'default') === effectiveApiKeyId)
+      : characters;
+    const effectiveCommonChars = accountChars.length > 0 ? accountChars : characters;
 
     // 1. 몬스터파크 (현재 계정의 캐릭터 중 일일 2회 이상 클리어 시 완료)
     let maxMonsterParkCount = 0;
@@ -454,18 +455,73 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       }
     });
 
-    // 사용자가 활성화한 공통 컨텐츠만 진행 현황 통계에 반영 (몬스터파크: 일일, 에픽던전: 주간)
-    if (targetCharacters.length > 0) {
-      if (currentEnabledCommonIds.includes('daily_monster_park')) {
-        totalDailyTasks += 1;
-        if (isMonsterParkCompleted) doneDailyTasks += 1;
-      }
+    // ----------------------------------------------------
+    // 계정 공통 컨텐츠 진행 현황 통계 집계:
+    // 다계정 환경인 경우, 등록된 모든 활성 계정의 활성화된 계정 컨텐츠(몬파, 에픽던전)를 전부 포함하여 진행률 계산
+    // ----------------------------------------------------
+    let totalAllCommonTasks = 0;
+    let doneAllCommonTasks = 0;
 
-      epicDungeonList.forEach((epic) => {
-        if (currentEnabledCommonIds.includes(epic.id)) {
-          totalWeeklyTasks += 1;
-          if (epic.isCompleted) doneWeeklyTasks += 1;
+    // 평가 대상 계정 목록 (다계정이면 등록된 모든 계정, 단일 계정이면 현재 계정)
+    const accountsToEvaluate = accountIndicatorItems.length > 1
+      ? accountIndicatorItems
+      : [{ id: effectiveApiKeyId || 'default', alias: '기본 계정' }];
+
+    // 각 계정별 완료율 맵 (탭 UI 인디케이터용)
+    const accountCommonStatusMap: Record<string, { total: number; done: number; isAllDone: boolean }> = {};
+
+    if (characters.length > 0) {
+      accountsToEvaluate.forEach((acc) => {
+        // 계정 컨텐츠는 즐겨찾기 필터(targetCharacters)와 상관없이 등록된 전체 캐릭터(characters)에서 해당 계정 캐릭터들을 대상으로 조회
+        const accChars = characters.filter((c) => (c.apiKeyId || 'default') === acc.id);
+        const charsForThisAcc = accChars.length > 0 ? accChars : (accountIndicatorItems.length <= 1 ? characters : []);
+        if (charsForThisAcc.length === 0) return;
+
+        const enabledIds = commonContentsMap[acc.id] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
+        let accTotal = 0;
+        let accDone = 0;
+
+        // 1. 몬스터파크 (일일 과제에 합산)
+        if (enabledIds.includes('daily_monster_park')) {
+          totalDailyTasks += 1;
+          totalAllCommonTasks += 1;
+          accTotal += 1;
+          const isDone = charsForThisAcc.some((char) => {
+            const rec = records?.[char.id];
+            const mpState = rec?.dailyTasks?.['daily_monster_park'];
+            const count = mpState?.currentCount ?? (mpState?.completed ? 2 : 0);
+            return !!mpState?.completed || count >= 2;
+          });
+          if (isDone) {
+            doneDailyTasks += 1;
+            doneAllCommonTasks += 1;
+            accDone += 1;
+          }
         }
+
+        // 2. 에픽 던전들 (주간 과제에 합산)
+        EPIC_DUNGEONS.forEach((epic) => {
+          if (enabledIds.includes(epic.id)) {
+            totalWeeklyTasks += 1;
+            totalAllCommonTasks += 1;
+            accTotal += 1;
+            const isDone = charsForThisAcc.some((char) => {
+              const rec = records?.[char.id];
+              return !!rec?.weeklyTasks?.[epic.id]?.completed;
+            });
+            if (isDone) {
+              doneWeeklyTasks += 1;
+              doneAllCommonTasks += 1;
+              accDone += 1;
+            }
+          }
+        });
+
+        accountCommonStatusMap[acc.id] = {
+          total: accTotal,
+          done: accDone,
+          isAllDone: accTotal > 0 && accDone >= accTotal,
+        };
       });
     }
 
@@ -512,8 +568,11 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       grandPct,
       isGrandCompleted,
       effectiveCommonChars,
+      totalAllCommonTasks,
+      doneAllCommonTasks,
+      accountCommonStatusMap,
     };
-  }, [targetCharacters, records, currentEnabledCommonIds, activeCharacter, effectiveApiKeyId]);
+  }, [targetCharacters, characters, records, currentEnabledCommonIds, activeCharacter, effectiveApiKeyId, accountIndicatorItems, commonContentsMap]);
 
   const {
     maxMonsterParkCount,
@@ -545,6 +604,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
     grandDone,
     grandPct,
     isGrandCompleted,
+    totalAllCommonTasks,
+    doneAllCommonTasks,
+    accountCommonStatusMap,
   } = stats;
 
   // 표시할 계정 공통 컨텐츠 필터링
@@ -554,7 +616,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   const pip: PipSettings = settings?.pip || {
     enabled: false,
-    opacity: 90,
+    opacity: 100,
     direction: 'horizontal',
     align: 'right',
     position: 'top',
@@ -870,12 +932,13 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               >
                 {accountIndicatorItems.map((acc) => {
                   const isSelected = acc.id === effectiveApiKeyId;
+                  const accStatus = accountCommonStatusMap[acc.id];
                   return (
                     <button
                       key={acc.id}
                       type="button"
                       onClick={() => setSelectedCommonApiKeyId(acc.id)}
-                      className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-colors ${
+                      className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-colors flex items-center gap-1 ${
                         isSelected
                           ? 'text-white'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -889,6 +952,17 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                         />
                       )}
                       <span className="relative z-10">{acc.alias}</span>
+                      {accStatus && accStatus.total > 0 && (
+                        <span className={`relative z-10 text-[9px] px-1 py-0.2 rounded-full font-medium ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : accStatus.isAllDone
+                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}>
+                          {accStatus.done}/{accStatus.total}
+                        </span>
+                      )}
                     </button>
                   );
                 })}

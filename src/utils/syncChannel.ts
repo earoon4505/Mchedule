@@ -51,9 +51,10 @@ export function broadcastApiKeys(keys: ApiKeyItem[]): void {
     }
   }
 
-  // 동일 윈도우 내 모든 컴포넌트(App, ProgressPanel, PiPOverlay 등)에 즉각 통지
+  // 동일 윈도우 내 모든 컴포넌트(App, ProgressPanel, PiPOverlay 등)에 즉각 통지 및 동기 캐시
   if (typeof window !== 'undefined') {
     try {
+      localStorage.setItem('mapleschedule_cached_apikeys_v1', JSON.stringify(keys));
       window.dispatchEvent(new CustomEvent(API_KEYS_UPDATED_EVENT, { detail: keys }));
       localStorage.setItem('mapleschedule_apikeys_broadcast', String(Date.now()));
     } catch (e) {}
@@ -69,6 +70,9 @@ export function subscribeToApiKeys(callback: (keys: ApiKeyItem[]) => void): () =
   if (channel) {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'API_KEYS_SYNC' && Array.isArray(event.data.keys)) {
+        try {
+          localStorage.setItem('mapleschedule_cached_apikeys_v1', JSON.stringify(event.data.keys));
+        } catch (_) {}
         callback(event.data.keys);
       }
     };

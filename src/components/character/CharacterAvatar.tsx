@@ -45,8 +45,8 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
         sizeClasses
       } ${
         isAllCompleted
-          ? 'bg-emerald-100/60 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700'
-          : 'bg-slate-100 dark:bg-slate-800 border-slate-200/90 dark:border-slate-700'
+          ? 'bg-emerald-100 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-700'
+          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
       } ${containerClassName}`}
     >
       <img
