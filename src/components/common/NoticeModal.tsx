@@ -50,23 +50,8 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose }) => 
         <div className="p-5 overflow-y-auto space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
           {/* 1번 공지사항 */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-              1
-            </div>
-            <div className="flex-1 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
-              <div>
-                <span className="font-bold text-blue-600 dark:text-blue-400">일일 보스</span>, <span className="font-bold text-[#8B0000] dark:text-[#f87171]">검은 마법사</span>의 데이터가 갱신되지 않고 있습니다.
-              </div>
-              <div className="mt-1">
-                <span className="font-bold text-blue-600 dark:text-blue-400">일일 보스</span>, <span className="font-bold text-[#8B0000] dark:text-[#f87171]">검은 마법사</span> 스케줄러는 이용 불가합니다.
-              </div>
-            </div>
-          </div>
-
-          {/* 2번 공지사항 */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex items-start gap-3">
             <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-              2
+              1
             </div>
             <div className="flex-1 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
               <div>
@@ -78,10 +63,10 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose }) => 
             </div>
           </div>
 
-          {/* 3번 공지사항 */}
+          {/* 2번 공지사항 */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex items-start gap-3">
             <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-              3
+              2
             </div>
             <div className="flex-1 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
               <span className="font-bold text-slate-900 dark:text-white">월드 리프</span> 이전 기록들은 <span className="font-bold text-slate-900 dark:text-white">월드 리프</span> 이후 갱신되지 않습니다.
