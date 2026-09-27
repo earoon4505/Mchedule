@@ -612,6 +612,15 @@ app.post('/api/nexon/key/test', async (req, res) => {
         });
       }
 
+      // 503 또는 500 점검/오류 상태 코드 전파
+      if (testRes.status === 503 || testRes.status === 500) {
+        return res.status(testRes.status).json({
+          success: false,
+          statusCode: testRes.status,
+          error: errMsg || (testRes.status === 503 ? '현재 넥슨 Open API 점검 중입니다.' : '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.'),
+        });
+      }
+
       return res.status(400).json({
         success: false,
         error: errMsg || '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
@@ -623,8 +632,9 @@ app.post('/api/nexon/key/test', async (req, res) => {
       message: 'NEXON Open API 연결 테스트에 성공했습니다!',
     });
   } catch (err: any) {
-    return res.status(500).json({
+    return res.status(502).json({
       success: false,
+      isNetworkError: true,
       error: err.message || '연결 테스트 중 네트워크 오류가 발생했습니다.',
     });
   }

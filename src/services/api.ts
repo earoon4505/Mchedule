@@ -962,3 +962,113 @@ export async function resetServerAppData(): Promise<boolean> {
     return false;
   }
 }
+
+// ----------------------------------------------------
+// NEXON Open API & Game Server 점검 자동 감지 시스템
+// ----------------------------------------------------
+export type NexonMaintenanceType = 'none' | 'api_maintenance' | 'game_maintenance';
+
+export interface NexonServerCheckResult {
+  isMaintenance: boolean;
+  type: NexonMaintenanceType;
+  statusCode?: number;
+  message?: string;
+}
+
+// 점검 상태 전역 이벤트 알림 함수
+export function dispatchNexonMaintenance(type: NexonMaintenanceType, message?: string, statusCode?: number) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('mapleschedule:nexon_maintenance', {
+        detail: {
+          isMaintenance: type !== 'none',
+          type,
+          message,
+          statusCode,
+        },
+      })
+    );
+  }
+}
+
+// 넥슨 Open API 상태 경량 점검 함수 (웹/데스크톱 듀얼 지원)
+export async function checkNexonServerStatus(): Promise<NexonServerCheckResult> {
+  try {
+    let activeKey = '';
+    if (isWeb) {
+      const keys = getWebLocalApiKeys();
+      if (keys.length > 0) {
+        activeKey = keys[0].apiKey;
+      }
+    } else {
+      const keyRes = await fetchApiKeys();
+      if (keyRes.keys && keyRes.keys.length > 0) {
+        activeKey = keyRes.keys[0].apiKey;
+      }
+    }
+
+    // 등록된 키가 없으면 점검 여부를 단독 확인하기 어려우므로 'none' 반환
+    if (!activeKey) {
+      return { isMaintenance: false, type: 'none' };
+    }
+
+    let status = 200;
+    let errJson: any = null;
+
+    if (isWeb) {
+      // 웹: 브라우저에서 가벼운 핑 테스트 호출
+      const testRes = await fetch(
+        `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent('메이플용사')}`,
+        {
+          headers: {
+            'x-nxopen-api-key': activeKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      status = testRes.status;
+      errJson = await testRes.json().catch(() => ({}));
+    } else {
+      // 데스크톱: 로컬 서버의 핑 테스트 엔드포인트 호출
+      const testRes = await fetch('/api/nexon/key/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: activeKey }),
+      });
+      status = testRes.status;
+      errJson = await testRes.json().catch(() => ({}));
+    }
+
+    // 1. 503: 넥슨 Open API 자체 점검
+    if (status === 503) {
+      const result: NexonServerCheckResult = {
+        isMaintenance: true,
+        type: 'api_maintenance',
+        statusCode: 503,
+        message: '현재 넥슨 Open API 서버가 점검 중입니다.',
+      };
+      dispatchNexonMaintenance(result.type, result.message, 503);
+      return result;
+    }
+
+    // 2. 500: 메이플 게임 서버 점검 또는 내부 시스템 통신 지연
+    if (status === 500) {
+      const errMsg = errJson?.error?.message || errJson?.error || '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.';
+      const result: NexonServerCheckResult = {
+        isMaintenance: true,
+        type: 'game_maintenance',
+        statusCode: 500,
+        message: errMsg.includes('점검') ? errMsg : '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.',
+      };
+      dispatchNexonMaintenance(result.type, result.message, 500);
+      return result;
+    }
+
+    // 3. 정상 응답 (200) 또는 일반 클라이언트 코드 (400, 403, 429 등)는 점검이 아님
+    dispatchNexonMaintenance('none');
+    return { isMaintenance: false, type: 'none', statusCode: status };
+  } catch (e: any) {
+    // 네트워크 단절 등
+    return { isMaintenance: false, type: 'none', message: e?.message };
+  }
+}

@@ -26,7 +26,9 @@ import {
   fetchNexonSchedulerState, 
   searchNexonCharacter,
   fetchCharacterBasic,
-  fetchApiKeys
+  fetchApiKeys,
+  checkNexonServerStatus,
+  NexonMaintenanceType
 } from './services/api';
 import { 
   getDefaultEnabledTasksForLevel, 
@@ -58,7 +60,7 @@ import { CustomTaskList } from './components/tasks/CustomTaskList';
 import { ContentConfigModal } from './components/tasks/ContentConfigModal';
 import { ProgressPanel } from './components/stats/ProgressPanel';
 import { SettingsModal } from './components/settings/SettingsModal';
-import { AdSenseBanner } from './components/ads/AdSenseBanner';
+// import { AdSenseBanner } from './components/ads/AdSenseBanner'; // 추후 광고 배너 활성화 시 주석 해제
 import { ApiKeyModal } from './components/settings/ApiKeyModal';
 import { NoticeModal } from './components/common/NoticeModal';
 import { LegalModal, LegalTab } from './components/legal/LegalModal';
@@ -72,7 +74,7 @@ import {
   evaluateAccountAlerts,
   getActiveAlertCycleKey 
 } from './utils/alertNotifier';
-import { Plus, SlidersHorizontal, Calendar, Flame, Crown, LayoutGrid, ShieldAlert } from 'lucide-react';
+import { Plus, SlidersHorizontal, Calendar, Flame, Crown, LayoutGrid, ShieldAlert, AlertTriangle, X, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { motion } from 'motion/react';
 import { isWeb, isElectron, supportsPiP, LOCAL_STORAGE_DATA_KEY } from './utils/platform';
@@ -165,6 +167,112 @@ export default function App() {
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
   const [configCharacterId, setConfigCharacterId] = useState<string | null>(null);
   const [toastFeedback, setToastFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // 넥슨 Open API & 메이플 게임 서버 점검 상태 관리
+  const [maintenanceInfo, setMaintenanceInfo] = useState<{
+    isMaintenance: boolean;
+    type: NexonMaintenanceType;
+    badge: string;
+    message: string;
+  }>({
+    isMaintenance: false,
+    type: 'none',
+    badge: '',
+    message: '',
+  });
+  const [isMaintenanceBannerVisible, setIsMaintenanceBannerVisible] = useState<boolean>(false);
+  const [isCheckingMaintenance, setIsCheckingMaintenance] = useState<boolean>(false);
+
+  // 전역 점검 이벤트 구독 (API 호출 중 503 또는 500 감지 시 자동 반응)
+  useEffect(() => {
+    const handleMaintenanceEvent = (e: any) => {
+      const detail = e.detail;
+      if (!detail) return;
+      if (detail.type === 'api_maintenance') {
+        setMaintenanceInfo({
+          isMaintenance: true,
+          type: 'api_maintenance',
+          badge: 'API 점검 안내',
+          message: detail.message || '현재 넥슨 Open API 서버가 점검 중입니다.',
+        });
+        setIsMaintenanceBannerVisible(true);
+      } else if (detail.type === 'game_maintenance') {
+        setMaintenanceInfo({
+          isMaintenance: true,
+          type: 'game_maintenance',
+          badge: '게임 서버 점검/오류',
+          message: detail.message || '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.',
+        });
+        setIsMaintenanceBannerVisible(true);
+      } else if (detail.type === 'none') {
+        setMaintenanceInfo({
+          isMaintenance: false,
+          type: 'none',
+          badge: '',
+          message: '',
+        });
+        setIsMaintenanceBannerVisible(false);
+      }
+    };
+
+    window.addEventListener('mapleschedule:nexon_maintenance', handleMaintenanceEvent);
+    return () => {
+      window.removeEventListener('mapleschedule:nexon_maintenance', handleMaintenanceEvent);
+    };
+  }, []);
+
+  // 수동/자동 상태 점검 실행 핸들러
+  const handleCheckMaintenance = async (showSuccessToast = true) => {
+    setIsCheckingMaintenance(true);
+    try {
+      const res = await checkNexonServerStatus();
+      if (res.isMaintenance) {
+        if (res.type === 'api_maintenance') {
+          setMaintenanceInfo({
+            isMaintenance: true,
+            type: 'api_maintenance',
+            badge: 'API 점검 안내',
+            message: res.message || '현재 넥슨 Open API 서버가 점검 중입니다.',
+          });
+          setIsMaintenanceBannerVisible(true);
+          showToast('현재 넥슨 Open API 점검 중입니다.', 'error');
+        } else if (res.type === 'game_maintenance') {
+          setMaintenanceInfo({
+            isMaintenance: true,
+            type: 'game_maintenance',
+            badge: '게임 서버 점검/오류',
+            message: res.message || '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.',
+          });
+          setIsMaintenanceBannerVisible(true);
+          showToast('메이플스토리 게임 서버 점검 또는 통신 지연 중입니다.', 'error');
+        }
+      } else {
+        if (showSuccessToast) {
+          showToast('넥슨 API 및 게임 서버가 정상 연결 상태입니다.', 'success');
+        }
+        setMaintenanceInfo({
+          isMaintenance: false,
+          type: 'none',
+          badge: '',
+          message: '',
+        });
+        setIsMaintenanceBannerVisible(false);
+      }
+    } catch (_) {
+      if (showSuccessToast) {
+        showToast('서버 상태 확인을 완료했습니다.', 'success');
+      }
+    } finally {
+      setIsCheckingMaintenance(false);
+    }
+  };
+
+  // 앱 로딩 완료 후 1회 조용히 넥슨 서버 점검 여부 확인
+  useEffect(() => {
+    if (!isInitializing) {
+      handleCheckMaintenance(false);
+    }
+  }, [isInitializing]);
 
   const handleOpenLegalModal = (tab: LegalTab = 'terms') => {
     setLegalModalTab(tab);
@@ -1839,6 +1947,74 @@ export default function App() {
         autoSyncIntervalSec={settings.autoSyncIntervalSec || 300}
       />
 
+      {/* 넥슨 Open API (503) & 메이플 게임 서버 (500) 점검 안내 배너 */}
+      {isMaintenanceBannerVisible && maintenanceInfo.isMaintenance && (
+        <div 
+          className={`w-full border-b px-4 py-2 flex items-center justify-between text-xs animate-in fade-in slide-in-from-top-1 duration-200 z-30 select-none ${
+            maintenanceInfo.type === 'game_maintenance'
+              ? 'bg-gradient-to-r from-rose-500/15 via-orange-500/10 to-rose-500/15 border-rose-500/30 text-rose-950 dark:text-rose-200'
+              : 'bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-amber-500/30 text-amber-950 dark:text-amber-200'
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span 
+              className={`p-1 rounded-md flex-shrink-0 ${
+                maintenanceInfo.type === 'game_maintenance'
+                  ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                  : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+              }`}
+            >
+              <AlertTriangle className="w-4 h-4 animate-pulse" />
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span 
+                className={`px-2 py-0.5 rounded-full font-bold text-[10px] tracking-wide ${
+                  maintenanceInfo.type === 'game_maintenance'
+                    ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                    : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                }`}
+              >
+                {maintenanceInfo.badge || (maintenanceInfo.type === 'game_maintenance' ? '게임 서버 점검/오류' : 'API 점검 안내')}
+              </span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {maintenanceInfo.message || (maintenanceInfo.type === 'game_maintenance' ? '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.' : '현재 넥슨 Open API 서버가 점검 중입니다.')}
+              </span>
+              <span className="text-slate-600 dark:text-slate-400 text-[11px] hidden sm:inline">
+                점검 중에도 일일/주간 숙제 수동 체크, 캐릭터 관리 및 메모 기능은 안전하게 100% 정상 작동합니다.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+            {/* 상태 재확인 버튼 */}
+            <button
+              type="button"
+              onClick={() => handleCheckMaintenance(true)}
+              disabled={isCheckingMaintenance}
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs disabled:opacity-50 ${
+                maintenanceInfo.type === 'game_maintenance'
+                  ? 'bg-white/80 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 border-rose-500/30 text-rose-800 dark:text-rose-300'
+                  : 'bg-white/80 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 border-amber-500/30 text-amber-800 dark:text-amber-300'
+              }`}
+              title="API 상태 재확인"
+            >
+              <RefreshCw className={`w-3 h-3 ${isCheckingMaintenance ? 'animate-spin' : ''}`} />
+              <span>{isCheckingMaintenance ? '확인 중...' : '상태 재확인'}</span>
+            </button>
+
+            {/* 닫기 버튼 */}
+            <button
+              type="button"
+              onClick={() => setIsMaintenanceBannerVisible(false)}
+              className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-colors cursor-pointer"
+              title="안내 닫기"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 2. 메인 3분할 뷰 */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#F8F9FB] dark:bg-slate-950 min-h-0 min-w-0">
         {/* 좌측 사이드바: 캐릭터 목록 */}
@@ -2040,7 +2216,7 @@ export default function App() {
             </div>
           )}
 
-          {/* 중앙 하단: 구글 애드센스 광고 분리 영역 (웹 전용: 스케줄 목록과 분리된 독립 칸) */}
+          {/* 중앙 하단: 광고 배너 영역 (현재 비활성화 - 필요 시 아래 블록의 주석을 해제하여 즉시 복원 가능)
           {isWeb && (
             <div 
               id="main-bottom-adsense-footer"
@@ -2049,6 +2225,7 @@ export default function App() {
               <AdSenseBanner />
             </div>
           )}
+          */}
         </section>
 
         {/* 우측 진행률 패널 */}
