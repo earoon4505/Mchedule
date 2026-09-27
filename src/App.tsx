@@ -27,6 +27,7 @@ import {
   searchNexonCharacter,
   fetchCharacterBasic,
   fetchApiKeys,
+  restoreApiKeys,
   checkNexonServerStatus,
   NexonMaintenanceType
 } from './services/api';
@@ -1823,12 +1824,26 @@ export default function App() {
   };
 
   const handleExportData = () => {
+    // 현재 등록된 API 키 목록 조회
+    const currentKeys = getStoredApiKeys();
+    
+    // 계정 공통 컨텐츠 ID 목록 조회
+    let commonIds: string[] = [];
+    try {
+      const rawCommon = localStorage.getItem('mapleschedule_common_content_ids');
+      if (rawCommon) {
+        commonIds = JSON.parse(rawCommon);
+      }
+    } catch (_) {}
+
     const payload: AppDataPayload = {
       characters,
       records,
       settings,
       activeCharacterId,
       lastServerSync: new Date().toISOString(),
+      apiKeys: currentKeys,
+      commonContentIds: commonIds,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1837,6 +1852,7 @@ export default function App() {
     a.download = `메이플스토리_스케줄러_백업_${getKSTDailyKey()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast('데이터 백업 파일이 다운로드되었습니다.', 'success');
   };
 
   const handleImportData = (file: File) => {
@@ -1845,12 +1861,38 @@ export default function App() {
       try {
         const json = JSON.parse(e.target?.result as string) as AppDataPayload;
         if (json.characters && Array.isArray(json.characters)) {
+          // 1. 캐릭터, 기록, 설정, 활성 캐릭터 복원
           setCharacters(json.characters);
           setRecords(json.records || {});
           setSettings(json.settings || DEFAULT_SETTINGS);
-          setActiveCharacterId(json.activeCharacterId || json.characters[0]?.id || null);
-          await persistData(json.characters, json.records || {}, json.settings || DEFAULT_SETTINGS, json.activeCharacterId || null);
-          showToast('데이터 복원이 성공적으로 완료되었습니다.', 'success');
+          const nextActiveId = json.activeCharacterId || json.characters[0]?.id || null;
+          setActiveCharacterId(nextActiveId);
+
+          // 2. 계정 공통 컨텐츠 ID 복원
+          if (Array.isArray(json.commonContentIds)) {
+            try {
+              localStorage.setItem('mapleschedule_common_content_ids', JSON.stringify(json.commonContentIds));
+            } catch (_) {}
+          }
+
+          // 3. 넥슨 API 키 목록 복원 (백업 파일에 포함되어 있을 경우 100% 완전 복원)
+          if (Array.isArray(json.apiKeys) && json.apiKeys.length > 0) {
+            try {
+              await restoreApiKeys(json.apiKeys);
+              setApiKeys(json.apiKeys);
+              setHasApiKey(true);
+            } catch (keyErr) {
+              console.warn('API 키 복원 중 경고:', keyErr);
+            }
+          }
+
+          // 4. 로컬스토리지 및 데스크톱 스토리지 영구 반영
+          await persistData(json.characters, json.records || {}, json.settings || DEFAULT_SETTINGS, nextActiveId);
+
+          const keyCountMsg = Array.isArray(json.apiKeys) && json.apiKeys.length > 0 
+            ? ` (API 키 ${json.apiKeys.length}개 포함)` 
+            : '';
+          showToast(`데이터 복원이 성공적으로 완료되었습니다.${keyCountMsg}`, 'success');
         } else {
           showToast('유효하지 않은 백업 파일 형식입니다.', 'error');
         }

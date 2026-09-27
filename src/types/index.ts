@@ -132,6 +132,8 @@ export interface AppDataPayload {
   settings: AppSettings;
   activeCharacterId: string | null;
   lastServerSync: string;
+  apiKeys?: ApiKeyItem[]; // 등록된 넥슨 Open API 키 목록 (완전 복원 지원)
+  commonContentIds?: string[]; // 계정 공통 컨텐츠 ID 목록
 }
 
 export interface NexonCharacterBasic {

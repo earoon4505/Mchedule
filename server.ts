@@ -421,6 +421,38 @@ app.post('/api/nexon/keys', (req, res) => {
   }
 });
 
+// [백업 복원 전용] 백업 파일로부터 API 키 목록 일괄 복원
+app.post('/api/nexon/keys/restore', (req, res) => {
+  try {
+    const { keys } = req.body || {};
+    if (!Array.isArray(keys)) {
+      return res.status(400).json({ success: false, error: '유효한 API 키 목록 형식이 아닙니다.' });
+    }
+
+    // 유효한 키 레코드만 필터링 및 정제
+    const validRecords: ApiKeyRecord[] = keys
+      .filter((k: any) => k && typeof k.apiKey === 'string' && k.apiKey.trim().length > 0)
+      .map((k: any, idx: number) => ({
+        id: k.id && typeof k.id === 'string' ? k.id : `key_${Date.now()}_${idx}`,
+        alias: k.alias && typeof k.alias === 'string' && k.alias.trim().length > 0 ? k.alias.trim() : `API ${idx + 1}`,
+        apiKey: k.apiKey.trim(),
+        createdAt: k.createdAt || new Date().toISOString(),
+      }));
+
+    saveApiKeys(validRecords);
+
+    return res.json({
+      success: true,
+      keys: validRecords,
+      count: validRecords.length,
+      message: `${validRecords.length}개의 API 키가 성공적으로 복원되었습니다.`,
+    });
+  } catch (err: any) {
+    console.error('Failed to restore API keys:', err);
+    return res.status(500).json({ success: false, error: err.message || 'API 키 일괄 복원 실패' });
+  }
+});
+
 // API 키 정보(alias 및 apiKey) 수정
 app.put('/api/nexon/keys/:id', (req, res) => {
   try {

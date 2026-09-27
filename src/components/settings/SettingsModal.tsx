@@ -62,6 +62,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenLegalModal,
 }) => {
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [isDownloadingApp, setIsDownloadingApp] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -196,8 +197,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onImportData(file);
+      setPendingImportFile(file);
       e.target.value = '';
+    }
+  };
+
+  const handleExecuteImport = () => {
+    if (pendingImportFile) {
+      onImportData(pendingImportFile);
+      setPendingImportFile(null);
+      showNotification('데이터 복원이 성공적으로 시작되었습니다.');
     }
   };
 
@@ -745,18 +754,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               데이터 관리 및 초기화
             </h4>
             
-            {/* 백업 / 복원 버튼 (데스크톱 전용) */}
+            {/* 백업 / 복원 버튼 (웹 및 데스크톱 공통 지원) */}
             {supportsFileBackup && (
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   onClick={onExportData}
-                  className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 text-sky-500" />
                   <span>데이터 백업 (JSON)</span>
                 </button>
 
-                <label className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center shadow-xs">
+                <label className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850">
                   <Upload className="w-3.5 h-3.5 text-amber-500" />
                   <span>데이터 복원</span>
                   <input
@@ -862,6 +871,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
       </div>
 
+      {/* 화면 중앙에 표시되는 데이터 복원 전용 확인 모달 */}
+      {pendingImportFile && (
+        <div 
+          id="restore-confirm-modal-backdrop"
+          className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div 
+            id="restore-confirm-modal"
+            className="w-full max-w-md bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">
+                <Upload className="w-6 h-6" />
+              </div>
+              <div className="space-y-1.5 flex-1">
+                <h4 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
+                  백업 파일로부터 데이터를 복원하시겠습니까?
+                </h4>
+                <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed space-y-1">
+                  <p>
+                    선택한 파일: <strong className="text-slate-800 dark:text-slate-200 font-semibold">{pendingImportFile.name}</strong>
+                  </p>
+                  <p>
+                    백업 파일에 저장된 캐릭터 목록, 숙제 체크 기록, 화면 설정 및 넥슨 API 키 정보로 현재 브라우저 데이터가 교체됩니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setPendingImportFile(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                id="btn-confirm-restore-data"
+                type="button"
+                onClick={handleExecuteImport}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>데이터 복원 진행</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 화면 중앙에 표시되는 데이터 초기화 전용 확인 모달 */}
       {isConfirmingReset && (
         <div 
@@ -890,7 +950,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsConfirmingReset(false)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 취소
               </button>
@@ -898,7 +958,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 id="btn-confirm-reset-all"
                 type="button"
                 onClick={handleExecuteResetAll}
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-xs flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>데이터 초기화 실행</span>

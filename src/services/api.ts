@@ -268,6 +268,45 @@ export async function removeApiKey(id: string): Promise<{ success: boolean; keys
   }
 }
 
+// [백업 복원 전용] 백업 파일로부터 API 키 목록 일괄 복원 및 동기화
+export async function restoreApiKeys(keys: ApiKeyItem[]): Promise<{ success: boolean; keys?: ApiKeyItem[]; message?: string; error?: string }> {
+  if (!Array.isArray(keys)) {
+    return { success: false, error: '유효한 API 키 목록이 아닙니다.' };
+  }
+
+  if (isWeb) {
+    try {
+      saveWebLocalApiKeys(keys);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mapleschedule_cached_apikeys_v1', JSON.stringify(keys));
+        window.dispatchEvent(new Event('storage'));
+      }
+      return { success: true, keys, message: `${keys.length}개의 API 키가 복원되었습니다.` };
+    } catch (e: any) {
+      return { success: false, error: e.message || '웹 로컬스토리지 저장 실패' };
+    }
+  }
+
+  try {
+    const res = await fetch('/api/nexon/keys/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keys }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      return { success: false, error: json.error || '데스크톱 API 키 복원 실패' };
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mapleschedule_cached_apikeys_v1', JSON.stringify(json.keys || keys));
+      window.dispatchEvent(new Event('storage'));
+    }
+    return { success: true, keys: json.keys, message: json.message };
+  } catch (e: any) {
+    return { success: false, error: e.message || '네트워크 오류가 발생했습니다.' };
+  }
+}
+
 export async function saveApiKey(apiKey: string, alias?: string): Promise<{ success: boolean; maskedKey?: string; keys?: ApiKeyItem[]; error?: string }> {
   if (isWeb) {
     const result = await addApiKey(apiKey, alias);
