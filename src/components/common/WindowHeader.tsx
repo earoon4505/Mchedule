@@ -74,7 +74,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
           (window as any).electronAPI.maximize();
         }
       }}
-      className="h-12 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between px-3 select-none flex-shrink-0 z-30 transition-colors titlebar-drag"
+      className="h-[calc(3rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-12 lg:pt-0 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between px-3 select-none flex-shrink-0 z-30 transition-colors titlebar-drag"
     >
       {/* 1. 좌측 영역: 앱 로고 & 미완료 캐릭터 알림 뱃지 */}
       <div className="flex items-center gap-3 flex-shrink-0 min-w-0">

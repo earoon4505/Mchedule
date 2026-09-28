@@ -197,7 +197,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
       </div>
 
       {/* 캐릭터 목록 스크롤 뷰 (스크롤바 숨김: no-scrollbar, 모바일 터치 세로 스크롤 및 하단바·브라우저 메뉴 가림 방지 여백 확보) */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 no-scrollbar touch-pan-y overscroll-contain pb-24 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] lg:pb-3">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 no-scrollbar touch-pan-y overscroll-contain pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-3">
         {displayedCharacters.length === 0 ? (
           <div className="text-center py-10 px-4 text-slate-400">
             <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-900/40 flex items-center justify-center p-2 shadow-xs">

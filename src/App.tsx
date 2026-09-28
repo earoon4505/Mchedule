@@ -2013,7 +2013,7 @@ export default function App() {
   }
 
   return (
-    <div className={`h-screen w-screen flex flex-col overflow-hidden ${settings.darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-[#F8F9FB] text-slate-800'}`}>
+    <div className={`h-[100dvh] lg:h-screen w-screen flex flex-col overflow-hidden ${settings.darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-[#F8F9FB] text-slate-800'}`}>
       {/* 1. 상단 Windows 헤더 */}
       <WindowHeader
         characters={characters}
@@ -2234,7 +2234,7 @@ export default function App() {
               </div>
 
               {/* 스크롤 가능한 콘텐츠 뷰 (모바일 브라우저 하단 툴바 및 하단바 가림 방지 여유 공간 확보) */}
-              <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable] pb-24 lg:pb-6 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] lg:pb-6">
+              <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable] pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-6">
                 {(activeTab === 'all' || activeTab === 'daily') && (
                   <DailyTaskList
                     key={`${activeCharacter.id}-${collapseTrigger}-daily`}

@@ -1153,7 +1153,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   return (
     <aside 
       id="progress-panel"
-      className="w-full lg:w-80 bg-slate-50/90 dark:bg-slate-950/80 border-l border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-y-auto no-scrollbar touch-pan-y overscroll-contain h-full pb-24 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] lg:pb-5"
+      className="w-full lg:w-80 bg-slate-50/90 dark:bg-slate-950/80 border-l border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-y-auto no-scrollbar touch-pan-y overscroll-contain h-full pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-5"
     >
       {/* 1. 상단 타이틀 및 컨트롤 버튼 (모바일 계정 컨텐츠 모드에서는 요청에 따라 숨김) */}
       {mobileMode !== 'common' && (

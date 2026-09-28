@@ -441,7 +441,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                     value={aliasInput}
                     onChange={(e) => setAliasInput(e.target.value)}
                     placeholder="예: 본계정, 부계정"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-base sm:text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -457,7 +457,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                       value={apiKeyInput}
                       onChange={(e) => setApiKeyInput(e.target.value.trim())}
                       placeholder="live_..."
-                      className="w-full pl-3.5 pr-20 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      className="w-full pl-3.5 pr-20 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-base sm:text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     />
 
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -600,7 +600,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                 value={editingAlias}
                                 onChange={(e) => setEditingAlias(e.target.value)}
                                 placeholder="예: 본계정, 부계정"
-                                className="w-full px-2.5 py-1.5 text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500"
+                                className="w-full px-2.5 py-1.5 text-base sm:text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') handleSaveEdit(item);
                                   if (e.key === 'Escape') setEditingKeyId(null);
@@ -619,7 +619,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                   value={editingApiKey}
                                   onChange={(e) => setEditingApiKey(e.target.value.trim())}
                                   placeholder="live_..."
-                                  className="w-full pl-2.5 pr-8 py-1.5 text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500 select-all"
+                                  className="w-full pl-2.5 pr-8 py-1.5 text-base sm:text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500 select-all"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSaveEdit(item);
                                     if (e.key === 'Escape') setEditingKeyId(null);
