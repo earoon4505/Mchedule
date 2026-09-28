@@ -21,9 +21,6 @@ export const PiPFloatingWidget: React.FC<PiPFloatingWidgetProps> = ({
 
   const handleTogglePip = () => {
     const nextEnabled = !pip.enabled;
-    if ((window as any).electronAPI?.togglePiPWindow) {
-      (window as any).electronAPI.togglePiPWindow();
-    }
     onUpdateSettings({
       pip: {
         ...pip,

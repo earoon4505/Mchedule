@@ -290,9 +290,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 id="btn-settings-pip-toggle"
                 checked={!!pip.enabled}
                 onChange={(checked) => {
-                  if ((window as any).electronAPI?.togglePiPWindow) {
-                    (window as any).electronAPI.togglePiPWindow();
-                  }
                   updatePipSettings({ enabled: checked });
                 }}
                 activeColor="bg-orange-500"

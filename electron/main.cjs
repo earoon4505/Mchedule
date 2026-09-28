@@ -318,14 +318,18 @@ ipcMain.on('open-pip-window', () => {
 });
 
 ipcMain.on('close-pip-window', () => {
-  if (pipWindow) {
+  const existingPip = loadWindowState().pip || {};
+  saveWindowState({ pip: { ...existingPip, isOpen: false } });
+  if (pipWindow && !pipWindow.isDestroyed()) {
     pipWindow.close();
     pipWindow = null;
   }
 });
 
 ipcMain.on('toggle-pip-window', () => {
-  if (pipWindow) {
+  if (pipWindow && !pipWindow.isDestroyed()) {
+    const existingPip = loadWindowState().pip || {};
+    saveWindowState({ pip: { ...existingPip, isOpen: false } });
     pipWindow.close();
     pipWindow = null;
   } else {
@@ -445,31 +449,45 @@ if (!gotTheLock) {
     await startServer();
     createMainWindow();
     
-    // 1. 윈도우 상태 및 저장소 데이터에서 PiP 활성화 여부 확인
+    // 윈도우 상태 및 저장소 데이터에서 PiP 활성화 여부 확인
+    // 중요: 사용자가 설정에서 PiP 토글을 껐을 경우 window-state에 남아있는 이전 기록 때문에 강제로 켜지지 않도록 storage.json을 단일 진실 공급원(Single Source of Truth)으로 우선 검증
     let shouldOpenPiP = false;
-    const pipState = loadWindowState().pip;
-    if (pipState && pipState.isOpen) {
-      shouldOpenPiP = true;
-    }
+    let foundStorageConfig = false;
 
-    // 2. storage.json 파일 내 settings.pip.enabled 도 확인하여 안전하게 2중 검증
     try {
       const candidates = [
-        path.join(process.env.APPDATA || '', 'MapleSchedule', 'data', 'storage.json'),
+        process.env.MAPLE_USER_DATA_PATH ? path.join(process.env.MAPLE_USER_DATA_PATH, 'data', 'storage.json') : null,
+        path.join(app.getPath('userData'), 'data', 'storage.json'),
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'MapleSchedule', 'data', 'storage.json') : null,
+        process.env.APPDATA ? path.join(process.env.APPDATA, 'maple-schedule', 'data', 'storage.json') : null,
         path.join(process.env.HOME || '', '.mapleschedule', 'data', 'storage.json'),
         path.join(process.cwd(), 'data', 'storage.json'),
-      ];
+      ].filter(Boolean);
+
       for (const p of candidates) {
         if (p && fs.existsSync(p)) {
           const raw = fs.readFileSync(p, 'utf-8');
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.settings && parsed.settings.pip && parsed.settings.pip.enabled) {
-            shouldOpenPiP = true;
+          if (parsed && parsed.settings && parsed.settings.pip) {
+            foundStorageConfig = true;
+            shouldOpenPiP = !!parsed.settings.pip.enabled;
             break;
           }
         }
       }
     } catch (e) {}
+
+    // storage.json에 명시적 설정이 없던 경우에만 기존 window-state의 isOpen 확인
+    if (!foundStorageConfig) {
+      const pipState = loadWindowState().pip;
+      if (pipState && pipState.isOpen) {
+        shouldOpenPiP = true;
+      }
+    } else if (!shouldOpenPiP) {
+      // storage.json에서 enabled가 false라면 window-state의 isOpen도 false로 동기화
+      const currentPipState = loadWindowState().pip || {};
+      saveWindowState({ pip: { ...currentPipState, isOpen: false } });
+    }
 
     if (shouldOpenPiP) {
       createPiPWindow();

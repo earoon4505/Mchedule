@@ -196,6 +196,11 @@ export const StandalonePiPView: React.FC = () => {
         if (data.records) setRecords(data.records);
         if (data.settings) {
           setSettings(data.settings);
+          if (data.settings.pip && data.settings.pip.enabled === false) {
+            if ((window as any).electronAPI?.closePiPWindow) {
+              (window as any).electronAPI.closePiPWindow();
+            }
+          }
         }
         if (data.activeCharacterId) {
           setActiveCharacterId(data.activeCharacterId);
@@ -229,6 +234,12 @@ export const StandalonePiPView: React.FC = () => {
         if (payload.records) setRecords(payload.records);
         if (payload.settings) {
           setSettings(payload.settings);
+          // 메인 창에서 사용자가 PiP 설정을 껐을 경우, 독립 PiP 창도 스스로 안전하게 닫힘
+          if (payload.settings.pip && payload.settings.pip.enabled === false) {
+            if ((window as any).electronAPI?.closePiPWindow) {
+              (window as any).electronAPI.closePiPWindow();
+            }
+          }
         }
         if (payload.activeCharacterId !== undefined) {
           setActiveCharacterId(payload.activeCharacterId);

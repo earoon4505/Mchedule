@@ -665,9 +665,6 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   const handleTogglePip = () => {
     const nextEnabled = !pip.enabled;
-    if ((window as any).electronAPI?.togglePiPWindow) {
-      (window as any).electronAPI.togglePiPWindow();
-    }
     onUpdateSettings?.({
       pip: {
         ...pip,

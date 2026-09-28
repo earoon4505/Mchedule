@@ -3,7 +3,7 @@
   "productName": "메케줄",
   "author": "MapleSchedule",
   "description": "메이플스토리 통합 스케줄러 & 보스 체크 데스크톱 앱",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "electron/main.cjs",
   "private": true,
   "type": "module",
@@ -33,6 +33,7 @@
     ],
     "win": {
       "icon": "public/icon.ico",
+      "artifactName": "${productName} Setup ${version}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -47,6 +48,9 @@
           ]
         }
       ]
+    },
+    "portable": {
+      "artifactName": "${productName} ${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

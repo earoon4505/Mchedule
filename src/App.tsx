@@ -716,11 +716,6 @@ export default function App() {
             setSettings(initialData.settings || DEFAULT_SETTINGS);
             setActiveCharacterId(initialData.activeCharacterId || initialData.characters[0]?.id || null);
             setRecords(checkAndResetRecords(initialData.records || {}, initialData.characters));
-
-            // 로컬 스토리지 상에서 pip.enabled가 켜져 있으면 즉시 PiP 창 오픈
-            if (initialData.settings?.pip?.enabled && (window as any).electronAPI?.openPiPWindow) {
-              (window as any).electronAPI.openPiPWindow();
-            }
           }
         }
       } catch (e) {
@@ -810,11 +805,6 @@ export default function App() {
           setSettings(loadedData.settings || DEFAULT_SETTINGS);
           setActiveCharacterId(loadedData.activeCharacterId || cleanedChars[0]?.id || null);
           setRecords(validatedRecords);
-
-          // Electron 환경에서 pip.enabled가 켜져 있으면 PiP 창 활성화
-          if (loadedData.settings?.pip?.enabled && (window as any).electronAPI?.openPiPWindow) {
-            (window as any).electronAPI.openPiPWindow();
-          }
 
           // 3. 백그라운드 비동기 아바타 보강 (메인 스레드 멈춤/지연 없음)
           if (hasKey) {
@@ -1865,12 +1855,9 @@ export default function App() {
     persistData(characters, records, next, activeCharacterId);
   };
 
-  // PiP 모드 토글 (데스크톱 및 웹 겸용 임시 활성화)
+  // PiP 모드 토글 (데스크톱 및 웹 겸용)
   const handleTogglePip = () => {
     const nextEnabled = !settings.pip?.enabled;
-    if ((window as any).electronAPI?.togglePiPWindow) {
-      (window as any).electronAPI.togglePiPWindow();
-    }
     handleUpdateSettings({
       pip: {
         ...settings.pip,
