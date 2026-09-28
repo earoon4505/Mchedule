@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  X, 
+  X,
   Search, 
   UserPlus, 
   AlertCircle,
@@ -297,7 +297,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
     >
       <div 
         id="character-search-modal"
-        className="w-full max-w-4xl h-[85vh] max-h-[850px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col transition-all"
+        className="w-full max-w-lg sm:max-w-4xl max-h-[82dvh] sm:h-[85vh] sm:max-h-[850px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col transition-all"
       >
         {/* 1. 모달 상단 헤더 */}
         <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/90 flex-shrink-0">
@@ -325,14 +325,6 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                 <span className="hidden sm:inline">새로고침</span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="닫기"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
 

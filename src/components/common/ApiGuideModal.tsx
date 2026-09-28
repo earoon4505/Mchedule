@@ -125,11 +125,11 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
       className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      {/* 모달 전체 크기 고정: 너비 820px, 높이 720px */}
+      {/* 모달 크기: 데스크톱 너비 820px, 높이 720px 고정 / 모바일 반응형 max-h-[82dvh] */}
       <div
         id="api-guide-modal"
         onWheel={handleWheel}
-        className="w-[820px] max-w-[96vw] h-[720px] max-h-[94vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg sm:w-[820px] sm:max-w-[96vw] max-h-[82dvh] sm:h-[720px] sm:max-h-[94vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 상단 헤더 (우측 상단 X 버튼 없음) */}

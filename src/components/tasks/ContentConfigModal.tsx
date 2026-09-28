@@ -249,7 +249,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
     >
       <div 
         id="content-config-modal" 
-        className="w-full max-w-4xl h-[88vh] sm:h-[720px] max-h-[92vh] sm:max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+        className="w-full max-w-lg sm:max-w-4xl max-h-[82dvh] sm:h-[720px] sm:max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
       >
         {/* 모달 헤더 (모바일: 캐릭터 닉네임 및 '인게임 동기화'만 배치 / 데스크톱: 스케줄 설정 타이틀 + 닉네임 뱃지 + 전체 버튼명 유지) */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/80">

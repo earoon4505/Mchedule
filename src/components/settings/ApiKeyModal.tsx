@@ -334,7 +334,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   return (
     <div 
       id="api-key-modal-backdrop"
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-lg">
         {/* 모달 창 상단 외부 알림 메시지 배너 (NEXON Open API 등록 및 관리 창 위, 창 위치 고정용 절대 위치) */}
@@ -359,7 +359,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
         <div 
           id="api-key-modal"
-          className="w-full h-auto max-h-[88vh] sm:h-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+          className="w-full h-auto max-h-[82dvh] sm:h-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
         >
         {/* 모달 헤더 */}
         <div className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900 flex-shrink-0">

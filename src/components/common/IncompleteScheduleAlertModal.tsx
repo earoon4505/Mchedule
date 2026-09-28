@@ -65,11 +65,11 @@ export const IncompleteScheduleAlertModal: React.FC<IncompleteScheduleAlertModal
   return (
     <div 
       id="incomplete-schedule-alert-backdrop"
-      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
     >
       <div 
         id="incomplete-schedule-alert-modal"
-        className="w-full max-w-lg bg-white dark:bg-slate-900 border-2 border-red-500/80 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[85vh] ring-4 ring-red-500/20 animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg bg-white dark:bg-slate-900 border-2 border-red-500/80 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[82dvh] sm:max-h-[85vh] ring-4 ring-red-500/20 animate-in zoom-in-95 duration-200"
       >
         {/* 상단 알림 헤더: 모바일/데스크톱 텍스트 줄바꿈 방지 */}
         <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-red-500 to-rose-600 text-white flex items-center shadow-xs flex-shrink-0">
