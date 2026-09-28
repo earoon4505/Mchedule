@@ -2233,8 +2233,8 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 스크롤 가능한 콘텐츠 뷰 (모바일 하단바 여백 pb-16 적용으로 과도한 공백 제거) */}
-              <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable] pb-16 lg:pb-6">
+              {/* 스크롤 가능한 콘텐츠 뷰 (모바일 브라우저 하단 툴바 및 하단바 가림 방지 여유 공간 확보) */}
+              <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable] pb-24 lg:pb-6 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] lg:pb-6">
                 {(activeTab === 'all' || activeTab === 'daily') && (
                   <DailyTaskList
                     key={`${activeCharacter.id}-${collapseTrigger}-daily`}

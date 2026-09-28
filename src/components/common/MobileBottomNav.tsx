@@ -44,7 +44,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     <nav
       id="mobile-bottom-navigation"
       aria-label="모바일 하단 탐색 바"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-md flex items-center justify-around h-13 px-1 pb-[env(safe-area-inset-bottom,0px)] select-none"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-md flex items-center justify-around min-h-[3.5rem] px-1 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.35rem)] select-none"
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
