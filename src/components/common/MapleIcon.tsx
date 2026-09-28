@@ -5,6 +5,7 @@ interface MapleIconProps {
   icon?: string;
   className?: string;
   fallback?: string;
+  taskId?: string; // 태스크 ID 직접 매핑 지원 (이름 변경 시에도 100% 안전하게 이미지 로드)
 }
 
 // 명칭 정규화 맵
@@ -79,6 +80,26 @@ const ICON_NAME_MAP: Record<string, string> = {
   '카르시온': '카르시온',
   '탈라하트': '탈라하트',
   '기어드락': '기어드락',
+
+  // 아케인리버 주간 퀘스트 (인게임 명칭 및 별칭 대응 -> 해당 심볼 이미지 매핑)
+  '에르다 스펙트럼': '소멸의 여로',
+  '에르다스펙트럼': '소멸의 여로',
+  '스펙트럼': '소멸의 여로',
+  '배고픈 무토': '츄츄 아일랜드',
+  '배고픈무토': '츄츄 아일랜드',
+  '무토': '츄츄 아일랜드',
+  '미드나잇 체이서': '레헬른',
+  '미드나잇체이서': '레헬른',
+  '미드나잇': '레헬른',
+  '스피릿 세이비어': '아르카나',
+  '스피릿세이비어': '아르카나',
+  '스세': '아르카나',
+  '엔하임 디펜스': '모라스',
+  '엔하임디펜스': '모라스',
+  '엔하임': '모라스',
+  '프로텍트 에스페라': '에스페라',
+  '프로텍트에스페라': '에스페라',
+  '프로텍트': '에스페라',
 
   // 몬스터파크
   '몬스터파크': '몬스터파크',
@@ -246,42 +267,47 @@ const TASK_ID_MAP: Record<string, string> = {
   'daily_boss_normal_cygnus': '시그너스',
 };
 
-export const getMapleIconCandidates = (nameOrId?: string): string[] => {
-  if (!nameOrId) return [];
+export const getMapleIconCandidates = (nameOrId?: string, taskId?: string): string[] => {
+  if (!nameOrId && !taskId) return [];
 
   const baseNames: string[] = [];
 
+  // 0. taskId 직접 매핑 우선 확인 (이름이 변경되더라도 고유 ID로 100% 매칭)
+  if (taskId && TASK_ID_MAP[taskId]) {
+    baseNames.push(TASK_ID_MAP[taskId]);
+  }
+
   // 1. 직접 ID 매핑 확인
-  if (TASK_ID_MAP[nameOrId]) {
+  if (nameOrId && TASK_ID_MAP[nameOrId]) {
     baseNames.push(TASK_ID_MAP[nameOrId]);
   }
 
   // 2. 이름 직접 매핑 확인
-  if (ICON_NAME_MAP[nameOrId]) {
+  if (nameOrId && ICON_NAME_MAP[nameOrId]) {
     baseNames.push(ICON_NAME_MAP[nameOrId]);
   }
 
   // 3. '진 힐라' vs '힐라' 엄격한 상호 배타적 분리 처리
   // 진 힐라와 힐라는 서로 완전히 다른 보스이므로 절대 교차 매핑되어서는 안 됨
   const isJinHilla = 
-    nameOrId.includes('진 힐라') || 
-    nameOrId.includes('진힐라') || 
-    nameOrId.toLowerCase().includes('jinhilla');
+    (nameOrId && (nameOrId.includes('진 힐라') || nameOrId.includes('진힐라') || nameOrId.toLowerCase().includes('jinhilla'))) ||
+    (taskId && taskId.toLowerCase().includes('jinhilla'));
 
   const isPlainHilla = 
     !isJinHilla && 
-    (nameOrId === '힐라' || 
-     nameOrId.includes('노말 힐라') || 
-     nameOrId.includes('하드 힐라') || 
-     nameOrId === 'daily_boss_normal_hilla' || 
-     nameOrId === 'daily_boss_hard_hilla' ||
-     (nameOrId.includes('힐라') && !nameOrId.includes('진')));
+    ((nameOrId && (nameOrId === '힐라' || 
+      nameOrId.includes('노말 힐라') || 
+      nameOrId.includes('하드 힐라') || 
+      nameOrId === 'daily_boss_normal_hilla' || 
+      nameOrId === 'daily_boss_hard_hilla' ||
+      (nameOrId.includes('힐라') && !nameOrId.includes('진')))) ||
+     (taskId && (taskId === 'daily_boss_normal_hilla' || taskId === 'daily_boss_hard_hilla')));
 
   if (isJinHilla) {
     baseNames.push('진 힐라', '진힐라');
   } else if (isPlainHilla) {
     baseNames.push('힐라');
-  } else {
+  } else if (nameOrId) {
     // 4. 이름 부분 일치 검색
     const cleanName = nameOrId
       .replace(/^(이지|노말|하드|카오스|익스트림)\s*/, '')
@@ -341,8 +367,8 @@ export const getMapleIconCandidates = (nameOrId?: string): string[] => {
   return Array.from(new Set(candidates));
 };
 
-export const getMapleIconSrc = (nameOrId?: string): string | null => {
-  const candidates = getMapleIconCandidates(nameOrId);
+export const getMapleIconSrc = (nameOrId?: string, taskId?: string): string | null => {
+  const candidates = getMapleIconCandidates(nameOrId, taskId);
   return candidates.length > 0 ? candidates[0] : null;
 };
 
@@ -351,14 +377,15 @@ export const MapleIcon: React.FC<MapleIconProps> = ({
   icon,
   className = 'w-7 h-7 rounded-lg object-contain flex-shrink-0 shadow-xs',
   fallback,
+  taskId,
 }) => {
-  const candidates = React.useMemo(() => getMapleIconCandidates(name || icon), [name, icon]);
+  const candidates = React.useMemo(() => getMapleIconCandidates(name || icon, taskId), [name, icon, taskId]);
   const [candidateIndex, setCandidateIndex] = useState(0);
 
-  // name이나 icon이 바뀌면 인덱스 리셋
+  // name이나 icon, taskId가 바뀌면 인덱스 리셋
   React.useEffect(() => {
     setCandidateIndex(0);
-  }, [name, icon]);
+  }, [name, icon, taskId]);
 
   if (candidates.length === 0 || candidateIndex >= candidates.length) {
     return (

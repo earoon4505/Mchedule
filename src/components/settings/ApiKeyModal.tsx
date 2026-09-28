@@ -359,10 +359,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
         <div 
           id="api-key-modal"
-          className="w-full h-[470px] max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+          className="w-full h-auto max-h-[88vh] sm:h-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
         >
         {/* 모달 헤더 */}
-        <div className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900">
+        <div className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow-xs">
               <Key className="w-4 h-4" />
@@ -376,7 +376,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         </div>
 
         {/* 상단 탭 메뉴 (API 등록, API 목록) - 기본값: API 등록 */}
-        <div className="px-6 pt-3 pb-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+        <div className="px-6 pt-3 pb-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -420,14 +420,14 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
           </button>
         </div>
 
-        {/* 본문 영역 */}
-        <div className={`flex-1 p-6 ${activeTab === 'register' ? 'overflow-hidden flex flex-col justify-between' : 'overflow-y-auto space-y-4 custom-scrollbar'}`}>
+        {/* 본문 영역 (모바일 및 데스크톱 스크롤 완벽 지원: flex-1 overflow-y-auto touch-pan-y min-h-0) */}
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 custom-scrollbar touch-pan-y overscroll-contain min-h-0">
 
           {/* ============================== */}
           {/* 1. [API 등록] 탭 내용 (기본값) */}
           {/* ============================== */}
           {activeTab === 'register' && (
-            <div className="space-y-4 animate-in fade-in duration-150 h-full flex flex-col justify-between">
+            <div className="space-y-4 animate-in fade-in duration-150 flex flex-col justify-between min-h-full">
               {/* 신규 API 키 입력 및 등록 폼 */}
               <form onSubmit={handleAddKey} className="space-y-3.5">
                 {/* API 이름 입력 */}
@@ -718,24 +718,14 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                               {/* 우측 수정 / 삭제 버튼 */}
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 {isDeleting ? (
-                                  <div className="flex items-center gap-1 animate-in fade-in duration-100">
-                                    <span className="text-[10px] font-bold text-rose-600">연동 캐릭터도 삭제됩니다. 계속할까요?</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteKey(item.id)}
-                                      disabled={isLoading}
-                                      className="px-1.5 py-0.5 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 rounded cursor-pointer"
-                                    >
-                                      확인
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setDeletingKeyId(null)}
-                                      className="px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded cursor-pointer"
-                                    >
-                                      취소
-                                    </button>
-                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingKeyId(null)}
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg cursor-pointer transition-colors"
+                                    title="삭제 취소"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
                                 ) : (
                                   <>
                                     <button
@@ -758,6 +748,36 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                 )}
                               </div>
                             </div>
+
+                            {/* 삭제 확인 전용 알림 바 (모바일에서 폰트 깨짐/뒤섞임 없이 반듯하게 정렬) */}
+                            {isDeleting && (
+                              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-in fade-in duration-150">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <AlertCircle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                                  <span className="text-[11px] sm:text-xs font-bold text-rose-700 dark:text-rose-300 leading-snug">
+                                    연동된 캐릭터도 함께 삭제됩니다. 계속할까요?
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteKey(item.id)}
+                                    disabled={isLoading}
+                                    className="px-2.5 py-1 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-lg cursor-pointer transition-all shadow-xs"
+                                  >
+                                    {isLoading ? '삭제 중...' : '삭제 확인'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingKeyId(null)}
+                                    disabled={isLoading}
+                                    className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 rounded-lg cursor-pointer transition-all"
+                                  >
+                                    취소
+                                  </button>
+                                </div>
+                              </div>
+                            )}
 
                             {/* 보안 마스킹 토글 및 실제 API 키 텍스트 및 복사 버튼 */}
                             <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60">
@@ -829,7 +849,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         </div>
 
         {/* 모달 푸터 */}
-        <div className="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex justify-end">
+        <div className="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex justify-end flex-shrink-0">
           <button
             type="button"
             onClick={onClose}

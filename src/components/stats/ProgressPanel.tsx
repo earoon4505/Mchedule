@@ -16,7 +16,8 @@ import {
   RotateCcw,
   Eye,
   EyeOff,
-  Tv
+  Tv,
+  Package
 } from 'lucide-react';
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
 import { CharacterInfo, CharacterProgressRecord, AppSettings, PipSettings, ApiKeyItem } from '../../types';
@@ -30,6 +31,9 @@ import {
   saveStoredCommonContentIds,
   CommonContentItem
 } from '../../utils/commonContents';
+import { 
+  getAccountMonsterParkTotalCount 
+} from '../../utils/monsterParkTracker';
 import { AccountAlertStatus } from '../../utils/alertNotifier';
 import { supportsPiP } from '../../utils/platform';
 import { getStoredApiKeys, buildAccountIndicatorItems } from '../../utils/accountHelper';
@@ -119,6 +123,7 @@ interface ProgressPanelProps {
   onUpdateSettings?: (newSettings: Partial<AppSettings>) => void;
   apiKeys?: ApiKeyItem[];
   characterSelectTrigger?: number;
+  mobileMode?: 'all' | 'common' | 'progress';
 }
 
 export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
@@ -134,6 +139,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   onUpdateSettings,
   apiKeys: initialApiKeys,
   characterSelectTrigger,
+  mobileMode = 'all',
 }) => {
   // 즐겨찾기 캐릭터만 필터링 여부
   const [onlyFavorites, setOnlyFavorites] = useState<boolean>(() => {
@@ -224,10 +230,40 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
     return accountIndicatorItems[0]?.id || (activeCharacter?.apiKeyId || 'default');
   }, [selectedCommonApiKeyId, activeCharacter?.apiKeyId, accountIndicatorItems]);
 
-  // 웹 모드(!supportsPiP)일 때 PIP 토글 섹션 제외
+  // 웹 모드(!supportsPiP)일 때 PIP 토글 섹션만 제외 (common_contents는 원본 섹션 배열에서 보존)
   const filteredSections = useMemo(() => {
     return panelSections.filter((sec) => supportsPiP || sec.id !== 'pip_toggle');
-  }, [panelSections]);
+  }, [panelSections, supportsPiP]);
+
+  // Electron 데스크톱 앱 감지
+  const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI;
+
+  // 창 너비 상태 (반응형 갱신)
+  const [windowWidth, setWindowWidth] = useState<number>(() => {
+    return typeof window !== 'undefined' ? window.innerWidth : 1200;
+  });
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 모바일 전용 뷰 판정: Electron이 아니고, 실제 창 너비가 1024px 미만이며, 모바일 네비게이션 모드('common' 또는 'progress')일 때만 모바일 뷰로 판정
+  const isMobileView = useMemo(() => {
+    if (isElectron) return false;
+    return windowWidth < 1024 && (mobileMode === 'common' || mobileMode === 'progress');
+  }, [isElectron, windowWidth, mobileMode]);
+
+  // 진행 현황 UI 편집 모달 리스트:
+  // - 모바일 웹 환경(isMobileView)에서는 하단 탭에 '계정 컨텐츠'가 별도로 존재하므로 진행 현황 편집 목록에서 제외
+  // - 데스크톱(Electron 및 PC 웹) 환경에서는 기존 3단 구성에 맞춰 '계정 컨텐츠'를 100% 정상 노출
+  const modalSections = useMemo(() => {
+    if (isMobileView) {
+      return filteredSections.filter((sec) => sec.id !== 'common_contents');
+    }
+    return filteredSections;
+  }, [filteredSections, isMobileView]);
 
   useEffect(() => {
     const unsubscribeCommon = subscribeToCommonContents((map) => {
@@ -245,14 +281,16 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
     };
   }, []);
 
-  // 현재 선택된 계정(effectiveApiKeyId)에 활성화된 계정 공통 컨텐츠 ID 목록
+  // 현재 선택된 계정(effectiveApiKeyId)에 활성화된 계정 공통 컨텐츠 ID 목록 (기본값: 전체 체크)
   const currentEnabledCommonIds = useMemo(() => {
-    return commonContentsMap[effectiveApiKeyId] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
+    const list = commonContentsMap[effectiveApiKeyId] || commonContentsMap['default'];
+    return (list && list.length > 0) ? list : DEFAULT_COMMON_CONTENT_IDS;
   }, [commonContentsMap, effectiveApiKeyId]);
 
-  // 편집 모달에서 현재 선택된 API의 계정 공통 컨텐츠 ID 목록
+  // 편집 모달에서 현재 선택된 API의 계정 공통 컨텐츠 ID 목록 (기본값: 전체 체크)
   const modalEditingEnabledIds = useMemo(() => {
-    return commonContentsMap[modalEditingApiKeyId] || commonContentsMap['default'] || DEFAULT_COMMON_CONTENT_IDS;
+    const list = commonContentsMap[modalEditingApiKeyId] || commonContentsMap['default'];
+    return (list && list.length > 0) ? list : DEFAULT_COMMON_CONTENT_IDS;
   }, [commonContentsMap, modalEditingApiKeyId]);
 
   const handleToggleFavorites = () => {
@@ -279,8 +317,8 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
 
   const handleMoveSectionUp = (index: number) => {
     if (index <= 0) return;
-    const target = filteredSections[index];
-    const prevTarget = filteredSections[index - 1];
+    const target = modalSections[index];
+    const prevTarget = modalSections[index - 1];
     if (!target || !prevTarget) return;
 
     const rawIndex = panelSections.findIndex((s) => s.id === target.id);
@@ -295,9 +333,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   };
 
   const handleMoveSectionDown = (index: number) => {
-    if (index >= filteredSections.length - 1) return;
-    const target = filteredSections[index];
-    const nextTarget = filteredSections[index + 1];
+    if (index >= modalSections.length - 1) return;
+    const target = modalSections[index];
+    const nextTarget = modalSections[index + 1];
     if (!target || !nextTarget) return;
 
     const rawIndex = panelSections.findIndex((s) => s.id === target.id);
@@ -346,15 +384,18 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       : characters;
     const effectiveCommonChars = accountChars.length > 0 ? accountChars : characters;
 
-    // 1. 몬스터파크 (현재 계정의 캐릭터 중 일일 2회 이상 클리어 시 완료)
-    let maxMonsterParkCount = 0;
+    // 1. 몬스터파크 (현재 계정의 캐릭터 레코드 상태 반영 및 트래커 합산 조회)
+    const totalTrackerCount = getAccountMonsterParkTotalCount(effectiveApiKeyId);
+    let maxMonsterParkCount = totalTrackerCount;
+    // 캐릭터 레코드의 completed 상태를 기본으로 판정 (수동 해제 시 즉시 UI에도 미완료로 풀림)
     let isMonsterParkCompleted = false;
+
     effectiveCommonChars.forEach((char) => {
       const rec = records?.[char.id];
       const mpState = rec?.dailyTasks?.['daily_monster_park'];
       const count = mpState?.currentCount ?? (mpState?.completed ? 2 : 0);
       if (count > maxMonsterParkCount) maxMonsterParkCount = count;
-      if (mpState?.completed || count >= 2) isMonsterParkCompleted = true;
+      if (mpState?.completed) isMonsterParkCompleted = true;
     });
 
     // 2. 에픽 던전들 (현재 계정의 캐릭터 중 클리어 여부 확인)
@@ -489,8 +530,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
           const isDone = charsForThisAcc.some((char) => {
             const rec = records?.[char.id];
             const mpState = rec?.dailyTasks?.['daily_monster_park'];
-            const count = mpState?.currentCount ?? (mpState?.completed ? 2 : 0);
-            return !!mpState?.completed || count >= 2;
+            return !!mpState?.completed;
           });
           if (isDone) {
             doneDailyTasks += 1;
@@ -985,6 +1025,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {displayedCommonContents.map((item) => {
                   if (item.id === 'daily_monster_park') {
                     const isMpAlert = !isMonsterParkCompleted && !!accountAlertStatus?.dailyAlert;
+
                     return (
                       <div
                         key={item.id}
@@ -1115,43 +1156,45 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   return (
     <aside 
       id="progress-panel"
-      className="w-full lg:w-80 bg-slate-50/90 dark:bg-slate-950/80 border-l border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-shrink-0 select-none overflow-y-auto custom-scrollbar"
+      className="w-full lg:w-80 bg-slate-50/90 dark:bg-slate-950/80 border-l border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-y-auto no-scrollbar touch-pan-y overscroll-contain h-full pb-16 lg:pb-5"
     >
-      {/* 1. 상단 타이틀 및 컨트롤 버튼 (즐겨찾기 필터 & UI 편집 버튼) */}
-      <div className="p-4 flex items-center justify-between gap-2 pb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <BarChart3 className="w-4 h-4 text-orange-500 flex-shrink-0" />
-          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider truncate">
-            진행 현황
-          </h3>
-        </div>
+      {/* 1. 상단 타이틀 및 컨트롤 버튼 (모바일 계정 컨텐츠 모드에서는 요청에 따라 숨김) */}
+      {mobileMode !== 'common' && (
+        <div className="p-4 flex items-center justify-between gap-2 pb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <BarChart3 className="w-4 h-4 text-orange-500 flex-shrink-0" />
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider truncate">
+              진행 현황
+            </h3>
+          </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* 즐겨찾기만 토글 버튼 */}
-          <button
-            type="button"
-            onClick={handleToggleFavorites}
-            className={`w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 ${
-              onlyFavorites
-                ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-            title={onlyFavorites ? '즐겨찾기 필터 해제 (전체 캐릭터 보기)' : '즐겨찾기 등록된 캐릭터만 통계에 반영'}
-          >
-            <Star className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-white text-white' : 'text-amber-500 fill-amber-500/20'}`} />
-          </button>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* 즐겨찾기만 토글 버튼 */}
+            <button
+              type="button"
+              onClick={handleToggleFavorites}
+              className={`w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 ${
+                onlyFavorites
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+              title={onlyFavorites ? '즐겨찾기 필터 해제 (전체 캐릭터 보기)' : '즐겨찾기 등록된 캐릭터만 통계에 반영'}
+            >
+              <Star className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-white text-white' : 'text-amber-500 fill-amber-500/20'}`} />
+            </button>
 
-          {/* 진행 현황 UI 항목 편집 버튼 */}
-          <button
-            type="button"
-            onClick={() => setIsEditUiModalOpen(true)}
-            className="w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
-            title="진행 현황 UI 편집 (항목 선택 및 순서 변경)"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-          </button>
+            {/* 진행 현황 UI 항목 편집 버튼 (진행 현황 뷰 또는 데스크톱에서만 노출) */}
+            <button
+              type="button"
+              onClick={() => setIsEditUiModalOpen(true)}
+              className="w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
+              title="진행 현황 UI 편집 (항목 선택 및 순서 변경)"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. 패널 본문 */}
       {targetCharacters.length === 0 ? (
@@ -1170,9 +1213,15 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
           )}
         </div>
       ) : (
-        <div className="px-4 pb-5 pt-1 space-y-3.5">
+        <div className={`px-4 pb-5 space-y-3.5 ${isMobileView && mobileMode === 'common' ? 'pt-3' : 'pt-1'}`}>
           {filteredSections.map((sec) => {
             if (!sec.visible) return null;
+            // 모바일 탭 분기: 실제 모바일 환경(isMobileView)일 때만 분기, 데스크톱 3단 구성에서는 모든 활성 섹션(계정 컨텐츠 포함) 노출
+            if (isMobileView) {
+              if (mobileMode === 'common' && sec.id !== 'common_contents') return null;
+              if (mobileMode === 'progress' && sec.id === 'common_contents') return null;
+            }
+
             return (
               <React.Fragment key={sec.id}>
                 {renderSection(sec.id)}
@@ -1196,11 +1245,11 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               </div>
             </div>
 
-            {/* 모달 본문 리스트 */}
-            <div className="p-4 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
-              {filteredSections.map((sec, index) => {
+            {/* 모달 본문 리스트 (스크롤바 숨김: no-scrollbar) */}
+            <div className="p-4 space-y-2 overflow-y-auto flex-1 no-scrollbar touch-pan-y overscroll-contain min-h-0">
+              {modalSections.map((sec, index) => {
                 const isFirst = index === 0;
-                const isLast = index === filteredSections.length - 1;
+                const isLast = index === modalSections.length - 1;
                 return (
                   <div
                     key={sec.id}
@@ -1341,8 +1390,8 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               </div>
             )}
 
-            {/* 모달 본문 */}
-            <div className="p-4 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
+            {/* 모달 본문 (스크롤바 숨김: no-scrollbar) */}
+            <div className="p-4 space-y-2.5 overflow-y-auto flex-1 no-scrollbar touch-pan-y overscroll-contain min-h-0">
               {ALL_COMMON_CONTENTS.map((item) => {
                 const isSelected = modalEditingEnabledIds.includes(item.id);
                 return (

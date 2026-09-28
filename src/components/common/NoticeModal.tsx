@@ -33,11 +33,11 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose }) => 
     >
       <div
         id="notice-modal"
-        className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[90vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모달 상단 헤더: 제목 '공지사항' (부가설명 및 X 버튼 제거) */}
-        <div className="px-5 py-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center bg-slate-50/70 dark:bg-slate-800/40">
+        <div className="px-5 py-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center bg-slate-50/70 dark:bg-slate-800/40 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
               <Megaphone className="w-4 h-4" />
@@ -46,8 +46,8 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose }) => 
           </div>
         </div>
 
-        {/* 공지 내용 본문 */}
-        <div className="p-5 overflow-y-auto space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+        {/* 공지 내용 본문 (모바일 스크롤 지원: flex-1 min-h-0 touch-pan-y) */}
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-3.5 sm:space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200 custom-scrollbar touch-pan-y overscroll-contain">
           {/* 1번 공지사항 */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex items-start gap-3">
             <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
@@ -72,10 +72,25 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose }) => 
               <span className="font-bold text-slate-900 dark:text-white">월드 리프</span> 이전 기록들은 <span className="font-bold text-slate-900 dark:text-white">월드 리프</span> 이후 갱신되지 않습니다.
             </div>
           </div>
+
+          {/* 3번 공지사항 */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+              3
+            </div>
+            <div className="flex-1 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
+              <div>
+                <span className="font-bold text-slate-900 dark:text-white">몬스터파크</span> 클리어 기록은 <span className="font-bold text-slate-900 dark:text-white">해당 월드의 캐릭터가 등록</span>되어 있고, <span className="font-bold text-orange-600 dark:text-orange-400">오늘 접속한 이력</span>이 있어야 정상 반영됩니다.
+              </div>
+              <div className="mt-1 text-slate-500 dark:text-slate-400">
+                (오늘 접속하지 않은 캐릭터는 넥슨 API에서 최신 기록이 조회되지 않습니다.)
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 하단 확인 버튼 */}
-        <div className="px-5 py-3.5 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex justify-end">
+        <div className="px-5 py-3.5 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex justify-end flex-shrink-0">
           <button
             id="btn-confirm-notice"
             type="button"

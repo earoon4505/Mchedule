@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, LayoutGroup } from 'motion/react';
 import { 
   Check, 
   SlidersHorizontal, 
@@ -70,6 +71,20 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
   const [editingCustomTask, setEditingCustomTask] = useState<CustomTask | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importStatusMsg, setImportStatusMsg] = useState<string | null>(null);
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+
+  // 탭 변경 시 선택된 탭을 화면 중앙/보이는 영역으로 부드럽게 스크롤
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        const activeTabEl = document.getElementById(`config-tab-${activeTab}`);
+        if (activeTabEl && tabScrollRef.current) {
+          activeTabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, isOpen]);
 
   useEffect(() => {
     if (character) {
@@ -234,30 +249,41 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
     >
       <div 
         id="content-config-modal" 
-        className="w-full max-w-4xl h-[720px] max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+        className="w-full max-w-4xl h-[88vh] sm:h-[720px] max-h-[92vh] sm:max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
       >
-        {/* 모달 헤더 */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/80">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-500">
+        {/* 모달 헤더 (모바일: 캐릭터 닉네임 및 '인게임 동기화'만 배치 / 데스크톱: 스케줄 설정 타이틀 + 닉네임 뱃지 + 전체 버튼명 유지) */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/80">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* 데스크톱 전용 아이콘 및 '스케줄 설정' 타이틀 */}
+            <div className="hidden sm:flex w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 items-center justify-center text-orange-500 flex-shrink-0">
               <SlidersHorizontal className="w-4 h-4" />
             </div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                스케줄 설정
-              </h3>
-              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
-                {character.characterName} (Lv.{character.characterLevel})
+            <h3 className="hidden sm:inline text-base font-bold text-slate-900 dark:text-white">
+              스케줄 설정
+            </h3>
+            
+            {/* 데스크톱 전용 캐릭터 뱃지 */}
+            <span className="hidden sm:inline-block text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
+              {character.characterName} (Lv.{character.characterLevel})
+            </span>
+
+            {/* 모바일 전용: 캐릭터 닉네임과 레벨만 깔끔하게 단독 배치 */}
+            <div className="sm:hidden flex items-center gap-1.5 min-w-0">
+              <span className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[150px]">
+                {character.characterName}
+              </span>
+              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded flex-shrink-0">
+                Lv.{character.characterLevel}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {character.ocid && !character.ocid.startsWith('manual_') && (
               <button
                 onClick={handleImportInGameScheduler}
                 disabled={isImporting}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors flex items-center gap-1.5 shadow-xs"
+                className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
                 title="게임 내 스케줄러에 등록된 퀘스트/보스 목록을 그대로 불러옵니다"
               >
                 {isImporting ? (
@@ -265,7 +291,9 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                 ) : (
                   <Download className="w-3.5 h-3.5" />
                 )}
-                <span>인게임 스케줄러 불러오기</span>
+                {/* 모바일에서는 '인게임 동기화', 데스크톱에서는 '인게임 스케줄러 불러오기' */}
+                <span className="sm:hidden font-bold">인게임 동기화</span>
+                <span className="hidden sm:inline">인게임 스케줄러 불러오기</span>
               </button>
             )}
           </div>
@@ -280,85 +308,69 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
             </button>
           </div>
         )}
-        <div className="px-6 pt-2.5 pb-1 flex items-center justify-between gap-2 bg-white dark:bg-slate-900 flex-wrap">
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold flex-wrap">
-            <button
-              id="config-tab-daily"
-              onClick={() => setActiveTab('daily')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'daily'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5 text-amber-500" />
-              <span>일일 컨텐츠</span>
-            </button>
-            <button
-              id="config-tab-daily-boss"
-              onClick={() => setActiveTab('daily_boss')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'daily_boss'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Crown className="w-3.5 h-3.5 text-sky-500" />
-              <span>일일 보스</span>
-            </button>
-            <button
-              id="config-tab-weekly"
-              onClick={() => setActiveTab('weekly')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'weekly'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-              <span>주간 컨텐츠</span>
-            </button>
-            <button
-              id="config-tab-bosses"
-              onClick={() => setActiveTab('bosses')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'bosses'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Crown className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-              <span>주간 보스</span>
-            </button>
-            <button
-              id="config-tab-black-mage"
-              onClick={() => setActiveTab('black_mage')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'black_mage'
-                  ? 'bg-black text-white border border-red-600 shadow-xs font-bold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <BlackMageSilhouetteIcon size={14} className="text-red-500" />
-              <span>검은 마법사</span>
-            </button>
-            <button
-              id="config-tab-custom"
-              onClick={() => setActiveTab('custom')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'custom'
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-bold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>커스텀</span>
-            </button>
+        {/* 탭 네비게이션: 모바일에서는 2~3줄로 꺾이지 않고 부드러운 한 줄 가로 스와이프 스크롤(스크롤바 완전 숨김) 적용 */}
+        <div className="px-4 sm:px-6 pt-2.5 pb-1 flex items-center justify-between gap-2 bg-white dark:bg-slate-900 min-w-0 overflow-hidden">
+          {/* 부드러운 가로 스와이프 스크롤 래퍼 (스크롤바 숨김 & 터치 pan-x & 마우스 휠 지원) */}
+          <div
+            ref={tabScrollRef}
+            onWheel={(e) => {
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+            className="w-full sm:w-auto overflow-x-auto no-scrollbar touch-pan-x min-w-0 py-0.5 overscroll-x-contain flex-1 sm:flex-initial"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <LayoutGroup id="configModalTabsGroup">
+              <div className="inline-flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold relative select-none flex-nowrap">
+                {[
+                  { id: 'daily', label: '일일 컨텐츠', icon: Calendar, activeBg: 'bg-amber-500', activeText: 'text-white' },
+                  { id: 'daily_boss', label: '일일 보스', icon: Crown, activeBg: 'bg-sky-600', activeText: 'text-white' },
+                  { id: 'weekly', label: '주간 컨텐츠', icon: Flame, activeBg: 'bg-rose-700', activeText: 'text-white' },
+                  { id: 'bosses', label: '주간 보스', icon: Crown, activeBg: 'bg-purple-600', activeText: 'text-white' },
+                  { id: 'black_mage', label: '검은 마법사', icon: null, activeBg: 'bg-black border border-red-500', activeText: 'text-red-500 font-bold' },
+                  { id: 'custom', label: '커스텀', icon: Plus, activeBg: 'bg-black dark:bg-white', activeText: 'text-white dark:text-black' },
+                ].map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      id={`config-tab-${tab.id}`}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`relative px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer z-10 flex-shrink-0 select-none ${
+                        isActive
+                          ? tab.activeText
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="configModalActiveTabPill"
+                          className={`absolute inset-0 rounded-lg shadow-xs -z-10 ${tab.activeBg}`}
+                          transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                        />
+                      )}
+                      {tab.id === 'black_mage' ? (
+                        <BlackMageSilhouetteIcon size={14} className="relative z-10" />
+                      ) : (
+                        Icon && <Icon className="w-3.5 h-3.5 relative z-10" />
+                      )}
+                      <span className="relative z-10">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </LayoutGroup>
           </div>
 
-          {/* 우측: 주간 보스 탭일 때의 완료 기준 조작 버튼 */}
+          {/* 데스크톱 전용: 주간 보스 탭일 때의 완료 기준 조작 버튼 */}
           {activeTab === 'bosses' ? (
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="hidden sm:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 flex-shrink-0">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mr-1 select-none">
                 완료 기준
               </span>
@@ -385,12 +397,42 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
               </button>
             </div>
           ) : (
-            <div className="h-8" />
+            <div className="hidden sm:block h-8" />
           )}
         </div>
 
-        {/* 탭 본문 영역 */}
-        <div className="px-6 pb-6 pt-3 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+        {/* 모바일 전용: 주간 보스 탭일 때 탭과 부딪히지 않는 독립된 전용 완료 기준 조작 바 */}
+        {activeTab === 'bosses' && (
+          <div className="sm:hidden px-4 py-2 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              주간 보스 완료 기준
+            </span>
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setWeeklyBossThreshold((prev) => Math.max(0, prev - 1))}
+                disabled={weeklyBossThreshold <= 0}
+                className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs"
+              >
+                <Minus className="w-3 h-3" />
+              </button>
+              <span className="w-6 text-center text-xs font-mono font-bold text-slate-900 dark:text-white">
+                {weeklyBossThreshold}
+              </span>
+              <button
+                type="button"
+                onClick={() => setWeeklyBossThreshold((prev) => Math.min(12, prev + 1))}
+                disabled={weeklyBossThreshold >= 12}
+                className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 탭 본문 영역 (스크롤바 숨김: no-scrollbar) */}
+        <div className="px-3.5 sm:px-6 pb-4 sm:pb-6 pt-2.5 sm:pt-3 space-y-4 overflow-y-auto no-scrollbar flex-1 min-h-0 touch-pan-y overscroll-contain">
           {/* 1. 일일 컨텐츠 탭 */}
           {activeTab === 'daily' && (
             <div className="space-y-5">
@@ -413,7 +455,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -455,7 +497,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -491,22 +533,22 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                 return (
                   <div
                     key={group.baseName}
-                    className={`px-4 py-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                    className={`p-3 sm:px-4 sm:py-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 ${
                       isAnySelectedInGroup
                         ? 'bg-sky-50/40 dark:bg-sky-950/20 border-sky-300/80 dark:border-sky-800/80 shadow-xs'
                         : 'bg-white dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     {/* 좌측: 보스 아이콘 및 이름 & 선택된 난이도 결정석 메소 가격 */}
-                    <div className="flex items-center gap-3 min-w-[200px]">
-                      <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-12 h-12 rounded-xl object-contain flex-shrink-0" />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                             {group.baseName}
                           </span>
                           {selectedInGroup && (
-                            <span className="text-[11px] font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-100/70 dark:bg-sky-950/70 px-2 py-0.5 rounded-md border border-sky-300/80 dark:border-sky-800/80">
+                            <span className="text-[10px] sm:text-[11px] font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-100/70 dark:bg-sky-950/70 px-1.5 sm:px-2 py-0.5 rounded-md border border-sky-300/80 dark:border-sky-800/80 truncate">
                               {selectedInGroup.mesoValue >= 100000000
                                 ? `${(selectedInGroup.mesoValue / 100000000).toLocaleString(undefined, { minimumFractionDigits: selectedInGroup.mesoValue % 100000000 === 0 ? 0 : 2, maximumFractionDigits: 2 })}억 메소`
                                 : `${(selectedInGroup.mesoValue / 10000).toLocaleString()}만 메소`
@@ -517,8 +559,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                       </div>
                     </div>
 
-                    {/* 우측: 난이도별 체크박스 / 토글 버튼 그룹 */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* 우측: 난이도별 체크박스 / 토글 버튼 그룹 (모바일: 2열 균등 분할 그리드 / 데스크톱: w-[82px] 가로 정렬 유지) */}
+                    <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 w-full sm:w-auto">
                       {group.difficulties.map((diff) => {
                         const isSelected = selectedDailyBossIds.includes(diff.id);
 
@@ -527,7 +569,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                             key={diff.id}
                             type="button"
                             onClick={() => handleToggleDailyBossDifficulty(groupIds, diff.id)}
-                            className={`w-[82px] py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer ${getDifficultyBadgeStyle(diff.difficulty, isSelected)}`}
+                            className={`w-full sm:w-[82px] py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer active:scale-95 ${getDifficultyBadgeStyle(diff.difficulty, isSelected)}`}
                           >
                             <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px] flex-shrink-0 ${
                               isSelected 
@@ -536,7 +578,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                             }`}>
                               {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                             </span>
-                            <span>{diff.label}</span>
+                            <span className="truncate">{diff.label}</span>
                           </button>
                         );
                       })}
@@ -572,7 +614,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -617,7 +659,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -654,22 +696,22 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                   return (
                     <div
                       key={group.baseName}
-                      className={`px-4 py-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                      className={`p-3 sm:px-4 sm:py-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 ${
                         isAnySelectedInGroup
                           ? 'bg-purple-50/40 dark:bg-purple-950/20 border-purple-300/80 dark:border-purple-800/80 shadow-xs'
                           : 'bg-white dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                     >
                       {/* 좌측: 보스 아이콘 및 이름 & 선택된 난이도 결정석 메소 가격 */}
-                      <div className="flex items-center gap-3 min-w-[200px]">
-                        <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-12 h-12 rounded-xl object-contain flex-shrink-0" />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                             <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                               {group.baseName}
                             </span>
                             {selectedInGroup && (
-                              <span className="text-[11px] font-mono font-bold text-purple-700 dark:text-purple-400 bg-purple-100/70 dark:bg-purple-950/70 px-2 py-0.5 rounded-md border border-purple-300/80 dark:border-purple-800/80">
+                              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-purple-700 dark:text-purple-400 bg-purple-100/70 dark:bg-purple-950/70 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-300/80 dark:border-purple-800/80 truncate">
                                 {selectedInGroup.mesoValue >= 100000000
                                   ? `${(selectedInGroup.mesoValue / 100000000).toLocaleString(undefined, { minimumFractionDigits: selectedInGroup.mesoValue % 100000000 === 0 ? 0 : 2, maximumFractionDigits: 2 })}억 메소`
                                   : `${(selectedInGroup.mesoValue / 10000).toLocaleString()}만 메소`
@@ -680,8 +722,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         </div>
                       </div>
 
-                      {/* 우측: 난이도별 체크박스 / 토글 버튼 그룹 (모든 난이도 버튼 가로 크기 균일 통일 w-[82px]) */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* 우측: 난이도별 체크박스 / 토글 버튼 그룹 (모바일: 2열 균등 분할 그리드 / 데스크톱: w-[82px] 가로 정렬 유지) */}
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 w-full sm:w-auto">
                         {group.difficulties.map((diff) => {
                           const isSelected = selectedBossIds.includes(diff.id);
 
@@ -690,7 +732,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                               key={diff.id}
                               type="button"
                               onClick={() => handleToggleBossDifficulty(groupIds, diff.id)}
-                              className={`w-[82px] py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer ${getDifficultyBadgeStyle(diff.difficulty, isSelected)}`}
+                              className={`w-full sm:w-[82px] py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer active:scale-95 ${getDifficultyBadgeStyle(diff.difficulty, isSelected)}`}
                             >
                               <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px] flex-shrink-0 ${
                                 isSelected 
@@ -699,7 +741,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                               }`}>
                                 {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                               </span>
-                              <span>{diff.label}</span>
+                              <span className="truncate">{diff.label}</span>
                             </button>
                           );
                         })}
@@ -848,23 +890,30 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
           )}
         </div>
 
-        {/* 모달 푸터 */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/80">
-          <div className="text-xs text-slate-400">
-            퀘스트 {enabledTaskIds.length}개 · 일일보스 {selectedDailyBossIds.length}개 · 주간보스 {selectedBossIds.length}개
-            {selectedBlackMageId ? ' · 검은마법사 등록됨' : ''}
-            {customTasks.length > 0 ? ` · 커스텀 ${customTasks.length}개` : ''}
+        {/* 모달 푸터 (모바일: 간결 요약 '선택: 퀘스트 N · 일보 N · 주보 N' / 데스크톱: 전체 요약 문구 유지) */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-900/80">
+          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 min-w-0 flex-1 truncate mr-2">
+            {/* 데스크톱 전용 전체 요약 문구 */}
+            <span className="hidden sm:inline">
+              퀘스트 {enabledTaskIds.length}개 · 일일보스 {selectedDailyBossIds.length}개 · 주간보스 {selectedBossIds.length}개
+              {selectedBlackMageId ? ' · 검은마법사 등록됨' : ''}
+              {customTasks.length > 0 ? ` · 커스텀 ${customTasks.length}개` : ''}
+            </span>
+            {/* 모바일 전용 간결 정돈 문구 */}
+            <span className="sm:hidden font-semibold">
+              선택: 퀘스트 {enabledTaskIds.length} · 일보 {selectedDailyBossIds.length} · 주보 {selectedBossIds.length}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer active:scale-95"
             >
               취소
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 shadow-sm transition-all"
+              className="px-4.5 sm:px-5 py-2 rounded-xl text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <span>저장</span>
             </button>

@@ -77,8 +77,12 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
 
   return (
     <div id="weekly-task-list">
-      {/* 주간 컨텐츠 상단 요약 바 (모두 완료 시 박스 색상 변경) */}
-      <div className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+      {/* 주간 컨텐츠 상단 요약 바 (모두 완료 시 박스 색상 변경, 박스 전체 클릭 시 펼치기/접기 지원) */}
+      <div 
+        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
+        className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+          collapsible ? 'cursor-pointer select-none' : ''
+        } ${
         isAlertActive && !isAllCompleted
           ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
           : isAllCompleted
@@ -122,7 +126,11 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
         <div className="flex items-center gap-2 relative z-10">
           {collapsible && (
             <button
-              onClick={() => setIsCollapsed((prev) => !prev)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed((prev) => !prev);
+              }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-rose-200 dark:border-rose-800 bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 hover:bg-rose-200 dark:hover:bg-rose-800'
@@ -207,7 +215,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-                        <MapleIcon name={task.name} icon={task.icon} fallback="🌊" className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                        <MapleIcon taskId={task.id} name={task.name} icon={task.icon} fallback="🌊" className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className={`text-xs font-bold truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                             {task.name}
@@ -254,7 +262,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-                        <MapleIcon name={task.name} icon={task.icon} fallback="🥋" className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                        <MapleIcon taskId={task.id} name={task.name} icon={task.icon} fallback="🥋" className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className={`text-xs font-bold truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                             {task.name}

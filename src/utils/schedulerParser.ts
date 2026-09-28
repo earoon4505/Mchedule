@@ -1,6 +1,11 @@
 import { CharacterProgressRecord, TaskProgressState, CharacterInfo } from '../types';
 import { getKSTDailyKey, getKSTMonthlyKey, getKSTWeeklyThuKey } from './time';
 import { 
+  recordWorldMonsterParkCount, 
+  isAccountMonsterParkApiVerified, 
+  getAccountMonsterParkTotalCount 
+} from './monsterParkTracker';
+import { 
   ALL_TASKS_MAP, 
   WEEKLY_BOSSES, 
   DAILY_BOSSES,
@@ -144,7 +149,7 @@ const KEYWORD_TASK_MAP: Array<{ keywords: string[]; taskId: string; isWeekly?: b
   { keywords: ['배고픈무토', '무토', '츄츄주간'], taskId: 'weekly_arcane_chuchu', isWeekly: true },
   { keywords: ['미드나잇체이서', '미드나잇', '체이서', '레헬른주간'], taskId: 'weekly_arcane_lachelein', isWeekly: true },
   { keywords: ['스피릿세이비어', '아르카나주간', '스세'], taskId: 'weekly_arcane_arcana', isWeekly: true },
-  { keywords: ['엔하임시드', '모라스주간', '엔하임'], taskId: 'weekly_arcane_morass', isWeekly: true },
+  { keywords: ['엔하임디펜스', '엔하임시드', '모라스주간', '엔하임'], taskId: 'weekly_arcane_morass', isWeekly: true },
   { keywords: ['프로텍트에스페라', '에스페라주간', '프로텍트'], taskId: 'weekly_arcane_espera', isWeekly: true },
 
   // 5. 길드 / 주간 컨텐츠 (점수형 컨텐츠 포함)
@@ -836,10 +841,9 @@ export function extractInGameRegisteredTasks(apiData: any): {
       }
 
       const found = findTaskItemId(rawName);
-      // daily_monster_park는 캐릭터 맞춤 설정이 아닌 계정 공통 진행 현황이므로 제외
+      // 일일 퀘스트 및 몬스터파크(계정 컨텐츠) 등록
       if (
         found && 
-        found.taskId !== 'daily_monster_park' &&
         ALL_TASKS_MAP.has(found.taskId) && 
         !enabledTaskIds.includes(found.taskId)
       ) {
@@ -848,7 +852,7 @@ export function extractInGameRegisteredTasks(apiData: any): {
     }
   });
 
-  // 2) weekly_contents (주간 컨텐츠: registration_flag === true, 계정 공통 에픽던전 제외)
+  // 2) weekly_contents (주간 컨텐츠: registration_flag === true, 에픽던전 포함)
   rawWeekly.forEach((item: any) => {
     if (
       isFlagTrue(item.registration_flag) || 
@@ -877,10 +881,9 @@ export function extractInGameRegisteredTasks(apiData: any): {
       }
 
       const found = findTaskItemId(rawName);
-      // weekly_epic_* (에픽던전)는 캐릭터 맞춤 설정이 아닌 계정 공통 진행 현황이므로 제외
+      // 주간 퀘스트 및 에픽던전(계정 컨텐츠) 등록
       if (
         found && 
-        !found.taskId.startsWith('weekly_epic_') &&
         ALL_TASKS_MAP.has(found.taskId) && 
         !enabledTaskIds.includes(found.taskId)
       ) {
@@ -1056,7 +1059,9 @@ export function applyNexonSchedulerData(
   characterEnabledTaskIds?: string[],
   characterSelectedBossIds?: string[],
   characterSelectedDailyBossIds?: string[],
-  characterSelectedBlackMageId?: string | null
+  characterSelectedBlackMageId?: string | null,
+  worldName?: string,
+  apiKeyId?: string
 ): { updatedRecord: CharacterProgressRecord; syncCount: number } {
   if (!apiData) {
     return { updatedRecord: currentRecord, syncCount: 0 };
@@ -1296,11 +1301,33 @@ export function applyNexonSchedulerData(
       const evalResult = evaluateContentProgress(item, found.taskId);
       const targetMap = found.isWeekly ? updatedWeekly : updatedDaily;
 
+      let isTaskDone = evalResult.isCompleted;
+      let finalCount = evalResult.currentCount;
+      let finalMax = evalResult.maxCount;
+
+      // 몬스터파크(일반 일일)인 경우: 월드별 클리어 횟수 기록 및 계정 합산 완료 평가
+      if (found.taskId === 'daily_monster_park') {
+        const mpResult = recordWorldMonsterParkCount(
+          apiKeyId,
+          worldName || '',
+          evalResult.currentCount,
+          evalResult.isCompleted
+        );
+        if (mpResult.isCompleted || mpResult.isApiVerified) {
+          isTaskDone = true;
+          finalCount = Math.max(mpResult.totalCount, evalResult.currentCount, 2);
+        } else {
+          isTaskDone = false;
+          finalCount = mpResult.totalCount;
+        }
+        finalMax = 7;
+      }
+
       targetMap[found.taskId] = {
-        completed: evalResult.isCompleted,
-        currentCount: evalResult.currentCount,
-        maxCount: evalResult.maxCount,
-        completedAt: evalResult.isCompleted ? (targetMap[found.taskId]?.completedAt || nowIso) : undefined,
+        completed: isTaskDone,
+        currentCount: finalCount,
+        maxCount: finalMax,
+        completedAt: isTaskDone ? (targetMap[found.taskId]?.completedAt || nowIso) : undefined,
         autoSynced: true,
       };
       syncCount++;
@@ -1513,6 +1540,26 @@ export function applyNexonSchedulerData(
 
   if (clearedDailyBossIds.length > 0 || updatedWeeklyLog[currentDailyKey]) {
     updatedWeeklyLog[currentDailyKey] = clearedDailyBossIds;
+  }
+
+  // 5. 몬스터파크 계정 공인 완료(apiVerified) 보호 가드:
+  // 당일 API를 통해 합산 2회 이상 달성되었거나 공인 완료 도장이 찍혀있다면 완료 상태 강제 유지
+  // 반대로 공인 완료 기록이 없는데 수동 체크만 해둔 상태라면 API 응답 카운트(< 2)에 의해 completed: false로 자동 해제
+  const isMpApiVerified = isAccountMonsterParkApiVerified(apiKeyId);
+  const mpTotalCount = getAccountMonsterParkTotalCount(apiKeyId);
+  if (isMpApiVerified || mpTotalCount >= 2) {
+    const existingMp = updatedDaily['daily_monster_park'];
+    updatedDaily['daily_monster_park'] = {
+      completed: true,
+      currentCount: Math.max(mpTotalCount, existingMp?.currentCount || 2),
+      maxCount: 7,
+      completedAt: existingMp?.completedAt || nowIso,
+      autoSynced: true,
+    };
+  } else if (!isMpApiVerified && updatedDaily['daily_monster_park']) {
+    if ((updatedDaily['daily_monster_park'].currentCount || 0) < 2) {
+      updatedDaily['daily_monster_park'].completed = false;
+    }
   }
 
   return {

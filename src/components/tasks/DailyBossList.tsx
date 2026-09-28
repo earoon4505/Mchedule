@@ -170,8 +170,12 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
 
   return (
     <div id="daily-boss-list">
-      {/* 일일 보스 상단 요약 바 (sky 계열) */}
-      <div className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+      {/* 일일 보스 상단 요약 바 (sky 계열, 박스 전체 클릭 시 펼치기/접기 지원) */}
+      <div 
+        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
+        className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+          collapsible ? 'cursor-pointer select-none' : ''
+        } ${
         isAlertActive && !isAllCompleted
           ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
           : isAllCompleted
@@ -227,7 +231,11 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
         <div className="flex items-center gap-2 relative z-10">
           {collapsible && (
             <button
-              onClick={() => setIsCollapsed((prev) => !prev)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed((prev) => !prev);
+              }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-sky-200 dark:border-sky-800 bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-800'

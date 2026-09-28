@@ -59,15 +59,15 @@ export function getStoredCommonContentsMap(): Record<string, string[]> {
 }
 
 /**
- * 특정 API(또는 기본 계정)에 활성화된 계정 공통 컨텐츠 ID 목록 조회
+ * 특정 API(또는 기본 계정)에 활성화된 계정 공통 컨텐츠 ID 목록 조회 (기본값: 전체 등록)
  */
 export function getStoredCommonContentIds(apiKeyId?: string | null): string[] {
   const map = getStoredCommonContentsMap();
   const key = apiKeyId || 'default';
-  if (map[key] && Array.isArray(map[key])) {
+  if (map[key] && Array.isArray(map[key]) && map[key].length > 0) {
     return map[key];
   }
-  if (map['default'] && Array.isArray(map['default'])) {
+  if (map['default'] && Array.isArray(map['default']) && map['default'].length > 0) {
     return map['default'];
   }
   return DEFAULT_COMMON_CONTENT_IDS;

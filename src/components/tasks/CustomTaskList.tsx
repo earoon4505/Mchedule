@@ -72,9 +72,12 @@ export const CustomTaskList: React.FC<CustomTaskListProps> = React.memo(({
 
   return (
     <div id="custom-task-section">
-      {/* 커스텀 상단 요약 바 (게이지 및 완료 시: 라이트 모드 검정 테두리/어두운 회색 배경, 다크 모드 하얀 테두리/밝은 회색 배경) */}
+      {/* 커스텀 상단 요약 바 (박스 전체 클릭 시 펼치기/접기 지원) */}
       <div
+        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
         className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+          collapsible ? 'cursor-pointer select-none' : ''
+        } ${
           isAlertActive && !isAllCompleted
             ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
             : isAllCompleted
@@ -125,7 +128,11 @@ export const CustomTaskList: React.FC<CustomTaskListProps> = React.memo(({
         <div className="flex items-center gap-2 relative z-10">
           {collapsible && (
             <button
-              onClick={() => setIsCollapsed((prev) => !prev)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed((prev) => !prev);
+              }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-black bg-zinc-300 text-zinc-950 hover:bg-zinc-400 dark:border-white dark:bg-zinc-600 dark:text-white dark:hover:bg-zinc-500'

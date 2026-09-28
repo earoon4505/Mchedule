@@ -153,8 +153,12 @@ export const WeeklyBossList: React.FC<WeeklyBossListProps> = React.memo(({
 
   return (
     <div id="weekly-boss-list">
-      {/* 주간 보스 상단 요약 바 (완료 기준 충족 시 박스 색상 변경) */}
-      <div className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+      {/* 주간 보스 상단 요약 바 (완료 기준 충족 시 박스 색상 변경, 박스 전체 클릭 시 펼치기/접기 지원) */}
+      <div 
+        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
+        className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+          collapsible ? 'cursor-pointer select-none' : ''
+        } ${
         isAlertActive && !isAllCompleted
           ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
           : isAllCompleted
@@ -204,7 +208,11 @@ export const WeeklyBossList: React.FC<WeeklyBossListProps> = React.memo(({
         <div className="flex items-center gap-2 relative z-10">
           {collapsible && (
             <button
-              onClick={() => setIsCollapsed((prev) => !prev)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed((prev) => !prev);
+              }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-purple-200 dark:border-purple-800 bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800'

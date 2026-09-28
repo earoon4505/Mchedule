@@ -229,17 +229,9 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
 
   if (!pip.enabled) return null;
 
-  // 프로필 사진만 표시 모드(onlyAvatar)이면서 다계정 환경인 경우, 현재 활성 계정의 캐릭터들만 선별
-  const baseCharacters = useMemo(() => {
-    if (pip.onlyAvatar && currentActiveChar?.apiKeyId) {
-      const hasMultipleAccounts = safeCharacters.some((c) => c.apiKeyId && c.apiKeyId !== currentActiveChar.apiKeyId);
-      if (hasMultipleAccounts) {
-        const filtered = safeCharacters.filter((c) => c.apiKeyId === currentActiveChar.apiKeyId);
-        if (filtered.length > 0) return filtered;
-      }
-    }
-    return safeCharacters;
-  }, [safeCharacters, pip.onlyAvatar, currentActiveChar?.apiKeyId]);
+  // PiP 캐릭터 목록: 기본 모드 및 프로필 사진 모드 모두 전체 캐릭터(또는 즐겨찾기 필터)를 온전히 표시
+  // (계정 공통 컨텐츠는 상단 인디케이터에서 선택된 활성 API 계정 기준으로만 독립 계산 유지)
+  const baseCharacters = safeCharacters;
 
   // 1. 캐릭터 필터링 (완료된 캐릭터 숨기기 + 즐겨찾기 필터)
   const visibleCharacters = useMemo(() => {
@@ -536,6 +528,7 @@ export const PiPOverlay: React.FC<PiPOverlayProps> = React.memo(({
                       : 'bg-slate-100 dark:bg-slate-800/80'
                   }`}>
                     <MapleIcon
+                      taskId={item.id}
                       name={item.name}
                       icon={item.icon}
                       fallback={item.fallbackIcon}

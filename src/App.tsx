@@ -43,6 +43,10 @@ import {
   sortBossIdsByStandardOrder,
   sortDailyBossIdsByStandardOrder
 } from './utils/schedulerParser';
+import { 
+  isAccountMonsterParkApiVerified, 
+  getAccountMonsterParkTotalCount 
+} from './utils/monsterParkTracker';
 import { sendWindowsNotification, playCheckSound } from './utils/notifications';
 import { APP_LOGO_SRC, onLogoError } from './utils/image';
 import { broadcastAppData, subscribeToBroadcast, subscribeToApiKeys } from './utils/syncChannel';
@@ -64,6 +68,7 @@ import { SettingsModal } from './components/settings/SettingsModal';
 // import { AdSenseBanner } from './components/ads/AdSenseBanner'; // 추후 광고 배너 활성화 시 주석 해제
 import { ApiKeyModal } from './components/settings/ApiKeyModal';
 import { NoticeModal } from './components/common/NoticeModal';
+import { MobileBottomNav, MobileTabType } from './components/common/MobileBottomNav';
 import { LegalModal, LegalTab } from './components/legal/LegalModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
@@ -75,9 +80,9 @@ import {
   evaluateAccountAlerts,
   getActiveAlertCycleKey 
 } from './utils/alertNotifier';
-import { Plus, SlidersHorizontal, Calendar, Flame, Crown, LayoutGrid, ShieldAlert, AlertTriangle, X, RefreshCw } from 'lucide-react';
+import { Plus, SlidersHorizontal, Calendar, Flame, Crown, LayoutGrid, ShieldAlert, AlertTriangle, X, RefreshCw, ChevronLeft, Users, Package, BarChart3 } from 'lucide-react';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
-import { motion } from 'motion/react';
+import { motion, LayoutGroup } from 'motion/react';
 import { isWeb, isElectron, supportsPiP, LOCAL_STORAGE_DATA_KEY } from './utils/platform';
 
 const LOCAL_STORAGE_KEY = LOCAL_STORAGE_DATA_KEY;
@@ -147,10 +152,15 @@ export default function App() {
   const [collapseTrigger, setCollapseTrigger] = useState<number>(0);
   const [characterSelectTrigger, setCharacterSelectTrigger] = useState<number>(0);
 
+  // 모바일 전용 하단 탭 및 캐릭터 화면 서브 뷰 상태 (모바일 최초 접속 시 캐릭터 목록 화면 우선 노출)
+  const [mobileTab, setMobileTab] = useState<MobileTabType>('character');
+  const [mobileCharacterSubView, setMobileCharacterSubView] = useState<'detail' | 'list'>('list');
+
   const handleSelectCharacter = (id: string) => {
     setActiveCharacterId(id);
     setCollapseTrigger((prev) => prev + 1);
     setCharacterSelectTrigger((prev) => prev + 1);
+    setMobileCharacterSubView('detail'); // 모바일에서 캐릭터 카드 탭 시 바로 해당 캐릭터 할 일로 전환!
     // 메인 창 캐릭터 선택 즉시 로컬 스토리지 저장 및 PiP로 0ms 브로드캐스트
     persistData(charactersRef.current, recordsRef.current, settingsRef.current, id, false);
     // 데스크톱 Electron IPC 실시간 0ms 동기화
@@ -891,80 +901,82 @@ export default function App() {
 
       // 2. API 키가 남아있는 경우:
       // 삭제된 API 키에 소속된 캐릭터를 전부 삭제(filter)하고, 유효한 키에 소속된 캐릭터만 보존
-      setCharacters((prev) => {
-        let changed = false;
-        const kept: CharacterInfo[] = [];
+      const prevChars = charactersRef.current;
+      let changed = false;
+      const kept: CharacterInfo[] = [];
 
-        for (const c of prev) {
-          if (c.apiKeyId) {
-            if (validKeyIds.has(c.apiKeyId)) {
-              // 유효한 키에 소속된 캐릭터: 보존 및 최신 별칭 동기화
-              const newAlias = aliasMap.get(c.apiKeyId);
-              if (newAlias && c.apiKeyAlias !== newAlias) {
-                changed = true;
-                kept.push({ ...c, apiKeyAlias: newAlias });
-              } else {
-                kept.push(c);
-              }
-            } else {
-              // 소속된 API 키가 삭제된 캐릭터: 완전 삭제
+      for (const c of prevChars) {
+        if (c.apiKeyId) {
+          if (validKeyIds.has(c.apiKeyId)) {
+            // 유효한 키에 소속된 캐릭터: 보존 및 최신 별칭 동기화
+            const newAlias = aliasMap.get(c.apiKeyId);
+            if (newAlias && c.apiKeyAlias !== newAlias) {
               changed = true;
+              kept.push({ ...c, apiKeyAlias: newAlias });
+            } else {
+              kept.push(c);
             }
           } else {
-            // apiKeyId가 없는 레거시 캐릭터: 유효 키가 정확히 1개일 때만 자동 연결하여 보존, 아니면 삭제
-            if (updatedKeys.length === 1) {
-              changed = true;
-              kept.push({
-                ...c,
-                apiKeyId: updatedKeys[0].id,
-                apiKeyAlias: updatedKeys[0].alias,
-              });
-            } else {
-              changed = true;
-            }
+            // 소속된 API 키가 삭제된 캐릭터: 완전 삭제
+            changed = true;
+          }
+        } else {
+          // apiKeyId가 없는 레거시 캐릭터: 유효 키가 정확히 1개일 때만 자동 연결하여 보존, 아니면 삭제
+          if (updatedKeys.length === 1) {
+            changed = true;
+            kept.push({
+              ...c,
+              apiKeyId: updatedKeys[0].id,
+              apiKeyAlias: updatedKeys[0].alias,
+            });
+          } else {
+            changed = true;
+          }
+        }
+      }
+
+      // 삭제된 API 키의 계정 공통 컨텐츠 맞춤 설정 정리
+      try {
+        const commonMap = getStoredCommonContentsMap();
+        Object.keys(commonMap).forEach((kId) => {
+          if (kId !== 'default' && !validKeyIds.has(kId)) {
+            removeStoredCommonContentId(kId);
+          }
+        });
+      } catch (_) {}
+
+      if (changed) {
+        // 삭제된 캐릭터들의 진행 기록(records) 정리
+        const keptIds = new Set(kept.map((c) => c.id));
+        const currentRecords = recordsRef.current;
+        let recordsChanged = false;
+        const nextRecords: Record<string, CharacterProgressRecord> = {};
+        for (const cid of Object.keys(currentRecords)) {
+          if (keptIds.has(cid) && currentRecords[cid]) {
+            nextRecords[cid] = currentRecords[cid];
+          } else {
+            recordsChanged = true;
           }
         }
 
-        // 삭제된 API 키의 계정 공통 컨텐츠 맞춤 설정 정리
-        try {
-          const commonMap = getStoredCommonContentsMap();
-          Object.keys(commonMap).forEach((kId) => {
-            if (kId !== 'default' && !validKeyIds.has(kId)) {
-              removeStoredCommonContentId(kId);
-            }
-          });
-        } catch (_) {}
-
-        if (changed) {
-          // 삭제된 캐릭터들의 진행 기록(records) 정리
-          const keptIds = new Set(kept.map((c) => c.id));
-          const currentRecords = recordsRef.current;
-          let recordsChanged = false;
-          const nextRecords: Record<string, CharacterProgressRecord> = {};
-          for (const cid of Object.keys(currentRecords)) {
-            if (keptIds.has(cid) && currentRecords[cid]) {
-              nextRecords[cid] = currentRecords[cid];
-            } else {
-              recordsChanged = true;
-            }
-          }
-          if (recordsChanged) {
-            setRecords(nextRecords);
-          }
-
-          // 활성 캐릭터가 삭제되었으면 첫 번째 남은 캐릭터로 전환하거나 null 처리
-          let nextActiveId = activeCharacterIdRef.current;
-          if (nextActiveId && !keptIds.has(nextActiveId)) {
-            nextActiveId = kept[0]?.id || null;
-            setActiveCharacterId(nextActiveId);
-          }
-
-          persistData(kept, recordsChanged ? nextRecords : currentRecords, settingsRef.current, nextActiveId, true);
-          return kept;
+        // 활성 캐릭터가 삭제되었으면 첫 번째 남은 캐릭터로 전환하거나 null 처리
+        let nextActiveId = activeCharacterIdRef.current;
+        let activeChanged = false;
+        if (nextActiveId && !keptIds.has(nextActiveId)) {
+          nextActiveId = kept[0]?.id || null;
+          activeChanged = true;
         }
 
-        return prev;
-      });
+        setCharacters(kept);
+        if (recordsChanged) {
+          setRecords(nextRecords);
+        }
+        if (activeChanged) {
+          setActiveCharacterId(nextActiveId);
+        }
+
+        persistData(kept, recordsChanged ? nextRecords : currentRecords, settingsRef.current, nextActiveId, true);
+      }
     }
   }, [persistData]);
 
@@ -1161,7 +1173,9 @@ export default function App() {
                 updatedChars[i].enabledTaskIds,
                 updatedChars[i].selectedBossIds,
                 updatedChars[i].selectedDailyBossIds,
-                updatedChars[i].selectedBlackMageId
+                updatedChars[i].selectedBlackMageId,
+                updatedChars[i].worldName,
+                updatedChars[i].apiKeyId
               );
 
               // 검은 마법사는 주간/일일 보스와 마찬가지로 미선택 처치 보스로 정상 표시되므로 selectedBlackMageId 강제 할당 불필요
@@ -1178,6 +1192,31 @@ export default function App() {
           }
         }
       }
+
+      // 계정별 몬스터파크 공통 완료 상태 전체 캐릭터 일괄 정합성 동기화
+      // (한 계정 내에서 어느 월드든 합산 2회 이상이거나 API 공인 완료된 경우 해당 계정 캐릭터 모두에게 완료 반영)
+      const allAccountKeyIds = new Set(updatedChars.map((c) => c.apiKeyId || 'default'));
+      allAccountKeyIds.forEach((kId) => {
+        const isVerified = isAccountMonsterParkApiVerified(kId);
+        const totalCount = getAccountMonsterParkTotalCount(kId);
+        if (isVerified || totalCount >= 2) {
+          const nowStr = new Date().toISOString();
+          updatedChars
+            .filter((c) => (c.apiKeyId || 'default') === kId)
+            .forEach((c) => {
+              const rec = currentRecords[c.id];
+              if (rec && rec.dailyTasks) {
+                rec.dailyTasks['daily_monster_park'] = {
+                  completed: true,
+                  currentCount: Math.max(totalCount, rec.dailyTasks['daily_monster_park']?.currentCount || 2),
+                  maxCount: 7,
+                  completedAt: rec.dailyTasks['daily_monster_park']?.completedAt || nowStr,
+                  autoSynced: true,
+                };
+              }
+            });
+        }
+      });
 
       setRecords(currentRecords);
       if (hasCharUpdate) {
@@ -1348,13 +1387,14 @@ export default function App() {
         const updatedWeekly = { ...currentRec.weeklyTasks };
 
         if (taskId === 'daily_monster_park') {
+          // 사용자의 수동 체크/체크해제 조작 즉각 반영
+          // (수동 해제 시 false로 풀리며, 이후 새로고침(동기화) 시 API 데이터 및 공인 상태에 따라 다시 체크됨)
           const nextCount = count !== undefined ? count : completed ? 2 : 0;
-          const isDone = completed || nextCount >= 2;
           updatedDaily['daily_monster_park'] = {
-            completed: isDone,
+            completed,
             currentCount: nextCount,
             maxCount: 7,
-            completedAt: isDone ? nowStr : undefined,
+            completedAt: completed ? nowStr : undefined,
           };
         } else {
           updatedWeekly[taskId] = {
@@ -1692,7 +1732,9 @@ export default function App() {
             formattedChar.enabledTaskIds,
             formattedChar.selectedBossIds,
             formattedChar.selectedDailyBossIds,
-            formattedChar.selectedBlackMageId
+            formattedChar.selectedBlackMageId,
+            formattedChar.worldName,
+            formattedChar.apiKeyId
           );
           initialRecord = updatedRecord;
         }
@@ -1821,6 +1863,20 @@ export default function App() {
     }
     setSettings(next);
     persistData(characters, records, next, activeCharacterId);
+  };
+
+  // PiP 모드 토글 (데스크톱 및 웹 겸용 임시 활성화)
+  const handleTogglePip = () => {
+    const nextEnabled = !settings.pip?.enabled;
+    if ((window as any).electronAPI?.togglePiPWindow) {
+      (window as any).electronAPI.togglePiPWindow();
+    }
+    handleUpdateSettings({
+      pip: {
+        ...settings.pip,
+        enabled: nextEnabled,
+      },
+    });
   };
 
   const handleExportData = () => {
@@ -2057,82 +2113,126 @@ export default function App() {
         </div>
       )}
 
-      {/* 2. 메인 3분할 뷰 */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#F8F9FB] dark:bg-slate-950 min-h-0 min-w-0">
-        {/* 좌측 사이드바: 캐릭터 목록 */}
-        <CharacterSidebar
-          characters={characters}
-          records={records}
-          activeCharacterId={activeCharacterId}
-          apiKeys={apiKeys}
-          settings={settings}
-          characterAlertMap={characterAlertMap}
-          onSelectCharacter={handleSelectCharacter}
-          onOpenAddModal={() => setIsAddModalOpen(true)}
-          onToggleFavorite={handleToggleFavorite}
-          onMoveCharacter={handleMoveCharacter}
-          onDeleteCharacter={handleDeleteCharacter}
-          onOpenContentConfig={(id, e) => {
-            e.stopPropagation();
-            setConfigCharacterId(id);
-          }}
-          onSelectTab={(tab) => setActiveTab(tab)}
-          onOpenLegalModal={handleOpenLegalModal}
-        />
+      {/* 2. 메인 뷰 (데스크톱: 3분할 가로 정렬 / 모바일: 하단 탭에 따른 단일 전체화면 뷰) */}
+      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#F8F9FB] dark:bg-slate-950 min-h-0 min-w-0 relative">
+        {/* 좌측 사이드바: 캐릭터 목록 (모바일에서는 '캐릭터' 탭의 '목록' 상태일 때 전체 화면으로 표시되며 위아래 스크롤 지원) */}
+        <div className={`
+          ${mobileTab === 'character' && (mobileCharacterSubView === 'list' || !activeCharacter) ? 'flex' : 'hidden'} 
+          lg:flex lg:w-72 lg:min-w-[280px] lg:max-w-[288px] flex-col flex-shrink-0 h-full overflow-hidden w-full
+        `}>
+          <CharacterSidebar
+            characters={characters}
+            records={records}
+            activeCharacterId={activeCharacterId}
+            apiKeys={apiKeys}
+            settings={settings}
+            characterAlertMap={characterAlertMap}
+            onSelectCharacter={handleSelectCharacter}
+            onOpenAddModal={() => setIsAddModalOpen(true)}
+            onToggleFavorite={handleToggleFavorite}
+            onMoveCharacter={handleMoveCharacter}
+            onDeleteCharacter={handleDeleteCharacter}
+            onOpenContentConfig={(id, e) => {
+              e.stopPropagation();
+              setConfigCharacterId(id);
+            }}
+            onSelectTab={(tab) => {
+              setActiveTab(tab);
+              setMobileCharacterSubView('detail');
+            }}
+            onOpenLegalModal={handleOpenLegalModal}
+          />
+        </div>
 
-        {/* 중앙: 선택된 캐릭터의 콘텐츠 관리 영역 */}
+        {/* 중앙: 선택된 캐릭터의 콘텐츠 관리 영역 (모바일에서는 '캐릭터' 탭의 '상세' 상태일 때 전체 화면 표시) */}
         <section 
           id="main-content-section" 
-          className="flex-1 flex flex-col bg-[#F8F9FB] dark:bg-slate-950 overflow-hidden min-h-0 min-w-0"
+          className={`
+            ${mobileTab === 'character' && mobileCharacterSubView === 'detail' && activeCharacter ? 'flex' : 'hidden'}
+            lg:flex flex-1 flex-col bg-[#F8F9FB] dark:bg-slate-950 overflow-hidden min-h-0 min-w-0 h-full pb-0
+          `}
         >
+          {/* 모바일 전용 상단 캐릭터 전환 미니 바: 캐릭터 목록으로 돌아가기 버튼 + 현재 캐릭터 정보 + 스케줄 설정 버튼 */}
+          {activeCharacter && (
+            <div className="lg:hidden px-3.5 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 flex-shrink-0 shadow-2xs">
+              <button
+                type="button"
+                id="btn-mobile-back-to-char-list"
+                onClick={() => setMobileCharacterSubView('list')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/80 dark:border-orange-800 text-xs font-bold active:scale-95 transition-all shadow-2xs cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>캐릭터 목록</span>
+              </button>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                  {activeCharacter.characterName}
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  Lv.{activeCharacter.characterLevel}
+                </span>
+                <button
+                  type="button"
+                  id="btn-mobile-schedule-config"
+                  onClick={() => setConfigCharacterId(activeCharacter.id)}
+                  className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-500 active:scale-95 transition-all cursor-pointer"
+                  title="스케줄 설정"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
           {activeCharacter ? (
             (() => {
               const activeCharAlert = characterAlertMap[activeCharacter.id];
               return (
             <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
-              {/* 중앙 상단: 탭 헤더 (가로 한 줄 고정 정렬 & 마우스 휠 가로 스크롤 지원) */}
+              {/* 중앙 상단: 탭 헤더 (데스크톱 전용: 가로 한 줄 고정 정렬 & 마우스 휠 가로 스크롤 지원 / 모바일에서는 요청에 따라 숨김) */}
               <div 
                 ref={tabScrollRef}
                 onWheel={handleTabWheel}
-                className="px-5 sm:px-6 py-3.5 bg-[#F8F9FB] dark:bg-slate-950 flex items-center justify-between gap-3 flex-shrink-0 overflow-x-auto custom-scrollbar"
+                className="hidden lg:flex px-5 sm:px-6 py-3.5 bg-[#F8F9FB] dark:bg-slate-950 items-center justify-between gap-3 flex-shrink-0 overflow-x-auto custom-scrollbar"
               >
                 <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
                   {/* 한국어 탭 세그먼트 버튼 (부드러운 슬라이딩 모션 전환) */}
-                  <div className="flex bg-white dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-800 shadow-xs flex-shrink-0 relative">
-                    {[
-                      { id: 'all', label: '전체', icon: LayoutGrid, activeBg: 'bg-orange-500', activeText: 'text-white' },
-                      { id: 'daily', label: '일일 컨텐츠', icon: Calendar, activeBg: 'bg-amber-500', activeText: 'text-white' },
-                      { id: 'daily_boss', label: '일일 보스', icon: Crown, activeBg: 'bg-sky-600', activeText: 'text-white' },
-                      { id: 'weekly', label: '주간 컨텐츠', icon: Flame, activeBg: 'bg-rose-700', activeText: 'text-white' },
-                      { id: 'bosses', label: '주간 보스', icon: Crown, activeBg: 'bg-purple-600', activeText: 'text-white' },
-                      { id: 'custom', label: '커스텀', icon: Plus, activeBg: 'bg-black dark:bg-white', activeText: 'text-white dark:text-black' },
-                    ].map((tab) => {
-                      const isActive = activeTab === tab.id;
-                      const Icon = tab.icon;
-                      return (
-                        <button
-                          key={tab.id}
-                          id={`tab-btn-${tab.id}`}
-                          onClick={() => setActiveTab(tab.id as any)}
-                          className={`relative px-3 sm:px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer z-10 select-none ${
-                            isActive
-                              ? tab.activeText
-                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
-                          }`}
-                        >
-                          {isActive && (
-                            <motion.div
-                              layoutId="mainActiveTabPill"
-                              className={`absolute inset-0 rounded-lg shadow-xs -z-10 ${tab.activeBg}`}
-                              transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                            />
-                          )}
-                          <Icon className="w-3.5 h-3.5 relative z-10" />
-                          <span className="relative z-10">{tab.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <LayoutGroup id="mainTabsGroup">
+                    <div className="flex bg-white dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-800 shadow-xs flex-shrink-0 relative">
+                      {[
+                        { id: 'all', label: '전체', icon: LayoutGrid, activeBg: 'bg-orange-500', activeText: 'text-white' },
+                        { id: 'daily', label: '일일 컨텐츠', icon: Calendar, activeBg: 'bg-amber-500', activeText: 'text-white' },
+                        { id: 'daily_boss', label: '일일 보스', icon: Crown, activeBg: 'bg-sky-600', activeText: 'text-white' },
+                        { id: 'weekly', label: '주간 컨텐츠', icon: Flame, activeBg: 'bg-rose-700', activeText: 'text-white' },
+                        { id: 'bosses', label: '주간 보스', icon: Crown, activeBg: 'bg-purple-600', activeText: 'text-white' },
+                        { id: 'custom', label: '커스텀', icon: Plus, activeBg: 'bg-black dark:bg-white', activeText: 'text-white dark:text-black' },
+                      ].map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        const Icon = tab.icon;
+                        return (
+                          <button
+                            key={tab.id}
+                            id={`tab-btn-${tab.id}`}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`relative px-3 sm:px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer z-10 select-none ${
+                              isActive
+                                ? tab.activeText
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
+                            }`}
+                          >
+                            {isActive && (
+                              <motion.div
+                                layoutId="mainActiveTabPill"
+                                className={`absolute inset-0 rounded-lg shadow-xs -z-10 ${tab.activeBg}`}
+                                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                              />
+                            )}
+                            <Icon className="w-3.5 h-3.5 relative z-10" />
+                            <span className="relative z-10">{tab.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </LayoutGroup>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -2146,8 +2246,8 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 스크롤 가능한 콘텐츠 뷰 (스크롤바 표시 시 크기 흔들림 방지) */}
-              <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable]">
+              {/* 스크롤 가능한 콘텐츠 뷰 (모바일 하단바 여백 pb-16 적용으로 과도한 공백 제거) */}
+              <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable] pb-16 lg:pb-6">
                 {(activeTab === 'all' || activeTab === 'daily') && (
                   <DailyTaskList
                     key={`${activeCharacter.id}-${collapseTrigger}-daily`}
@@ -2270,22 +2370,43 @@ export default function App() {
           */}
         </section>
 
-        {/* 우측 진행률 패널 */}
-        <ProgressPanel
-          characters={characters}
-          records={records}
-          activeCharacter={activeCharacter}
-          apiKeys={apiKeys}
-          characterSelectTrigger={characterSelectTrigger}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-          autoSyncCountdown={autoSyncCountdown}
-          onToggleCommonTask={handleToggleCommonTask}
-          settings={settings}
-          accountAlertStatus={accountAlertStatus}
-          onUpdateSettings={handleUpdateSettings}
-        />
+        {/* 우측 진행률 패널 / 계정 컨텐츠 (모바일: '계정 컨텐츠' 또는 '진행 현황' 탭일 때 전체 화면 표시) */}
+        <div className={`
+          ${mobileTab === 'common' || mobileTab === 'progress' ? 'flex' : 'hidden'}
+          lg:flex lg:w-80 flex-col flex-shrink-0 h-full overflow-hidden w-full pb-0
+        `}>
+          <ProgressPanel
+            characters={characters}
+            records={records}
+            activeCharacter={activeCharacter}
+            apiKeys={apiKeys}
+            characterSelectTrigger={characterSelectTrigger}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+            autoSyncCountdown={autoSyncCountdown}
+            onToggleCommonTask={handleToggleCommonTask}
+            settings={settings}
+            accountAlertStatus={accountAlertStatus}
+            onUpdateSettings={handleUpdateSettings}
+            mobileMode={mobileTab === 'common' ? 'common' : mobileTab === 'progress' ? 'progress' : 'all'}
+          />
+        </div>
       </main>
+
+      {/* 3. 모바일 웹 전용 하단 고정 네비게이션 바 (데스크톱에서는 lg:hidden으로 완전 숨김) */}
+      <MobileBottomNav
+        activeTab={mobileTab}
+        onChangeTab={(tab) => {
+          if (tab === 'character' && mobileTab === 'character') {
+            setMobileCharacterSubView('list');
+          }
+          setMobileTab(tab);
+          if (tab === 'character' && !activeCharacter) {
+            setMobileCharacterSubView('list');
+          }
+        }}
+        characterCount={characters.length}
+      />
 
       {/* 모달 컴포넌트들 */}
       <CharacterSearchModal

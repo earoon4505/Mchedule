@@ -192,11 +192,11 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
           <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-orange-500' : ''}`} />
         </button>
 
-        {/* 4. 다크/라이트 모드 토글 버튼 (아이콘만 표시) */}
+        {/* 4. 다크/라이트 모드 토글 버튼 (아이콘만 표시, 모바일에서는 요청에 따라 숨김) */}
         <button
           id="btn-header-darkmode-toggle"
           onClick={onToggleDarkMode}
-          className="h-7 w-7 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0 shadow-2xs"
+          className="hidden lg:flex h-7 w-7 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 items-center justify-center flex-shrink-0 shadow-2xs"
           title={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
         >
           {darkMode ? (

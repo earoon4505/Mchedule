@@ -33,12 +33,12 @@ export const DAILY_OTHER: TaskItem[] = [
 ];
 
 export const WEEKLY_QUESTS: TaskItem[] = [
-  { id: 'weekly_arcane_vanishing', name: '소멸의 여로 (에르다 스펙트럼)', category: 'weekly_quest', type: 'boolean', minLevel: 200, region: '소멸의 여로', icon: '🌊', resetType: 'weekly_thu' },
-  { id: 'weekly_arcane_chuchu', name: '츄츄 아일랜드 (배고픈 무토)', category: 'weekly_quest', type: 'boolean', minLevel: 210, region: '츄츄 아일랜드', icon: '🥪', resetType: 'weekly_thu' },
-  { id: 'weekly_arcane_lachelein', name: '레헬른 (미드나잇 체이서)', category: 'weekly_quest', type: 'boolean', minLevel: 220, region: '레헬른', icon: '🎭', resetType: 'weekly_thu' },
-  { id: 'weekly_arcane_arcana', name: '아르카나 (스피릿 세이비어)', category: 'weekly_quest', type: 'boolean', minLevel: 225, region: '아르카나', icon: '🌳', resetType: 'weekly_thu' },
-  { id: 'weekly_arcane_morass', name: '모라스 (엔하임 시드)', category: 'weekly_quest', type: 'boolean', minLevel: 230, region: '모라스', icon: '🧪', resetType: 'weekly_thu' },
-  { id: 'weekly_arcane_espera', name: '에스페라 (프로텍트 에스페라)', category: 'weekly_quest', type: 'boolean', minLevel: 235, region: '에스페라', icon: '✨', resetType: 'weekly_thu' },
+  { id: 'weekly_arcane_vanishing', name: '에르다 스펙트럼', category: 'weekly_quest', type: 'boolean', minLevel: 200, region: '소멸의 여로', icon: '🌊', resetType: 'weekly_thu' },
+  { id: 'weekly_arcane_chuchu', name: '배고픈 무토', category: 'weekly_quest', type: 'boolean', minLevel: 210, region: '츄츄 아일랜드', icon: '🥪', resetType: 'weekly_thu' },
+  { id: 'weekly_arcane_lachelein', name: '미드나잇 체이서', category: 'weekly_quest', type: 'boolean', minLevel: 220, region: '레헬른', icon: '🎭', resetType: 'weekly_thu' },
+  { id: 'weekly_arcane_arcana', name: '스피릿 세이비어', category: 'weekly_quest', type: 'boolean', minLevel: 225, region: '아르카나', icon: '🌳', resetType: 'weekly_thu' },
+  { id: 'weekly_arcane_morass', name: '엔하임 디펜스', category: 'weekly_quest', type: 'boolean', minLevel: 230, region: '모라스', icon: '🧪', resetType: 'weekly_thu' },
+  { id: 'weekly_arcane_espera', name: '프로텍트 에스페라', category: 'weekly_quest', type: 'boolean', minLevel: 235, region: '에스페라', icon: '✨', resetType: 'weekly_thu' },
 ];
 
 export const EPIC_DUNGEONS: TaskItem[] = [
@@ -437,25 +437,33 @@ export const ALL_TASKS_MAP = new Map<string, TaskItem>([
   ...BLACK_MAGE_TASKS.map((t) => [t.id, t] as [string, TaskItem]),
 ]);
 
-// 캐릭터 레벨에 맞는 추천 기본 활성 태스크 ID 목록 (몬스터파크, 에픽던전은 계정 공통 관리로 제외)
+// 캐릭터 추천 기본 활성 태스크 ID 목록 (계정 컨텐츠인 몬스터파크 및 모든 에픽던전 기본 무조건 전체 등록)
 export function getDefaultEnabledTasksForLevel(level: number): string[] {
   const result: string[] = [];
 
-  // 일일 퀘스트
+  // 1. 몬스터파크 (계정 공통 컨텐츠: 레벨 무관 기본 무조건 등록)
+  result.push('daily_monster_park');
+
+  // 2. 에픽 던전 전체 (계정 공통 컨텐츠: 레벨 무관 기본 무조건 등록)
+  EPIC_DUNGEONS.forEach((epic) => {
+    result.push(epic.id);
+  });
+
+  // 3. 일일 퀘스트 (아케인리버 / 그란디스)
   DAILY_QUESTS.forEach((q) => {
     if (!q.minLevel || level >= q.minLevel) {
       result.push(q.id);
     }
   });
 
-  // 주간 퀘스트
+  // 4. 주간 퀘스트
   WEEKLY_QUESTS.forEach((q) => {
     if (!q.minLevel || level >= q.minLevel) {
       result.push(q.id);
     }
   });
 
-  // 무릉 / 수로 / 플래그
+  // 5. 무릉 / 수로 / 플래그
   result.push('weekly_mulung_dojang', 'weekly_sharenian_culvert', 'weekly_flag_race');
 
   return result;

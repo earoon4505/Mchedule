@@ -16,6 +16,7 @@ import { getDefaultEnabledTasksForLevel, getDefaultBossesForLevel, getDefaultDai
 import { extractInGameRegisteredTasks } from '../../utils/schedulerParser';
 import { CharacterAvatar } from './CharacterAvatar';
 import { getStoredApiKeys } from '../../utils/accountHelper';
+import { DEFAULT_COMMON_CONTENT_IDS, saveStoredCommonContentIds, getStoredCommonContentsMap } from '../../utils/commonContents';
 import { motion } from 'motion/react';
 
 interface CharacterSearchModalProps {
@@ -240,7 +241,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
             initialBlackMageId = selectedBlackMageId;
           }
         } else {
-          // 인게임 스케줄러 조회 실패 시 최소한의 레벨별 퀘스트만 기본 활성화 (보스는 임의 등록 방지)
+          // 인게임 스케줄러 조회 실패 시 레벨별 기본 퀘스트 및 계정 컨텐츠 등록
           initialTasks = getDefaultEnabledTasksForLevel(level);
         }
       } catch (err) {
@@ -249,6 +250,22 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
     } else {
       initialTasks = getDefaultEnabledTasksForLevel(level);
     }
+
+    // [요구사항 1] 레벨 무관: 계정 컨텐츠(몬스터파크, 하이마운틴, 앵글러 등 모든 에픽던전) 기본값 무조건 전체 등록
+    DEFAULT_COMMON_CONTENT_IDS.forEach((commonId) => {
+      if (!initialTasks.includes(commonId)) {
+        initialTasks.push(commonId);
+      }
+    });
+
+    // 계정 공통 컨텐츠 관리 저장소에도 해당 계정 키의 기본값을 전체 활성화(체크)로 보장
+    try {
+      const currentMap = getStoredCommonContentsMap();
+      const targetKey = char.apiKeyId || 'default';
+      if (!currentMap[targetKey] || currentMap[targetKey].length === 0) {
+        saveStoredCommonContentIds(targetKey, DEFAULT_COMMON_CONTENT_IDS);
+      }
+    } catch (_) {}
 
     const newChar: CharacterInfo = {
       id: char.ocid || `char_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -319,9 +336,9 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
           </div>
         </div>
 
-        {/* 2. API 키 미등록 시 상태 */}
+        {/* 2. API 키 미등록 시 상태 (스크롤바 숨김: no-scrollbar) */}
         {!hasApiKey ? (
-          <div className="flex-1 p-8 sm:p-12 flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-6 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 p-8 sm:p-12 flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-6 overflow-y-auto no-scrollbar touch-pan-y overscroll-contain">
             <div className="w-16 h-16 rounded-3xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-md flex-shrink-0">
               <Key className="w-8 h-8" />
             </div>
@@ -497,8 +514,8 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
               </div>
             </div>
 
-            {/* 캐릭터 카드 그리드 영역 */}
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col">
+            {/* 캐릭터 카드 그리드 영역 (스크롤바 숨김: no-scrollbar) */}
+            <div className="flex-1 p-4 sm:p-6 overflow-y-auto no-scrollbar touch-pan-y overscroll-contain flex flex-col min-h-0">
               {isLoading ? (
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
                   <LoadingSpinner size="lg" text="캐릭터 목록을 불러오는 중..." />

@@ -243,8 +243,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         )}
 
-        {/* 본문 */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+        {/* 본문 (스크롤바 숨김: no-scrollbar) */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar touch-pan-y overscroll-contain min-h-0">
           {/* 1. 테마 설정 (다크 모드 / 라이트 모드) */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -506,7 +506,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         : 'text-slate-400'
                     }`}
                   />
-                  <span>즐겨찾기 캐릭터만 적용</span>
+                  <span className="whitespace-nowrap">즐겨찾기 캐릭터만 적용</span>
                 </button>
 
                 {/* 알림이 토글 스위치 */}
@@ -520,18 +520,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            {/* 시간 및 분 조절 칸 (PIP 크기 조절처럼 칸 각각 생성) */}
+            {/* 시간 및 분 조절 칸 (모바일: 1열 세로 정렬로 폰트 깨짐 방지 / 데스크톱: 기존 2열 가로 정렬 100% 보존) */}
             {notifier.enabled && (
               <div className="pt-3 border-t border-rose-200/60 dark:border-rose-900/40 space-y-3 animate-in fade-in duration-150">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   {/* 시간 조절 칸 (0시 ~ 23시) */}
                   <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-slate-800 flex items-center justify-between shadow-2xs">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-rose-500" />
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">시간</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Clock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">시간 설정</span>
                     </div>
 
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700 flex-shrink-0">
                       <button
                         type="button"
                         id="btn-notifier-hours-minus"
@@ -546,7 +546,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <Minus className="w-3.5 h-3.5" />
                       </button>
 
-                      <span className="w-10 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none">
+                      <span className="w-12 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none whitespace-nowrap">
                         {notifier.hours || 0}시간
                       </span>
 
@@ -568,12 +568,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                   {/* 분 조절 칸 (0분 ~ 55분, 5분 단위) */}
                   <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-slate-800 flex items-center justify-between shadow-2xs">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-rose-500" />
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">분</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Clock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">분 설정</span>
                     </div>
 
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700 flex-shrink-0">
                       <button
                         type="button"
                         id="btn-notifier-minutes-minus"
@@ -588,7 +588,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <Minus className="w-3.5 h-3.5" />
                       </button>
 
-                      <span className="w-10 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none">
+                      <span className="w-12 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none whitespace-nowrap">
                         {notifier.minutes || 0}분
                       </span>
 
@@ -612,7 +612,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* 설정 안내 문구 */}
                 <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-rose-200/40 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0 animate-ping" />
-                  <span>
+                  <span className="leading-snug break-keep">
                     컨텐츠 초기화 <strong className="text-rose-600 dark:text-rose-400 font-bold">{notifier.hours}시간 {notifier.minutes}분 전</strong>에 미완료된 컨텐츠, 캐릭터를 알립니다.
                   </span>
                 </div>
@@ -816,27 +816,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 7. 운영 정책 및 법적 고지 */}
+          {/* 7. 운영 정책 및 법적 고지 (모바일 화면 폭에 맞춰 단정하고 깔끔하게 정렬) */}
           <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               운영 정책 및 라이선스
             </h4>
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Scale className="w-4 h-4 text-orange-500" />
+                  <Scale className="w-4 h-4 text-orange-500 flex-shrink-0" />
                   <span className="text-xs font-bold text-slate-900 dark:text-white">
                     이용약관 및 개인정보처리방침
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
                       onOpenLegalModal?.('terms');
                     }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 transition-colors shadow-2xs"
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
                   >
                     이용약관
                   </button>
@@ -846,16 +846,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClose();
                       onOpenLegalModal?.('privacy');
                     }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 transition-colors shadow-2xs"
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
                   >
                     개인정보
                   </button>
                 </div>
               </div>
-              <p className="text-[10.5px] text-slate-400 leading-relaxed">
-                Data based on NEXON Open API · MapleStory © NEXON Korea Corp.
-                <br />공식 문의: mchedule4505@gmail.com
-              </p>
+              <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed">
+                <div>Data based on NEXON Open API · MapleStory © NEXON Korea Corp.</div>
+                <div>공식 문의: mchedule4505@gmail.com</div>
+              </div>
             </div>
           </div>
         </div>

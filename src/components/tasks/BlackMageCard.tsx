@@ -176,9 +176,12 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
 
   return (
     <div id={`black-mage-section-${character.id}`}>
-      {/* 검은 마법사 상단 요약 바: 클리어 시 순수 검정 배경 */}
+      {/* 검은 마법사 상단 요약 바: 클리어 시 순수 검정 배경 (박스 전체 클릭 시 펼치기/접기 지원) */}
       <div
+        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
         className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
+          collapsible ? 'cursor-pointer select-none' : ''
+        } ${
           isAlertActive && !isAllCompleted
             ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
             : isAllCompleted
@@ -231,7 +234,11 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
         <div className="flex items-center gap-2 relative z-10">
           {collapsible && (
             <button
-              onClick={() => setIsCollapsed((prev) => !prev)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed((prev) => !prev);
+              }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-red-600 bg-black text-red-400 hover:bg-zinc-900'
@@ -239,7 +246,13 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
               }`}
               title={isCollapsed ? '목록 펼치기' : '목록 접기'}
             >
-              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              <motion.div
+                animate={{ rotate: isCollapsed ? 180 : 0 }}
+                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-center justify-center"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </motion.div>
             </button>
           )}
         </div>
