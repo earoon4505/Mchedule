@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>메케줄 - 메이플스토리 스케줄러</title>
+    <title>메케줄(MapleSchedule) - 메이플스토리 스마트 스케줄러 & 이용 가이드</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -11,36 +11,88 @@
     <link rel="apple-touch-icon" href="/app-logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#f97316" />
-    <meta name="description" content="NEXON Open API 연동 및 캐릭터별 일일/주간/보스 콘텐츠 관리 메이플스토리 스케줄러" />
-    <meta property="og:title" content="메케줄 - 메이플스토리 스케줄러" />
-    <meta property="og:description" content="NEXON Open API 연동 메이플스토리 스케줄러" />
+    <meta name="description" content="NEXON Open API 공식 연동 메이플스토리 스케줄러. 인게임 자동 동기화, 다계정, 계정 컨텐츠(몬파/에픽던전), 커스텀 숙제, 초기화 임박 알림이까지 한눈에 스마트하게 관리하세요." />
+    <meta name="keywords" content="메이플스토리, 메이플 스케줄러, 메케줄, 넥슨 API, 메이플 일퀘, 주간 보스, 몬스터파크, 에픽 던전, 메이플 스케줄 관리, 메이플 숙제" />
+    <meta property="og:title" content="메케줄(MapleSchedule) - 메이플스토리 스마트 스케줄러" />
+    <meta property="og:description" content="NEXON Open API 연동 메이플스토리 스마트 스케줄러 및 공식 이용 가이드" />
     <meta property="og:image" content="/app-logo.png" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
 
+    <!-- Schema.org JSON-LD Structured Data for Google Search & AdSense Bots -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "메케줄 (MapleSchedule)",
+          "url": "https://ais-pre-xxmbrrgkenwxzpovbt7ycv-54363699507.asia-northeast1.run.app",
+          "applicationCategory": "UtilitiesApplication",
+          "operatingSystem": "Web, Windows",
+          "description": "NEXON Open API 공식 연동 메이플스토리 캐릭터 일일/주간 숙제 관리, 인게임 자동 동기화 및 다계정 스마트 스케줄러",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "KRW"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "넥슨 Open API 데이터는 얼마나 자주 갱신되나요?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "게임에서 보스를 처치하거나 퀘스트를 완료한 후 약 5~10분 후 반영되며, 인게임에서 채널 이동이나 접속 종료를 하시면 즉시 최신 데이터가 반영됩니다."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "새로 추가한 캐릭터의 보스 처치 이력이나 스케줄러가 불러와지지 않아요.",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "생성 후 게임에 장기간 미접속 상태인 캐릭터는 넥슨 API 서버에 데이터가 색인되어 있지 않습니다. 게임에 1회 접속 후 채널 이동이나 정상 로그아웃을 진행하시면 정상 조회됩니다."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
     <!-- Nexon Open API Analytics (방문자 및 유입 통계 분석) -->
     <script type="text/javascript" src="https://openapi.nexon.com/js/analytics.js?app_id=332102" async></script>
 
-    <!-- Google AdSense (웹 브라우저 환경에서만 실행되며 데스크톱 Electron 앱에서는 로드되지 않음) -->
-    <script>
-      (function() {
-        var isElectronApp = typeof window !== 'undefined' && (
-          !!window.electronAPI || 
-          (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.indexOf('Electron') !== -1)
-        );
-        if (!isElectronApp) {
-          var adScript = document.createElement('script');
-          adScript.async = true;
-          adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9376850026832369';
-          adScript.crossOrigin = 'anonymous';
-          document.head.appendChild(adScript);
-        }
-      })();
-    </script>
+    <!-- Google AdSense (공식 표준 검증 스크립트 태그) -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9376850026832369" crossorigin="anonymous"></script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="padding: 24px; font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto;">
+        <h1>메케줄(MapleSchedule) - 메이플스토리 통합 스케줄러 & 이용 가이드</h1>
+        <p>메케줄은 넥슨(NEXON) 공식 Open API를 연동하여 메이플스토리 캐릭터별 일일 퀘스트, 주간 보스, 에픽 던전, 몬스터파크 완료 여부를 관리하는 스마트 스케줄러 유틸리티입니다.</p>
+        
+        <h2>주요 하위 페이지 바로가기</h2>
+        <ul>
+          <li><a href="/guide"><strong>메케줄 공식 이용 가이드 & 메이플스토리 스케줄 공략 백서</strong></a></li>
+          <li><a href="/terms"><strong>메케줄 서비스 이용약관</strong></a></li>
+          <li><a href="/privacy"><strong>메케줄 개인정보처리방침 (온라인 맞춤형 광고 쿠키 운영 정책 포함)</strong></a></li>
+        </ul>
+
+        <h2>메이플스토리 주요 콘텐츠 리셋 주기</h2>
+        <ul>
+          <li><strong>일일 콘텐츠 (심볼 일일 퀘스트, 일일 보스, 몬스터파크)</strong>: 매일 오전 00:00 (자정) 리셋</li>
+          <li><strong>주간 콘텐츠 (주간 레이드 보스, 에픽 던전, 주간 퀘스트)</strong>: 매주 목요일 오전 00:00 리셋 (강렬한 힘의 결정석 주간 60개 판매 한도 초기화)</li>
+          <li><strong>월간 콘텐츠 (검은 마법사 하드 / 익스트림)</strong>: 매월 1일 오전 00:00 리셋</li>
+        </ul>
+
+        <h2>서비스 운영 및 법적 정책 (시행일자: 2026년 10월 1일)</h2>
+        <p>메케줄은 중앙 서버에 어떠한 개인정보나 넥슨 API 키도 수집 및 저장하지 않으며 이용자 본인의 로컬 단말기(브라우저 LocalStorage)에만 안전하게 보관합니다. 서비스의 지속적인 무료 제공과 서버 및 시스템 유지를 위하여 온라인 광고가 게재될 수 있으며 맞춤형 광고 쿠키 운영 정책은 개인정보처리방침 제9조를 준수합니다.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

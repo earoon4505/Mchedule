@@ -23,6 +23,7 @@ import { WEEKLY_BOSSES } from '../../data/defaultTasks';
 import { CharacterAvatar } from './CharacterAvatar';
 import { getCharacterCompletionStatus } from '../../utils/schedulerParser';
 import { CharacterAlertStatus } from '../../utils/alertNotifier';
+import { isWeb } from '../../utils/platform';
 
 interface CharacterSidebarProps {
   characters: CharacterInfo[];
@@ -39,6 +40,7 @@ interface CharacterSidebarProps {
   onOpenContentConfig: (id: string, e: React.MouseEvent) => void;
   onSelectTab?: (tab: 'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom') => void;
   onOpenLegalModal?: (tab?: 'terms' | 'privacy') => void;
+  onOpenGuideModal?: () => void;
 }
 
 export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
@@ -56,6 +58,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
   onOpenContentConfig,
   onSelectTab,
   onOpenLegalModal,
+  onOpenGuideModal,
 }) => {
   // 인라인 삭제 확인 상태 (캐릭터 ID)
   const [deletingCharId, setDeletingCharId] = useState<string | null>(null);
@@ -650,7 +653,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
         </div>
       </div>
 
-      {/* 좌측 하단 초슬림 법적 고지 및 약관 바 (면적 최소화: 28px) */}
+      {/* 좌측 하단 초슬림 법적 고지 및 약관 바 (웹에서는 구글봇 크롤링 표준 a 태그, 데스크톱에서는 쾌적한 모달) */}
       <div 
         id="sidebar-legal-footer"
         className="px-3 py-1.5 border-t border-slate-200/70 dark:border-slate-800/70 bg-slate-100/50 dark:bg-slate-900/50 flex-shrink-0 text-[10px] text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center gap-0.5 select-none"
@@ -659,21 +662,71 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
           Data based on NEXON Open API
         </span>
         <div className="flex items-center gap-1.5 font-medium leading-none">
-          <button
-            type="button"
-            onClick={() => onOpenLegalModal?.('terms')}
-            className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
-          >
-            이용약관
-          </button>
-          <span className="text-slate-300 dark:text-slate-700">·</span>
-          <button
-            type="button"
-            onClick={() => onOpenLegalModal?.('privacy')}
-            className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
-          >
-            개인정보처리방침
-          </button>
+          {isWeb ? (
+            <>
+              <a
+                href="/guide"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/guide');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
+                className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
+              >
+                가이드
+              </a>
+              <span className="text-slate-300 dark:text-slate-700">·</span>
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/terms');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
+                className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
+              >
+                이용약관
+              </a>
+              <span className="text-slate-300 dark:text-slate-700">·</span>
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/privacy');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
+                className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
+              >
+                개인정보처리방침
+              </a>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onOpenGuideModal}
+                className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
+              >
+                가이드
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">·</span>
+              <button
+                type="button"
+                onClick={() => onOpenLegalModal?.('terms')}
+                className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
+              >
+                이용약관
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">·</span>
+              <button
+                type="button"
+                onClick={() => onOpenLegalModal?.('privacy')}
+                className="hover:text-slate-700 dark:hover:text-slate-200 hover:underline transition-colors cursor-pointer"
+              >
+                개인정보처리방침
+              </button>
+            </>
+          )}
         </div>
       </div>
     </aside>

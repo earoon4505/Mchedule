@@ -70,6 +70,7 @@ import { ApiKeyModal } from './components/settings/ApiKeyModal';
 import { NoticeModal } from './components/common/NoticeModal';
 import { MobileBottomNav, MobileTabType } from './components/common/MobileBottomNav';
 import { LegalModal, LegalTab } from './components/legal/LegalModal';
+import { GuideModal } from './components/guide/GuideModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
 import { 
@@ -176,6 +177,7 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [configCharacterId, setConfigCharacterId] = useState<string | null>(null);
   const [toastFeedback, setToastFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -289,6 +291,25 @@ export default function App() {
     setLegalModalTab(tab);
     setIsLegalModalOpen(true);
   };
+
+  // URL 파라미터 또는 해시를 통한 가이드/약관 직접 열기 (구글 애드센스 봇 및 직접 링크 유입 대응)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const hash = window.location.hash;
+        const pathname = window.location.pathname;
+
+        if (params.get('guide') === 'true' || hash === '#guide' || pathname === '/guide') {
+          setIsGuideModalOpen(true);
+        } else if (params.get('privacy') === 'true' || hash === '#privacy' || pathname === '/privacy') {
+          handleOpenLegalModal('privacy');
+        } else if (params.get('terms') === 'true' || hash === '#terms' || pathname === '/terms') {
+          handleOpenLegalModal('terms');
+        }
+      } catch (_) {}
+    }
+  }, []);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToastFeedback({ message, type });
@@ -2128,6 +2149,7 @@ export default function App() {
               setMobileCharacterSubView('detail');
             }}
             onOpenLegalModal={handleOpenLegalModal}
+            onOpenGuideModal={() => setIsGuideModalOpen(true)}
           />
         </div>
 
@@ -2344,17 +2366,6 @@ export default function App() {
               </button>
             </div>
           )}
-
-          {/* 중앙 하단: 광고 배너 영역 (현재 비활성화 - 필요 시 아래 블록의 주석을 해제하여 즉시 복원 가능)
-          {isWeb && (
-            <div 
-              id="main-bottom-adsense-footer"
-              className="px-4 py-2 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/40 flex-shrink-0 flex items-center justify-center select-none"
-            >
-              <AdSenseBanner />
-            </div>
-          )}
-          */}
         </section>
 
         {/* 우측 진행률 패널 / 계정 컨텐츠 (모바일: '계정 컨텐츠' 또는 '진행 현황' 탭일 때 전체 화면 표시) */}
@@ -2442,6 +2453,13 @@ export default function App() {
       <NoticeModal
         isOpen={isNoticeModalOpen}
         onClose={() => setIsNoticeModalOpen(false)}
+      />
+
+      {/* 이용 가이드 모달 */}
+      <GuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
+        onOpenLegal={handleOpenLegalModal}
       />
 
       {/* 이용약관 및 개인정보처리방침 법적 고지 모달 */}

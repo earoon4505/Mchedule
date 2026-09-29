@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   FileText, 
-  X, 
   ChevronDown, 
   ChevronUp, 
   ExternalLink, 
@@ -27,6 +26,14 @@ export const LegalModal: React.FC<LegalModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<LegalTab>(initialTab);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  // 모달이 열리거나 외부에서 initialTab이 변경될 때 탭 상태 동기화
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setExpandedSection(null);
+    }
+  }, [isOpen, initialTab]);
 
   // 탭 변경 시 확장 섹션 리셋
   const handleSwitchTab = (tab: LegalTab) => {
@@ -66,15 +73,6 @@ export const LegalModal: React.FC<LegalModalProps> = ({
               </p>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
-            title="닫기"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* 상단 탭 스위처 */}
@@ -108,7 +106,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
         </div>
 
         {/* 본문 스크롤 영역 */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar text-xs leading-relaxed">
+        <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain p-5 sm:p-6 space-y-4 custom-scrollbar text-xs leading-relaxed">
           {activeTab === 'terms' ? (
             /* ================= 이용약관 전문 (공정위 표준약관 기반) ================= */
             <div className="space-y-4">
@@ -227,10 +225,22 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                 </div>
               </div>
 
-              {/* 제9조 및 제10조 */}
+              {/* 제9조 - 광고 게재 및 서비스 운영 */}
               <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-bold">제9조 및 제10조</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-bold">제9조</span>
+                  <span>광고 게재 및 서비스 운영</span>
+                </h4>
+                <div className="text-slate-600 dark:text-slate-400 text-[11.5px] space-y-1">
+                  <p>① 운영자는 서비스의 지속적인 무료 제공과 서버 및 시스템 유지보수를 위하여 서비스 화면 내에 온라인 광고를 게재할 수 있습니다.</p>
+                  <p>② 서비스 내에 게재된 제3자의 광고나 링크를 통해 연결되는 외부 서비스의 이용 및 거래에 대해서는 해당 제3자의 운영정책이 적용되며, 운영자는 이에 대해 책임을 부담하지 않습니다.</p>
+                </div>
+              </div>
+
+              {/* 제10조 및 제11조 */}
+              <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 bg-white dark:bg-slate-900/50 space-y-1.5">
+                <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-bold">제10조 및 제11조</span>
                   <span>서비스 중단, 준거법 및 공식 문의처</span>
                 </h4>
                 <div className="text-slate-600 dark:text-slate-400 text-[11.5px] space-y-1">
@@ -238,7 +248,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                   <p>• 본 약관의 해석 및 서비스 이용과 관련된 분쟁에 대해서는 대한민국 법률을 적용합니다.</p>
                   <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
                     <span className="font-semibold text-slate-700 dark:text-slate-300">공식 문의: mchedule4505@gmail.com</span>
-                    <span className="text-slate-400">시행일자: 2026년 9월 11일</span>
+                    <span className="text-slate-400">시행일자: 2026년 10월 1일</span>
                   </div>
                 </div>
               </div>
@@ -312,15 +322,34 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                 </p>
               </div>
 
-              {/* 제8조 및 제9조 */}
+              {/* 제8조 */}
               <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-bold">제8조 및 제9조</span>
-                  <span>안전성 확보 조치 및 쿠키(Cookie) 미사용</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-bold">제8조</span>
+                  <span>안전성 확보 조치</span>
                 </h4>
                 <p className="text-slate-600 dark:text-slate-400 text-[11.5px]">
-                  외부 서버 비수집 아키텍처와 HTTPS 암호화 전송을 통해 데이터 유출을 원천 방어합니다. 또한 맞춤형 광고 트래커나 상업용 쿠키(Cookie)를 일절 운용하지 않습니다.
+                  외부 서버 비수집 아키텍처와 HTTPS 암호화 전송을 통해 데이터 유출을 원천 방어하며, 이용자의 브라우저 내 로컬 데이터에 대한 비인가 접근을 기술적으로 통제합니다.
                 </p>
+              </div>
+
+              {/* 제9조 - 온라인 맞춤형 광고 및 쿠키(Cookie) 운영 안내 */}
+              <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 bg-white dark:bg-slate-900/50 space-y-1.5">
+                <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-bold">제9조</span>
+                  <span>온라인 맞춤형 광고 및 쿠키(Cookie) 운영 안내</span>
+                </h4>
+                <div className="text-slate-600 dark:text-slate-400 text-[11.5px] space-y-1.5">
+                  <p>① 메케줄은 웹 브라우저 환경에서 서비스의 지속적인 무료 제공과 유지를 위하여 Google 등 제3자 광고 사업자가 제공하는 온라인 광고를 게재할 수 있습니다.</p>
+                  <p>② Google을 비롯한 제3자 공급업체는 <strong>쿠키(Cookie)</strong>를 사용하여 이용자의 이전 웹사이트 방문 기록 등을 바탕으로 맞춤형 광고를 게재할 수 있습니다.</p>
+                  <p>③ Google의 광고 쿠키 사용으로 Google 및 파트너사는 이용자의 본 웹사이트 및 인터넷상의 다른 웹사이트 방문 기록을 바탕으로 관련성 높은 광고를 게재할 수 있습니다.</p>
+                  <p>④ 이용자는 언제든지 맞춤형 광고 게재를 위한 쿠키 사용을 선택 해제(거부)할 수 있습니다:
+                    <br />• <strong>Google 맞춤형 광고 설정 해제</strong>: <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-orange-600 dark:text-orange-400 underline font-semibold">Google 광고 설정 (www.google.com/settings/ads)</a>
+                    <br />• <strong>제3자 광고업체 맞춤 광고 차단</strong>: <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-orange-600 dark:text-orange-400 underline font-semibold">AboutAds 페이지 (www.aboutads.info)</a>
+                    <br />• <strong>웹 브라우저 설정</strong>: 브라우저 환경설정에서 모든 쿠키를 거부하거나 쿠키가 전송될 때 알림을 설정할 수 있습니다.
+                  </p>
+                  <p>⑤ 이용자가 쿠키 설치를 거부하거나 맞춤형 광고를 해제하더라도 메케줄의 기본 스케줄러 기능, 캐릭터 등록, 인게임 동기화 등 모든 서비스 기능은 아무런 제한 없이 100% 정상 이용할 수 있습니다.</p>
+                </div>
               </div>
 
               {/* 제10조 및 제11조 */}
@@ -346,7 +375,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                 </h4>
                 <p className="text-slate-600 dark:text-slate-400 text-[11.5px]">
                   본 방침은 관계 법령, 넥슨 운영정책, 서비스 변경에 따라 개정될 수 있으며, 개정 시 서비스 공지를 통해 시행 일자와 변경 사유를 고지합니다.
-                  <br /><strong>공고 및 시행일자: 2026년 9월 11일</strong>
+                  <br /><strong>공고 및 시행일자: 2026년 10월 1일</strong>
                 </p>
               </div>
             </div>
@@ -366,7 +395,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
             onClick={onClose}
             className="px-4 py-1.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
           >
-            확인 및 닫기
+            확인
           </button>
         </div>
       </div>
