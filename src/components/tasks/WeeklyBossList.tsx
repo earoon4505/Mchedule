@@ -106,7 +106,7 @@ export const WeeklyBossList: React.FC<WeeklyBossListProps> = React.memo(({
         }`}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-          <MapleIcon name={displayName} icon={boss.icon} fallback="💀" className="w-12 h-12 rounded-xl object-contain flex-shrink-0" />
+          <MapleIcon name={displayName} icon={boss.icon} fallback="💀" className="w-12 h-12 object-contain flex-shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <p className={`text-xs font-bold truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>

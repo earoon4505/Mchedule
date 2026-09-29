@@ -1092,7 +1092,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                           name={item.name}
                           icon={item.icon}
                           fallback={item.fallbackIcon}
-                          className="w-9 h-9 rounded-xl object-contain flex-shrink-0"
+                          className="w-9 h-9 object-contain flex-shrink-0"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">

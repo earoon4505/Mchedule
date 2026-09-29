@@ -208,7 +208,7 @@ export const DailyTaskList: React.FC<DailyTaskListProps> = React.memo(({
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-                            <MapleIcon taskId={task.id} name={task.name} icon={task.icon} fallback="🌊" className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                            <MapleIcon taskId={task.id} name={task.name} icon={task.icon} fallback="🌊" className="w-11 h-11 object-contain flex-shrink-0" />
                             <div className="min-w-0 flex-1">
                               <p className={`text-xs font-bold truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                                 {task.name}
@@ -255,7 +255,7 @@ export const DailyTaskList: React.FC<DailyTaskListProps> = React.memo(({
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-                            <MapleIcon taskId={task.id} name={task.name} icon={task.icon} fallback="☀️" className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                            <MapleIcon taskId={task.id} name={task.name} icon={task.icon} fallback="☀️" className="w-11 h-11 object-contain flex-shrink-0" />
                             <div className="min-w-0 flex-1">
                               <p className={`text-xs font-bold truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                                 {task.name}

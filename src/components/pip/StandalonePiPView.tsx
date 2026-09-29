@@ -811,7 +811,7 @@ export const StandalonePiPView: React.FC = () => {
               name={item.name}
               icon={item.icon}
               fallback={item.fallbackIcon}
-              className={`w-9 h-9 object-contain rounded-lg transition-all select-none pointer-events-none ${
+              className={`w-9 h-9 object-contain transition-all select-none pointer-events-none ${
                 isDone ? 'grayscale-0 opacity-100 scale-105' : 'grayscale-50 opacity-60'
               }`}
             />

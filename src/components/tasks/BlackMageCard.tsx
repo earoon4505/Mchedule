@@ -119,7 +119,7 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
             name="검은 마법사" 
             icon="⚫" 
             fallback="💀" 
-            className="w-12 h-12 rounded-xl object-contain flex-shrink-0" 
+            className="w-12 h-12 object-contain flex-shrink-0" 
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">

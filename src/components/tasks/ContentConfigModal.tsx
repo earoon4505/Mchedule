@@ -249,7 +249,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
     >
       <div 
         id="content-config-modal" 
-        className="w-full max-w-4xl h-[88vh] sm:h-[720px] max-h-[92vh] sm:max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+        className="w-full max-w-lg sm:max-w-4xl h-[82dvh] sm:h-[720px] max-h-[82dvh] sm:max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
       >
         {/* 모달 헤더 (모바일: 캐릭터 닉네임 및 '인게임 동기화'만 배치 / 데스크톱: 스케줄 설정 타이틀 + 닉네임 뱃지 + 전체 버튼명 유지) */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/80">
@@ -309,7 +309,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
           </div>
         )}
         {/* 탭 네비게이션: 모바일에서는 2~3줄로 꺾이지 않고 부드러운 한 줄 가로 스와이프 스크롤(스크롤바 완전 숨김) 적용 */}
-        <div className="px-4 sm:px-6 pt-2.5 pb-1 flex items-center justify-between gap-2 bg-white dark:bg-slate-900 min-w-0 overflow-hidden">
+        <div className="px-4 sm:px-6 pt-2.5 pb-0.5 sm:pt-2.5 sm:pb-1 flex items-center justify-between gap-2 bg-white dark:bg-slate-900 min-w-0">
           {/* 부드러운 가로 스와이프 스크롤 래퍼 (스크롤바 숨김 & 터치 pan-x & 마우스 휠 지원) */}
           <div
             ref={tabScrollRef}
@@ -318,7 +318,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                 e.currentTarget.scrollLeft += e.deltaY;
               }
             }}
-            className="w-full sm:w-auto overflow-x-auto no-scrollbar touch-pan-x min-w-0 py-0.5 overscroll-x-contain flex-1 sm:flex-initial"
+            className="w-full sm:w-auto overflow-x-auto no-scrollbar touch-pan-x min-w-0 pt-1 pb-3 sm:py-0.5 overscroll-x-contain flex-1 sm:flex-initial"
             style={{
               WebkitOverflowScrolling: 'touch',
               scrollbarWidth: 'none',
@@ -342,7 +342,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                       key={tab.id}
                       id={`config-tab-${tab.id}`}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`relative px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer z-10 flex-shrink-0 select-none text-[11px] sm:text-xs leading-none ${
+                      className={`relative px-2.5 sm:px-3 py-1.5 sm:py-1.5 rounded-lg transition-colors flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer z-10 flex-shrink-0 select-none text-[11px] sm:text-xs leading-none ${
                         isActive
                           ? tab.activeText
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -455,7 +455,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -497,7 +497,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -541,7 +541,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                   >
                     {/* 좌측: 보스 아이콘 및 이름 & 선택된 난이도 결정석 메소 가격 */}
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain flex-shrink-0" />
+                      <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
@@ -614,7 +614,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -659,7 +659,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 rounded-xl object-contain flex-shrink-0" />
+                          <MapleIcon taskId={task.id} name={task.name} icon={task.icon} className="w-11 h-11 object-contain flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {task.name}
@@ -704,7 +704,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                     >
                       {/* 좌측: 보스 아이콘 및 이름 & 선택된 난이도 결정석 메소 가격 */}
                       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                        <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain flex-shrink-0" />
+                        <MapleIcon name={group.baseName} icon={group.icon} fallback="💀" className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                             <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
@@ -786,11 +786,11 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                           name="검은 마법사"
                           icon="/icons/검은 마법사.png"
                           fallback="⚫"
-                          className="w-12 h-12 rounded-xl object-contain flex-shrink-0"
+                          className="w-12 h-12 object-contain flex-shrink-0"
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                            <span className={`font-bold text-sm ${isSelected ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>
                               {diff.label}
                             </span>
                             <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${

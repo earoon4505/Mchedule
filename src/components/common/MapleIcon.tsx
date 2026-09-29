@@ -375,7 +375,7 @@ export const getMapleIconSrc = (nameOrId?: string, taskId?: string): string | nu
 export const MapleIcon: React.FC<MapleIconProps> = ({
   name,
   icon,
-  className = 'w-7 h-7 rounded-lg object-contain flex-shrink-0 shadow-xs',
+  className = 'w-7 h-7 object-contain flex-shrink-0 shadow-xs',
   fallback,
   taskId,
 }) => {
