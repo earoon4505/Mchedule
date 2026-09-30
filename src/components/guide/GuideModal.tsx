@@ -216,6 +216,10 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </ol>
             </div>
 
+            <div className="font-bold text-xs text-slate-900 dark:text-white pt-1">
+              💡 데이터 갱신
+            </div>
+
             <div className="grid grid-cols-1 gap-2 pt-1">
               <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
                 <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -223,28 +227,31 @@ export const GuideModal: React.FC<GuideModalProps> = ({
                   <span>인게임 최신 데이터 반영 주기</span>
                 </div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 leading-relaxed">
-                  보스나 퀘스트 완료 후 통상 5~10분 후 반영됩니다. 바로 반영하려면 인게임에서 <strong>[채널 이동]</strong> 또는 <strong>[접속 종료]</strong>를 진행하세요.
+                  보스나 퀘스트 완료 후 통상 5~10분 후 메케줄로 자동 반영됩니다. 바로 반영하려면 인게임에서 <strong>[채널 이동]</strong>, <strong>[캐시샵 이동]</strong> 또는 <strong>[접속 종료]</strong>를 진행하세요.
                 </p>
               </div>
 
               <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
                 <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 text-[10px] flex items-center justify-center font-bold">2</span>
-                  <span>금일(당일) 1회 이상 게임 접속 필수</span>
+                  <span>신규 등록 전 1회 이상 게임 접속 권장</span>
                 </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 leading-relaxed">
-                  넥슨 API는 게임 접속 활동 이력이 있어야 최신 데이터를 생성하므로, 신규 등록 캐릭터는 게임 1회 접속 후 종료/채널이동을 거쳐야 합니다.
-                </p>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 space-y-0.5 leading-relaxed">
+                  <p>• 캐릭터 등록 시 해당 캐릭터 당일 1회 이상 접속 시 올바른 데이터를 잘 불러올 수 있습니다.</p>
+                  <p>• 등록 당일 미접속 시 '인게임 스케줄러 불러오기', '등록 전 날 처치한 보스', '등록 전 날 클리어한 퀘스트'를 정상적으로 불러오지 못 할수 있습니다.</p>
+                </div>
               </div>
 
               <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
                 <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 text-[10px] flex items-center justify-center font-bold">3</span>
-                  <span>몬스터파크 캐릭터 클리어 기준</span>
+                  <span>몬스터파크: 마지막 접속 캐릭터 월드 기록 & 2회 이상 클리어</span>
                 </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 leading-relaxed">
-                  오늘 실제로 몬스터파크를 클리어한 캐릭터가 메케줄에 등록되어 있고 채널 이동/로그아웃을 마쳐야 자동으로 완료 표시가 적용됩니다.
-                </p>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 space-y-0.5 leading-relaxed">
+                  <p>• 몬스터파크는 계정 공통 숙제이며, 마지막으로 접속 한 캐릭터의 월드 내 기록을 통해 완료 여부를 판정합니다.</p>
+                  <p>• 따라서 오늘 몬스터파크를 클리어한 캐릭터 또는 동일한 월드의 캐릭터가 메케줄에 등록되어있고, 당일 1회 이상 접속 시 자동으로 완료 표시가 적용됩니다.</p>
+                  <p className="text-orange-600 dark:text-orange-400 font-semibold">• 몬스터파크 완료 기준은 2회 이상 클리어 입니다.</p>
+                </div>
               </div>
             </div>
           </section>

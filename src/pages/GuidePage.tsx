@@ -323,7 +323,7 @@ export const GuidePage: React.FC = () => {
           {/* 3가지 동작 규칙 */}
           <div className="space-y-2.5 pt-1">
             <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
-              💡 넥슨 Open API 핵심 규칙 3가지
+              💡 데이터 갱신
             </h3>
 
             <div className="grid grid-cols-1 gap-2.5">
@@ -333,9 +333,9 @@ export const GuidePage: React.FC = () => {
                   <span>인게임 최신 데이터 반영 주기 & 즉시 반영 팁</span>
                 </div>
                 <div className="pl-6 text-xs text-slate-600 dark:text-slate-400 space-y-1 leading-relaxed">
-                  <p>• 게임에서 보스를 잡거나 퀘스트를 완료하면 기본적으로 <strong>약 5~10분 후</strong>에 넥슨 API 서버로 자동 반영됩니다.</p>
+                  <p>• 게임에서 보스를 잡거나 퀘스트를 완료하면 기본적으로 <strong>약 5~10분 후</strong>에 메케줄로 자동 반영됩니다.</p>
                   <p className="text-orange-600 dark:text-orange-400 font-semibold">
-                    • 기다리기 번거로우시다면, 인게임에서 <strong>[채널 이동]</strong>, <strong>[캐시샵 이동]</strong> 또는 <strong>[접속 종료(로그아웃)]</strong>를 하시면 넥슨 서버에 데이터가 즉시 저장되어 메케줄에서 바로 최신 클리어 상태를 가져올 수 있습니다.
+                    • 기다리기 번거로우시다면, 인게임에서 <strong>[채널 이동]</strong>, <strong>[캐시샵 이동]</strong> 또는 <strong>[접속 종료(로그아웃)]</strong>를 하시면 메케줄에서 바로 최신 클리어 상태를 가져올 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -343,22 +343,23 @@ export const GuidePage: React.FC = () => {
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
                 <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-[10px] flex items-center justify-center font-bold">2</span>
-                  <span>금일(당일) 1회 이상 게임 접속 필수 (신규 캐릭터 포함)</span>
+                  <span>신규 등록 전 1회 이상 게임 접속 권장</span>
                 </div>
                 <div className="pl-6 text-xs text-slate-600 dark:text-slate-400 space-y-1 leading-relaxed">
-                  <p>• 넥슨 API는 캐릭터의 접속 활동 기록이 존재해야 최신 스케줄러와 보스 기록을 생성합니다.</p>
-                  <p>• 새로 생성했거나 장기간 미접속했던 캐릭터는 게임에 1회 접속 후 종료 또는 채널이동을 거쳐야 메케줄에서 온전한 스케줄러 정보를 불러옵니다.</p>
+                  <p>• 캐릭터 등록 시 해당 캐릭터 당일 1회 이상 접속 시 올바른 데이터를 잘 불러올 수 있습니다.</p>
+                  <p>• 등록 당일 미접속 시 '인게임 스케줄러 불러오기', '등록 전 날 처치한 보스', '등록 전 날 클리어한 퀘스트'를 정상적으로 불러오지 못 할수 있습니다.</p>
                 </div>
               </div>
 
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
                 <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-[10px] flex items-center justify-center font-bold">3</span>
-                  <span>몬스터파크: 실제로 클리어한 캐릭터 등록 & 채널이동 필수</span>
+                  <span>몬스터파크: 마지막 접속 캐릭터 월드 기록 & 2회 이상 클리어</span>
                 </div>
-                <div className="pl-6 text-xs text-slate-600 dark:text-slate-400 space-y-1 leading-relaxed">
-                  <p>• 몬스터파크는 계정 공통 숙제이지만, 넥슨 API는 <strong>오늘 실제로 몬스터파크를 클리어한 캐릭터의 기록</strong>을 통해 완료 여부를 판정합니다.</p>
-                  <p>• 따라서 오늘 몬스터파크를 클리어한 캐릭터가 메케줄에 등록되어 있고 채널 이동/로그아웃을 마쳐야 자동으로 완료 표시가 적용됩니다.</p>
+                <div className="pl-6 text-xs text-slate-600 dark:text-slate-400 space-y-1.5 leading-relaxed">
+                  <p>• 몬스터파크는 계정 공통 숙제이며, 마지막으로 접속 한 캐릭터의 월드 내 기록을 통해 완료 여부를 판정합니다.</p>
+                  <p>• 따라서 오늘 몬스터파크를 클리어한 캐릭터 또는 동일한 월드의 캐릭터가 메케줄에 등록되어있고, 당일 1회 이상 접속 시 자동으로 완료 표시가 적용됩니다.</p>
+                  <p className="text-orange-600 dark:text-orange-400 font-semibold">• 몬스터파크 완료 기준은 2회 이상 클리어 입니다.</p>
                 </div>
               </div>
             </div>
@@ -401,7 +402,7 @@ export const GuidePage: React.FC = () => {
                 <span>몬스터파크를 클리어했는데 왜 메케줄에 안 뜨나요?</span>
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-4">
-                A. 넥슨 API는 <strong>오늘 실제로 몬스터파크를 클리어한 캐릭터의 접속 기록</strong>을 통해서만 클리어 여부를 전송합니다. 오늘 몬스터파크를 플레이한 캐릭터가 메케줄에 등록되어 있고, 클리어 후 해당 캐릭터로 채널 이동이나 로그아웃을 마쳐야 정상 체크됩니다.
+                A. 몬스터파크는 마지막으로 접속한 캐릭터의 월드 내 기록을 통해 완료 여부를 판정합니다. 오늘 몬스터파크를 클리어한 캐릭터 또는 동일한 월드의 캐릭터가 메케줄에 등록되어 있고 당일 1회 이상 접속(채널 이동/로그아웃)해야 하며, 2회 이상 클리어해야 완료 처리됩니다.
               </p>
             </div>
 

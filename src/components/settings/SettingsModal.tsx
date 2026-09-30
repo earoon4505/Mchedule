@@ -827,26 +827,61 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenLegalModal?.('terms');
-                    }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
-                  >
-                    이용약관
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenLegalModal?.('privacy');
-                    }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
-                  >
-                    개인정보
-                  </button>
+                  {isWeb ? (
+                    <>
+                      <a
+                        href="/terms"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onClose();
+                          if (window.location.pathname !== '/terms') {
+                            window.history.pushState({}, '', '/terms');
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                      >
+                        이용약관
+                      </a>
+                      <a
+                        href="/privacy"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onClose();
+                          if (window.location.pathname !== '/privacy') {
+                            window.history.pushState({}, '', '/privacy');
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                      >
+                        개인정보
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenLegalModal?.('terms');
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                      >
+                        이용약관
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenLegalModal?.('privacy');
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                      >
+                        개인정보
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed">

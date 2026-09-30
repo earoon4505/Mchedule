@@ -392,28 +392,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                 {/* 2. 하단 현황 뱃지 (편집 모드 시 숨겨져 프로필과 편집 버튼만 깔끔하게 노출) */}
                 {!isEditMode && (
                   <div className="mt-2.5 grid grid-cols-3 gap-1 text-[9.5px]">
-                  {/* a1. 일일 퀘스트 뱃지 */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectCharacter(char.id);
-                      onSelectTab?.('daily');
-                    }}
-                    title="일일 컨텐츠 현황"
-                    className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
-                      charAlert?.dailyAlert && !isDailyAllDone
-                        ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
-                        : isDailyAllDone
-                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                        : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border-transparent'
-                    }`}
-                  >
-                    <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
-                    <span className="truncate">일일 {dailyDone}/{dailyTotal}</span>
-                  </button>
-
-                  {/* a2. 일일 보스 뱃지 */}
+                  {/* [1행 1열] 일일 보스 뱃지 */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -434,7 +413,28 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     <span className="truncate">일보 {dailyBossDone}/{dailyBossTotal}</span>
                   </button>
 
-                  {/* a3. 검은 마법사 뱃지 (미클리어 시 검정 배경에 빨간 테두리 폰트, 완료 시 초록색 완료) */}
+                  {/* [1행 2열] 주간 보스 뱃지 */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectCharacter(char.id);
+                      onSelectTab?.('bosses');
+                    }}
+                    title="주간 보스 현황"
+                    className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
+                      charAlert?.bossAlert && !isBossAllDone
+                        ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
+                        : isBossAllDone
+                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
+                        : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 border-transparent'
+                    }`}
+                  >
+                    <Crown className="w-2.5 h-2.5 flex-shrink-0" />
+                    <span className="truncate">주보 {clearedBossCount}/{bossThreshold}</span>
+                  </button>
+
+                  {/* [1행 3열] 검은 마법사 뱃지 (미클리어 시 검정 배경에 빨간 테두리 폰트, 완료 시 초록색 완료) */}
                   {char.selectedBlackMageId ? (
                     <button
                       type="button"
@@ -478,7 +478,28 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     </div>
                   )}
 
-                  {/* b1. 주간 퀘스트 뱃지 */}
+                  {/* [2행 1열] 일일 퀘스트 뱃지 */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectCharacter(char.id);
+                      onSelectTab?.('daily');
+                    }}
+                    title="일일 컨텐츠 현황"
+                    className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
+                      charAlert?.dailyAlert && !isDailyAllDone
+                        ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
+                        : isDailyAllDone
+                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
+                        : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border-transparent'
+                    }`}
+                  >
+                    <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
+                    <span className="truncate">일일 {dailyDone}/{dailyTotal}</span>
+                  </button>
+
+                  {/* [2행 2열] 주간 퀘스트 뱃지 */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -499,28 +520,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     <span className="truncate">주간 {weeklyDone}/{weeklyTotal}</span>
                   </button>
 
-                  {/* b2. 주간 보스 뱃지 */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectCharacter(char.id);
-                      onSelectTab?.('bosses');
-                    }}
-                    title="주간 보스 현황"
-                    className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
-                      charAlert?.bossAlert && !isBossAllDone
-                        ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
-                        : isBossAllDone
-                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                        : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 border-transparent'
-                    }`}
-                  >
-                    <Crown className="w-2.5 h-2.5 flex-shrink-0" />
-                    <span className="truncate">주보 {clearedBossCount}/{bossThreshold}</span>
-                  </button>
-
-                  {/* b3. 커스텀 뱃지 (완료 시 일일/주간과 동일한 초록색 완료 스타일) */}
+                  {/* [2행 3열] 커스텀 뱃지 (완료 시 일일/주간과 동일한 초록색 완료 스타일) */}
                   {(char.customTasks && char.customTasks.length > 0) ? (
                     <button
                       type="button"

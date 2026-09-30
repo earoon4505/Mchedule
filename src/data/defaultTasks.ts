@@ -49,9 +49,9 @@ export const EPIC_DUNGEONS: TaskItem[] = [
 ];
 
 export const WEEKLY_GUILD_AND_MISC: TaskItem[] = [
-  { id: 'weekly_sharenian_culvert', name: '샤레니안의 지하 수로', category: 'weekly_content', type: 'boolean', icon: '🏛️', badge: '노블포인트', resetType: 'weekly_sun' },
-  { id: 'weekly_flag_race', name: '플래그 레이스', category: 'weekly_content', type: 'boolean', icon: '🚩', badge: '노블포인트', resetType: 'weekly_sun' },
-  { id: 'weekly_mulung_dojang', name: '무릉도장', category: 'weekly_content', type: 'boolean', icon: '🥋', badge: '일 23:30 정산', resetType: 'weekly_sun' },
+  { id: 'weekly_sharenian_culvert', name: '샤레니안의 지하 수로', category: 'weekly_content', type: 'boolean', icon: '🏛️', badge: '노블포인트', resetType: 'weekly_thu' },
+  { id: 'weekly_flag_race', name: '플래그 레이스', category: 'weekly_content', type: 'boolean', icon: '🚩', badge: '노블포인트', resetType: 'weekly_thu' },
+  { id: 'weekly_mulung_dojang', name: '무릉도장', category: 'weekly_content', type: 'boolean', icon: '🥋', resetType: 'weekly_thu' },
 ];
 
 // 보스 그룹화 정의 (맞춤 설정 모달에서 보스별 단일 난이도 선택 지원)

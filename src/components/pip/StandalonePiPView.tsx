@@ -1127,22 +1127,7 @@ export const StandalonePiPView: React.FC = () => {
 
                   {/* 2. 하단 현황 뱃지 (메인 화면과 동일한 3열 2행 구성) */}
                   <div className="mt-2.5 grid grid-cols-3 gap-1 text-[9.5px] pointer-events-none select-none">
-                    {/* a1. 일일 컨텐츠 */}
-                    <div
-                      title="일일 컨텐츠 현황"
-                      className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
-                        charAlert?.dailyAlert && !isDailyAllDone
-                          ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
-                          : isDailyAllDone
-                          ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                          : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-transparent'
-                      }`}
-                    >
-                      <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
-                      <span className="truncate">일일 {dailyDone}/{dailyTotal}</span>
-                    </div>
-
-                    {/* a2. 일일 보스 */}
+                    {/* [1행 1열] 일일 보스 */}
                     <div
                       title="일일 보스 현황"
                       className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
@@ -1157,7 +1142,22 @@ export const StandalonePiPView: React.FC = () => {
                       <span className="truncate">일보 {dailyBossDone}/{dailyBossTotal}</span>
                     </div>
 
-                    {/* a3. 검은 마법사 (메인 화면과 동일하게 미완료 시 검정 배경에 빨간 테두리 및 폰트, 완료 시 에메랄드) */}
+                    {/* [1행 2열] 주간 보스 */}
+                    <div
+                      title="주간 보스 현황"
+                      className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
+                        charAlert?.bossAlert && !isBossAllDone
+                          ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
+                          : isBossAllDone
+                          ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
+                          : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border-transparent'
+                      }`}
+                    >
+                      <Crown className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span className="truncate">주보 {clearedBossCount}/{bossThreshold}</span>
+                    </div>
+
+                    {/* [1행 3열] 검은 마법사 (메인 화면과 동일하게 미완료 시 검정 배경에 빨간 테두리 및 폰트, 완료 시 에메랄드) */}
                     {char.selectedBlackMageId ? (
                       <div
                         title="검은 마법사 현황"
@@ -1181,7 +1181,22 @@ export const StandalonePiPView: React.FC = () => {
                       </div>
                     )}
 
-                    {/* b1. 주간 컨텐츠 */}
+                    {/* [2행 1열] 일일 컨텐츠 */}
+                    <div
+                      title="일일 컨텐츠 현황"
+                      className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
+                        charAlert?.dailyAlert && !isDailyAllDone
+                          ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
+                          : isDailyAllDone
+                          ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
+                          : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-transparent'
+                      }`}
+                    >
+                      <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span className="truncate">일일 {dailyDone}/{dailyTotal}</span>
+                    </div>
+
+                    {/* [2행 2열] 주간 컨텐츠 */}
                     <div
                       title="주간 컨텐츠 현황"
                       className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
@@ -1196,22 +1211,7 @@ export const StandalonePiPView: React.FC = () => {
                       <span className="truncate">주간 {weeklyDone}/{weeklyTotal}</span>
                     </div>
 
-                    {/* b2. 주간 보스 */}
-                    <div
-                      title="주간 보스 현황"
-                      className={`flex items-center justify-center gap-1 font-semibold py-1 px-1 rounded border transition-colors ${
-                        charAlert?.bossAlert && !isBossAllDone
-                          ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
-                          : isBossAllDone
-                          ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                          : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border-transparent'
-                      }`}
-                    >
-                      <Crown className="w-2.5 h-2.5 flex-shrink-0" />
-                      <span className="truncate">주보 {clearedBossCount}/{bossThreshold}</span>
-                    </div>
-
-                    {/* b3. 커스텀 컨텐츠 (흑백, + 아이콘) */}
+                    {/* [2행 3열] 커스텀 컨텐츠 (흑백, + 아이콘) */}
                     {(char.customTasks && char.customTasks.length > 0) ? (
                       <div
                         title="커스텀 스케줄 현황"

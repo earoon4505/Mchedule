@@ -1,5 +1,5 @@
 {
-  "name": "메케줄 1.0.6 + 가이드 작성(애드센스 조건 맞추기)",
+  "name": "Remix 메케줄 1.0.6 + 가이드 작성(애드센스 조건 맞추기)",
   "description": "NEXON Open API 연동 메이플스토리 스케줄러",
   "requestFramePermissions": [
     "notifications"

@@ -596,9 +596,6 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <span>아케인리버 주간 컨텐츠</span>
-                  <span className="text-[10px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.2 rounded border border-rose-200 dark:border-rose-800">
-                    목요일 리셋
-                  </span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {WEEKLY_QUESTS.map((task) => {
@@ -641,9 +638,6 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
               <div className="space-y-2 pt-1">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <span>길드 및 주간 컨텐츠</span>
-                  <span className="text-[10px] text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 px-1.5 py-0.2 rounded border border-orange-200 dark:border-orange-800">
-                    일요일 23:30 마감
-                  </span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {WEEKLY_GUILD_AND_MISC.map((task) => {

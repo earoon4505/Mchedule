@@ -521,18 +521,11 @@ export default function App() {
         });
       }
 
-      // 주간 콘텐츠 초기화 (목요일 정기 리셋: 주간 퀘스트, 주간 보스, 지하 수로, 플래그 등 모든 주간 데이터 초기화)
+      // 주간 콘텐츠 초기화 (목요일 정기 리셋: 주간 퀘스트, 주간 보스, 지하 수로, 플래그, 무릉도장 등 모든 주간 데이터 초기화)
       if (isWeeklyThuResetNeeded) {
         Object.keys(newWeeklyTasks).forEach((k) => {
           delete newWeeklyTasks[k];
         });
-      }
-
-      // 주간 콘텐츠 중 일요일 리셋 항목 초기화 (일요일 23:59 리셋 대비)
-      if (isWeeklySunResetNeeded) {
-        delete newWeeklyTasks['weekly_mulung_dojang'];
-        delete newWeeklyTasks['weekly_sharenian_culvert'];
-        delete newWeeklyTasks['weekly_flag_race'];
       }
 
       updatedRecords[charId] = {
