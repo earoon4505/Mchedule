@@ -33,4 +33,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // 환산 스펙 (환산 주스탯, 헥사 환산, 보스 배율) 백그라운드 크롤러 IPC
   fetchScouterStats: (characterName) => ipcRenderer.invoke('fetch-scouter-stats', characterName),
+
+  // 데스크톱 자동 업데이트 IPC
+  quitAndInstall: () => ipcRenderer.send('quit-and-install'),
+  onUpdateDownloaded: (callback) => {
+    const handler = (_event, info) => callback(info);
+    ipcRenderer.on('update-downloaded', handler);
+    return () => ipcRenderer.removeListener('update-downloaded', handler);
+  },
+  checkForUpdateStatus: () => ipcRenderer.send('check-for-update-status'),
 });

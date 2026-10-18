@@ -74,6 +74,7 @@ import { LegalModal, LegalTab } from './components/legal/LegalModal';
 import { GuideModal } from './components/guide/GuideModal';
 import { PiPOverlay } from './components/pip/PiPOverlay';
 import { IncompleteScheduleAlertModal } from './components/common/IncompleteScheduleAlertModal';
+import { UpdateModal } from './components/common/UpdateModal';
 import { 
   CharacterAlertStatus, 
   AccountAlertStatus,
@@ -183,6 +184,33 @@ export default function App() {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [configCharacterId, setConfigCharacterId] = useState<string | null>(null);
   const [toastFeedback, setToastFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // 데스크톱 앱 자동 업데이트 상태
+  const [updateInfo, setUpdateInfo] = useState<{ hasUpdate: boolean; version: string; isOpen: boolean }>({
+    hasUpdate: false,
+    version: '',
+    isOpen: false,
+  });
+
+  useEffect(() => {
+    const electron = (window as any).electronAPI;
+    if (!electron?.onUpdateDownloaded) return;
+
+    const unsubscribe = electron.onUpdateDownloaded((info: { version?: string }) => {
+      const ver = info?.version || '1.1.1';
+      setUpdateInfo({
+        hasUpdate: true,
+        version: ver,
+        isOpen: true,
+      });
+    });
+
+    electron.checkForUpdateStatus?.();
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
 
   // 넥슨 Open API & 메이플 게임 서버 점검 상태 관리
   const [maintenanceInfo, setMaintenanceInfo] = useState<{
@@ -2047,6 +2075,9 @@ export default function App() {
         currentTimeStr={lastUpdatedStr}
         autoSyncCountdown={autoSyncCountdown}
         autoSyncIntervalSec={settings.autoSyncIntervalSec || 300}
+        hasUpdate={updateInfo.hasUpdate}
+        updateVersion={updateInfo.version}
+        onOpenUpdateModal={() => setUpdateInfo((prev) => ({ ...prev, isOpen: true }))}
       />
 
       {/* 넥슨 Open API (503) & 메이플 게임 서버 (500) 점검 안내 배너 */}
@@ -2522,6 +2553,18 @@ export default function App() {
         incompleteList={incompleteAlertList}
         incompleteAccountTasks={accountAlertStatus.incompleteTasks}
         onSelectCharacter={handleSelectCharacter}
+      />
+
+      {/* 데스크톱 앱 새로운 버전 업데이트 안내 모달 */}
+      <UpdateModal
+        isOpen={updateInfo.isOpen}
+        version={updateInfo.version}
+        onClose={() => setUpdateInfo((prev) => ({ ...prev, isOpen: false }))}
+        onUpdate={() => {
+          if ((window as any).electronAPI?.quitAndInstall) {
+            (window as any).electronAPI.quitAndInstall();
+          }
+        }}
       />
 
       {/* 웹 환경 전용 인앱 PiP 오버레이 (임시 웹 PiP 숨김 처리: 데스크톱만 지원하도록 보호하며 코드는 100% 보존) */}

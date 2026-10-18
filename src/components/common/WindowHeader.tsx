@@ -11,7 +11,8 @@ import {
   Sun,
   ShieldCheck,
   Key,
-  Megaphone
+  Megaphone,
+  ArrowUpCircle
 } from 'lucide-react';
 import { CharacterInfo, CharacterProgressRecord } from '../../types';
 import { getFormattedKSTString } from '../../utils/time';
@@ -35,6 +36,9 @@ interface WindowHeaderProps {
   currentTimeStr: string;
   autoSyncCountdown: number;
   autoSyncIntervalSec?: number;
+  hasUpdate?: boolean;
+  updateVersion?: string;
+  onOpenUpdateModal?: () => void;
 }
 
 export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
@@ -52,6 +56,9 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
   currentTimeStr,
   autoSyncCountdown,
   autoSyncIntervalSec = 300,
+  hasUpdate = false,
+  updateVersion = '',
+  onOpenUpdateModal,
 }) => {
   // 미완료 컨텐츠(일일, 주간, 주간 보스)가 남아있는 캐릭터 목록 (불필요한 반복 연산 방지)
   const incompleteCharacters = useMemo(() => {
@@ -129,6 +136,19 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
 
       {/* 3. 우측 컨트롤 영역 (고정 폭 정렬로 흔들림 차단) */}
       <div className="flex items-center justify-end gap-1.5 flex-shrink-0 titlebar-no-drag">
+        {/* 0. 업데이트 준비 완료 알림 버튼 (업데이트 준비 완료 시 노출) */}
+        {hasUpdate && (
+          <button
+            id="btn-header-app-update"
+            onClick={onOpenUpdateModal}
+            className="h-7 px-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 transition-all border border-orange-600 shadow-2xs animate-pulse cursor-pointer"
+            title={`새로운 업데이트(v${updateVersion})가 준비되었습니다. 클릭하여 설치하기`}
+          >
+            <ArrowUpCircle className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">업데이트</span>
+          </button>
+        )}
+
         {/* 1. 공지사항 버튼 (확성기 아이콘 - API 버튼 왼쪽 배치) */}
         <button
           id="btn-header-notice"

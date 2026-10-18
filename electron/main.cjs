@@ -155,6 +155,12 @@ function createMainWindow() {
     }, 1000);
   });
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (downloadedUpdateInfo && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-downloaded', downloadedUpdateInfo);
+    }
+  });
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
@@ -1042,23 +1048,40 @@ function createTray() {
 }
 
 // 자동 업데이트 관리자 (GitHub Releases 연동)
+let downloadedUpdateInfo = null;
+
 function initAutoUpdater() {
   if (!app.isPackaged) return; // 개발 환경에서는 자동 업데이트 스킵
   try {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true;
-    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.autoInstallOnAppQuit = false; // 앱 종료 시 강제 설치 방지: 사용자가 '업데이트' 버튼을 직접 누를 때만 설치
 
     autoUpdater.on('update-available', (info) => {
       console.log('[AutoUpdater] 새 버전 발견:', info.version);
     });
 
     autoUpdater.on('update-downloaded', (info) => {
-      console.log('[AutoUpdater] 업데이트 다운로드 완료 (앱 종료 시 자동 설치):', info.version);
+      console.log('[AutoUpdater] 업데이트 다운로드 완료 (사용자 승인 대기):', info.version);
+      downloadedUpdateInfo = info;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update-downloaded', info);
+      }
     });
 
     autoUpdater.on('error', (err) => {
       console.warn('[AutoUpdater] 업데이트 확인 건너뜀:', err.message);
+    });
+
+    ipcMain.on('quit-and-install', () => {
+      console.log('[AutoUpdater] 사용자가 업데이트 승인 -> 즉시 재실행 및 패치 설치 진행');
+      autoUpdater.quitAndInstall();
+    });
+
+    ipcMain.on('check-for-update-status', (event) => {
+      if (downloadedUpdateInfo) {
+        event.reply('update-downloaded', downloadedUpdateInfo);
+      }
     });
 
     // 앱 실행 후 5초 뒤 백그라운드에서 조용히 업데이트 확인
