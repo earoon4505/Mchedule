@@ -72,6 +72,7 @@ AI Studio 플랫폼에서 토큰 한도 초과 및 세션 과부하로 인한 �
 4. **[코딩 스타일 및 개발 지침]**: `docs/CODING_STYLE.md`
 5. **[모바일 웹 전용 아키텍처 및 데스크톱 차이점 가이드]**: `docs/MOBILE_ARCHITECTURE.md`
 6. **[버전별 업데이트 상세 내역]**:
+   - v1.1.2 상세 내역: `docs/changelogs/v1.1.2.md`
    - v1.1.1 상세 내역: `docs/changelogs/v1.1.1.md`
    - v1.1.0 상세 내역: `docs/changelogs/v1.1.0.md`
    - v1.0.7 상세 내역: `docs/changelogs/v1.0.7.md`
