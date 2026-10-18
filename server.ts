@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { calculateScouterBossData } from './src/utils/scouterEngine.ts';
 
 const currentDirname = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
@@ -876,6 +877,156 @@ app.get('/api/nexon/character/basic', async (req, res) => {
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message || '네트워크 오류' });
+  }
+});
+
+// OCID 기반 캐릭터 스탯(전투력 등) 조회
+app.get('/api/nexon/character/stat', async (req, res) => {
+  const ocid = req.query.ocid as string;
+  const force = req.query.force === 'true';
+
+  if (!ocid || !ocid.trim()) {
+    return res.status(400).json({ success: false, error: 'OCID가 필요합니다.' });
+  }
+
+  const apiKeys = getAllActiveApiKeys(req);
+  if (apiKeys.length === 0) {
+    return res.status(400).json({ success: false, error: 'NEXON API 키가 등록되지 않았습니다.' });
+  }
+
+  const cacheKey = `stat_${ocid.trim()}`;
+  if (!force) {
+    const cachedStat = getFromCache(cacheKey);
+    if (cachedStat) {
+      return res.json({ success: true, stat: cachedStat, cached: true });
+    }
+  }
+
+  const requestedKey = (req.query.apiKeyId as string)
+    ? getActiveApiKeyRecords(req).find((r) => r.id === req.query.apiKeyId)?.apiKey
+    : undefined;
+  const preferredKey = requestedKey || ocidToApiKeyMap.get(ocid);
+  const candidateKeys = preferredKey
+    ? [preferredKey, ...apiKeys.filter((k) => k !== preferredKey)]
+    : [...apiKeys];
+
+  let statData: any = null;
+  let lastError: string = '스탯 조회 실패';
+
+  for (const key of candidateKeys) {
+    const statUrl = `https://open.api.nexon.com/maplestory/v1/character/stat?ocid=${encodeURIComponent(ocid.trim())}`;
+    const statRes = await safeFetch(statUrl, {
+      headers: { 'x-nxopen-api-key': key, 'Content-Type': 'application/json' },
+    }, 7000);
+
+    if (statRes.ok) {
+      statData = await statRes.json();
+      ocidToApiKeyMap.set(ocid, key);
+      setCache(cacheKey, statData, 5 * 60 * 1000);
+      break;
+    } else {
+      const errJson = await statRes.json().catch(() => ({}));
+      lastError = errJson.error?.message || `상태 코드 ${statRes.status}`;
+    }
+  }
+
+  if (!statData) {
+    return res.status(400).json({ success: false, error: lastError });
+  }
+
+  // final_stat에서 전투력, 아케인포스, 어센틱포스 추출
+  let combatPower = '0';
+  let arcaneForce = 0;
+  let authenticForce = 0;
+  if (Array.isArray(statData.final_stat)) {
+    const cpItem = statData.final_stat.find((s: any) => s.stat_name === '전투력');
+    if (cpItem && cpItem.stat_value) {
+      combatPower = String(cpItem.stat_value);
+    }
+    const afItem = statData.final_stat.find((s: any) => s.stat_name === '아케인포스');
+    if (afItem && afItem.stat_value) {
+      arcaneForce = Number(afItem.stat_value) || 0;
+    }
+    const authItem = statData.final_stat.find((s: any) => s.stat_name === '어센틱포스');
+    if (authItem && authItem.stat_value) {
+      authenticForce = Number(authItem.stat_value) || 0;
+    }
+  }
+
+  return res.json({
+    success: true,
+    combatPower,
+    arcaneForce,
+    authenticForce,
+    stat: statData,
+  });
+});
+
+// 환산 스펙 (환산 주스탯, 헥사 환산, 보스 배율) 웹 프록시 엔드포인트
+app.get('/api/scouter/stats', async (req, res) => {
+  const name = req.query.name as string;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, error: '캐릭터명이 필요합니다.' });
+  }
+
+  const targetName = name.trim();
+  const cacheKey = `scouter_${targetName.toLowerCase()}`;
+  const cached = getFromCache(cacheKey);
+  if (cached) {
+    return res.json({ success: true, stats: cached, cached: true });
+  }
+
+  try {
+    const scouterApiUrl = `https://api.maplescouter.com/api/id?name=${encodeURIComponent(targetName)}`;
+    const scouterRes = await safeFetch(scouterApiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+        'api-key': '01ce8bc7-43a0-4122-ae05-e23f07640b9c',
+        'Referer': 'https://maplescouter.com/',
+        'Origin': 'https://maplescouter.com',
+        'Content-Type': 'application/json',
+      },
+    }, 9000);
+
+    const json = await scouterRes.json().catch(() => null);
+
+    if (json && json.calculatedData) {
+      const calc = json.calculatedData;
+      const mainStatNum = calc.boss300_stat || calc.boss380_stat || 0;
+      const hexaStatNum = calc.boss300_hexaStat || calc.boss380_hexaStat || 0;
+
+      // 메이플스카우터 공식 큐빅 스플라인 및 레벨/포스 반감 엔진으로 보스 배율 및 순서 정밀 계산
+      const { multipliers: bossMultipliers, bossList } = calculateScouterBossData(json);
+
+      const stats = {
+        mainStat: mainStatNum ? mainStatNum.toLocaleString('ko-KR') : '-',
+        hexaStat: hexaStatNum ? hexaStatNum.toLocaleString('ko-KR') : '-',
+        bossMultiplier: '-',
+        combatPower: calc.combatPower ? String(calc.combatPower) : undefined,
+        characterClass: calc.class || undefined,
+        arcaneForce: Number(json.userStat?.stat?.arcaneForce || 0),
+        authenticForce: Number(json.userStat?.stat?.authenticForce || 0),
+        userSymbol: json.userApiData?.symbol || json.userSymbol || undefined,
+        bossMultipliers,
+        bossList,
+        updatedAt: new Date().toISOString(),
+      };
+
+      setCache(cacheKey, stats, 5 * 60 * 1000); // 5분 캐시
+      return res.json({ success: true, stats });
+    }
+
+    if (json && json.message) {
+      return res.status(400).json({ success: false, error: json.message });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: '메이플스카우터에서 해당 캐릭터의 환산 데이터를 찾지 못했습니다.',
+    });
+  } catch (err: any) {
+    console.error('Scouter fetch error in server.ts:', err);
+    return res.status(500).json({ success: false, error: err.message || '환산 정보 조회 중 오류' });
   }
 });
 

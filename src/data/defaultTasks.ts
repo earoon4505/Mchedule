@@ -219,7 +219,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
       { id: 'boss_easy_kaling', difficulty: 'easy', label: '이지', mesoValue: 320000000 },
       { id: 'boss_normal_kaling', difficulty: 'normal', label: '노말', mesoValue: 593000000 },
       { id: 'boss_hard_kaling', difficulty: 'hard', label: '하드', mesoValue: 1560000000 },
-      { id: 'boss_extreme_kaling', difficulty: 'extreme', label: '익스트림', mesoValue: 5387000000 },
+      { id: 'boss_extreme_kaling', difficulty: 'extreme', label: '익스트림', mesoValue: 4845000000 },
     ],
   },
   {
@@ -245,6 +245,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
     difficulties: [
       { id: 'boss_normal_limbo', difficulty: 'normal', label: '노말', mesoValue: 995000000 },
       { id: 'boss_hard_limbo', difficulty: 'hard', label: '하드', mesoValue: 2385000000 },
+      { id: 'boss_extreme_limbo', difficulty: 'extreme', label: '익스트림', mesoValue: 7500000000 },
     ],
   },
   {
@@ -253,6 +254,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
     difficulties: [
       { id: 'boss_normal_valdrix', difficulty: 'normal', label: '노말', mesoValue: 1320000000 },
       { id: 'boss_hard_valdrix', difficulty: 'hard', label: '하드', mesoValue: 3078000000 },
+      { id: 'boss_extreme_valdrix', difficulty: 'extreme', label: '익스트림', mesoValue: 9600000000 },
     ],
   },
   {
@@ -260,7 +262,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
     icon: '⚡',
     difficulties: [
       { id: 'boss_normal_jupiter', difficulty: 'normal', label: '노말', mesoValue: 1560000000 },
-      { id: 'boss_hard_jupiter', difficulty: 'hard', label: '하드', mesoValue: 4845000000 },
+      { id: 'boss_extreme_jupiter', difficulty: 'extreme', label: '익스트림', mesoValue: 5387000000 },
     ],
   },
 ];
@@ -435,6 +437,17 @@ export const ALL_TASKS_MAP = new Map<string, TaskItem>([
   ...WEEKLY_GUILD_AND_MISC.map((t) => [t.id, t] as [string, TaskItem]),
   ...WEEKLY_BOSSES.map((t) => [t.id, t] as [string, TaskItem]),
   ...BLACK_MAGE_TASKS.map((t) => [t.id, t] as [string, TaskItem]),
+  // 하위 호환성: 이전 버전에서 저장된 boss_hard_jupiter 안전 지원
+  ['boss_hard_jupiter', {
+    id: 'boss_extreme_jupiter',
+    name: '유피테르 (익스트림)',
+    category: 'weekly_boss' as const,
+    type: 'boolean' as const,
+    difficulty: 'extreme' as const,
+    mesoValue: 5387000000,
+    icon: '⚡',
+    resetType: 'weekly_thu' as const,
+  }],
 ]);
 
 // 캐릭터 추천 기본 활성 태스크 ID 목록 (계정 컨텐츠인 몬스터파크 및 모든 에픽던전 기본 무조건 전체 등록)

@@ -1,3 +1,7 @@
+declare global {
+  const __DESKTOP_SCOUTER_ENABLED__: boolean;
+}
+
 export type ResetType = 'daily' | 'weekly_thu' | 'weekly_sun' | 'monthly';
 
 export interface CustomTask {
@@ -28,6 +32,51 @@ export interface TaskItem {
   description?: string;
 }
 
+export interface BossMultiplierItem {
+  id?: string;
+  bossName?: string;
+  difficulty?: string;
+  difficultyLabel?: string;
+  category?: '그란디스' | '아케인' | '루타·주간';
+  multiplier: string; // 예: '115.4%' 또는 '[파티] 12%'
+  multiplierNum?: number | null; // 예: 115.4
+  statusLabel: string; // 예: '솔플 여유컷', '솔플 가능', '솔플 최소컷', '파티격 가능', '파티 최소컷', '불가능'
+  rawImg?: string; // 예: 'hard_jupiter', 'extreme_kaling'
+  iconUrl?: string; // 메이플스카우터 원본 아이콘 이미지 URL (신규 보스 자동 매핑용)
+  stat?: string | number; // 보스 요구 환산 스탯
+  isParty?: boolean;
+  // 호버 팝업 및 레벨/포스 부족 인디케이터용 스탯
+  bossLevel?: number;
+  bossArcaneForce?: number;
+  bossAuthenticForce?: number;
+  userLevel?: number;
+  userArcaneForce?: number;
+  userAuthenticForce?: number;
+  levelDmgPercent?: number; // 0 ~ 120%
+  forceDmgPercent?: number; // 0 ~ 125% (어센틱) 또는 0 ~ 150% (아케인)
+  forceType?: 'authentic' | 'arcane' | 'none';
+  reqForce?: number;
+  userForce?: number;
+  totalDmgPenaltyPercent?: number; // 기준(100%) 대비 최종 데미지 감소율
+  hasLevelPenalty?: boolean;
+  hasForcePenalty?: boolean;
+  isMaxSymbolShortage?: boolean;
+}
+
+export interface CharacterScouterStats {
+  mainStat?: string; // 환산 주스탯 (예: '65,464' 등)
+  hexaStat?: string; // 헥사 환산 주스탯 (예: '58,089' 등)
+  bossMultiplier?: string; // 대표 보스 배율
+  bossMultipliers?: Record<string, BossMultiplierItem>; // 보스별 메이플스카우터 실측 배율 및 판정 라벨 (0.00% 오차 1:1 일치)
+  bossList?: BossMultiplierItem[]; // 메이플스카우터 원본 순서 및 신규 보스 동적 렌더링 리스트
+  combatPower?: string; // 메이플스카우터 전투력
+  characterClass?: string; // 직업
+  arcaneForce?: number; // 아케인포스
+  authenticForce?: number; // 어센틱포스
+  userSymbol?: Record<string, any>; // 심볼 레벨 및 성장치 데이터
+  updatedAt?: string; // 마지막 환산 갱신 일시
+}
+
 export interface CharacterInfo {
   id: string;
   ocid: string;
@@ -47,6 +96,10 @@ export interface CharacterInfo {
   apiKeyAlias?: string; // 소속된 API 키 별칭 캐시 (PiP 및 오프라인 고속 표시 지원)
   customTasks?: CustomTask[]; // 캐릭터별 커스텀 스케줄 목록
   weeklyBossThreshold?: number; // 주간 보스 완료 기준 마리수 (기본 12, 0~12)
+  combatPower?: string; // 넥슨 Open API 공식 전투력
+  arcaneForce?: number; // 캐릭터 아케인포스
+  authenticForce?: number; // 캐릭터 어센틱포스
+  scouterStats?: CharacterScouterStats; // 환산 데이터 (환산 주스탯, 헥사 환산 등)
   lastSyncedAt?: string;
   syncError?: boolean; // 캐릭터 정보 갱신(OCID/닉네임/서버) 실패 여부
   syncErrorMessage?: string; // 실패 사유 안내 메시지

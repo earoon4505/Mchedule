@@ -51,4 +51,16 @@ if (sourcePng && png2icons) {
   }
 }
 
+// 3. Sync scouter boss definitions for Electron packaging
+const scouterDefsSource = path.join(root, 'src', 'data', 'scouterBossDefinitions.json');
+const scouterDefsDest = path.join(root, 'electron', 'scouterBossDefinitions.json');
+if (fs.existsSync(scouterDefsSource)) {
+  try {
+    fs.copyFileSync(scouterDefsSource, scouterDefsDest);
+    console.log('[prepare-build] Successfully synced scouterBossDefinitions.json to electron/');
+  } catch (e) {
+    console.error('[prepare-build] Error syncing scouterBossDefinitions.json:', e);
+  }
+}
+
 console.log('[prepare-build] Build assets preparation complete.');

@@ -644,6 +644,84 @@ export async function fetchCharacterBasic(
   }
 }
 
+// 캐릭터 전투력 조회 (넥슨 공식 API)
+export async function fetchCharacterCombatPower(
+  ocid: string,
+  apiKeyId?: string
+): Promise<{ success: boolean; combatPower?: string; arcaneForce?: number; authenticForce?: number; error?: string }> {
+  if (!ocid || !ocid.trim()) {
+    return { success: false, error: 'OCID가 필요합니다.' };
+  }
+
+  // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시 우선 호출
+  if (!isWeb) {
+    try {
+      const params = new URLSearchParams({ ocid: ocid.trim() });
+      if (apiKeyId) params.set('apiKeyId', apiKeyId);
+
+      const headers = getRequestHeaders();
+      const res = await fetch(`/api/nexon/character/stat?${params.toString()}`, { headers });
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (res.ok && data.success) {
+          return {
+            success: true,
+            combatPower: data.combatPower || '0',
+            arcaneForce: typeof data.arcaneForce === 'number' ? data.arcaneForce : undefined,
+            authenticForce: typeof data.authenticForce === 'number' ? data.authenticForce : undefined,
+          };
+        }
+      }
+    } catch (_) {
+      // 프록시 실패 시 웹 직접 조회로 폴백
+    }
+  }
+
+  // 2차: 웹 환경 또는 폴백 (브라우저 직접 fetch)
+  try {
+    const keys = getWebLocalApiKeys();
+    if (keys.length === 0) {
+      return { success: false, error: '등록된 API 키가 없습니다.' };
+    }
+
+    const preferredKey = apiKeyId ? keys.find((k) => k.id === apiKeyId) : undefined;
+    const orderedKeys = preferredKey ? [preferredKey, ...keys.filter((k) => k.id !== apiKeyId)] : keys;
+
+    for (const k of orderedKeys) {
+      try {
+        const statRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/stat?ocid=${encodeURIComponent(ocid.trim())}`, {
+          headers: { 'x-nxopen-api-key': k.apiKey, 'Content-Type': 'application/json' },
+        });
+        if (statRes.ok) {
+          const statData = await statRes.json();
+          let combatPower = '0';
+          let arcaneForce = 0;
+          let authenticForce = 0;
+          if (Array.isArray(statData.final_stat)) {
+            const cpItem = statData.final_stat.find((s: any) => s.stat_name === '전투력');
+            if (cpItem && cpItem.stat_value) {
+              combatPower = String(cpItem.stat_value);
+            }
+            const afItem = statData.final_stat.find((s: any) => s.stat_name === '아케인포스');
+            if (afItem && afItem.stat_value) {
+              arcaneForce = Number(afItem.stat_value) || 0;
+            }
+            const authItem = statData.final_stat.find((s: any) => s.stat_name === '어센틱포스');
+            if (authItem && authItem.stat_value) {
+              authenticForce = Number(authItem.stat_value) || 0;
+            }
+          }
+          return { success: true, combatPower, arcaneForce, authenticForce };
+        }
+      } catch (_) {}
+    }
+    return { success: false, error: '전투력 정보를 가져오지 못했습니다.' };
+  } catch (err: any) {
+    return { success: false, error: err.message || '네트워크 오류' };
+  }
+}
+
 export interface AccountCharactersResult {
   success: boolean;
   characters?: NexonAccountCharacter[];

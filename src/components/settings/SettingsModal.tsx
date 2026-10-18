@@ -35,6 +35,7 @@ import { AppSettings, PipDirection, PipSettings, NotificationSettings } from '..
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
 import { supportsPiP, supportsAutoStart, supportsFileBackup, isWeb } from '../../utils/platform';
 import { SwitchToggle } from '../common/SwitchToggle';
+import { APP_VERSION } from '../../constants/version';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -225,10 +226,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-500">
               <SettingsIcon className="w-4 h-4" />
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">설정</h3>
+              <span className="px-2 py-0.5 text-[11px] font-bold rounded-md bg-orange-100/80 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400 border border-orange-200/80 dark:border-orange-900/60 tracking-tight">
+                v{APP_VERSION}
+              </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="닫기"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* 상단 알림 메시지 배너 */}
@@ -884,8 +896,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                 </div>
               </div>
-              <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed">
-                <div>Data based on NEXON Open API · MapleStory © NEXON Korea Corp.</div>
+              <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <div>
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">메케줄 v{APP_VERSION}</span>
+                  <span className="mx-1.5">·</span>
+                  <span>Data based on NEXON Open API</span>
+                </div>
                 <div>공식 문의: mchedule4505@gmail.com</div>
               </div>
             </div>
