@@ -26,7 +26,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm install
+          npm install -D electron electron-builder
 
       - name: Extract App Version
         id: get_version
