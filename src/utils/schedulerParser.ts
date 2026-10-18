@@ -60,8 +60,8 @@ export function sortTaskIdsByStandardOrder(taskIds: string[]): string[] {
  */
 export function sortBossIdsByStandardOrder(bossIds: string[]): string[] {
   if (!Array.isArray(bossIds)) return [];
-  // 이전 버전 boss_hard_jupiter 호환 자동 승격
-  const normalized = bossIds.map((id) => id === 'boss_hard_jupiter' ? 'boss_extreme_jupiter' : id);
+  // 이전 버전 boss_extreme_jupiter 호환 자동 매핑
+  const normalized = bossIds.map((id) => id === 'boss_extreme_jupiter' ? 'boss_hard_jupiter' : id);
   const bossOrder = WEEKLY_BOSSES.map((b) => b.id);
   const unique = Array.from(new Set(normalized));
   return unique.sort((a, b) => {
@@ -361,7 +361,7 @@ export function findBossTaskId(contentName: string, difficulty?: string): string
       let diffMatch = matchedGroup.difficulties.find((d) => d.difficulty === normDiff);
       // 유피테르의 경우 게임/API 명칭(하드/익스트림) 호환 매칭 지원
       if (!diffMatch && matchedGroup.baseName === '유피테르' && (normDiff === 'hard' || normDiff === 'extreme')) {
-        diffMatch = matchedGroup.difficulties.find((d) => d.difficulty === 'extreme');
+        diffMatch = matchedGroup.difficulties.find((d) => d.difficulty === 'hard');
       }
       if (diffMatch) return diffMatch.id;
       // 난이도가 명시적으로 주어졌는데 해당 주간 그룹에 속하지 않는 난이도라면 불일치로 판정

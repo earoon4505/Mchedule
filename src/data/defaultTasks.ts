@@ -262,7 +262,7 @@ export const BOSS_GROUP_DEFINITIONS: BossGroupDefinition[] = [
     icon: '⚡',
     difficulties: [
       { id: 'boss_normal_jupiter', difficulty: 'normal', label: '노말', mesoValue: 1560000000 },
-      { id: 'boss_extreme_jupiter', difficulty: 'extreme', label: '익스트림', mesoValue: 5387000000 },
+      { id: 'boss_hard_jupiter', difficulty: 'hard', label: '하드', mesoValue: 5387000000 },
     ],
   },
 ];
@@ -437,13 +437,13 @@ export const ALL_TASKS_MAP = new Map<string, TaskItem>([
   ...WEEKLY_GUILD_AND_MISC.map((t) => [t.id, t] as [string, TaskItem]),
   ...WEEKLY_BOSSES.map((t) => [t.id, t] as [string, TaskItem]),
   ...BLACK_MAGE_TASKS.map((t) => [t.id, t] as [string, TaskItem]),
-  // 하위 호환성: 이전 버전에서 저장된 boss_hard_jupiter 안전 지원
-  ['boss_hard_jupiter', {
-    id: 'boss_extreme_jupiter',
-    name: '유피테르 (익스트림)',
+  // 하위 호환성: 이전 버전에서 저장된 boss_extreme_jupiter 안전 지원
+  ['boss_extreme_jupiter', {
+    id: 'boss_hard_jupiter',
+    name: '유피테르 (하드)',
     category: 'weekly_boss' as const,
     type: 'boolean' as const,
-    difficulty: 'extreme' as const,
+    difficulty: 'hard' as const,
     mesoValue: 5387000000,
     icon: '⚡',
     resetType: 'weekly_thu' as const,
