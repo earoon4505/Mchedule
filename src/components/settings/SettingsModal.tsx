@@ -64,7 +64,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
-  const [isDownloadingApp, setIsDownloadingApp] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -78,75 +77,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTimeout(() => {
       setNotificationMsg(null);
     }, 3000);
-  };
-
-  const triggerFileDownload = (url: string) => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.setAttribute('download', '');
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-    }, 1000);
-  };
-
-  const handleDownloadOrInstallApp = async () => {
-    if (isDownloadingApp) return;
-    setIsDownloadingApp(true);
-    showNotification('최신 데스크톱 앱 다운로드를 시작합니다.');
-
-    // 신규 GitHub 저장소: earoon4505 / Mchedule-exe-file
-    const repoReleasesUrl = 'https://github.com/earoon4505/Mchedule-exe-file/releases';
-    const repoLatestUrl = 'https://github.com/earoon4505/Mchedule-exe-file/releases/latest';
-
-    try {
-      // 1. GitHub 최신 릴리즈의 .exe 다운로드 링크 조회
-      const response = await fetch('https://api.github.com/repos/earoon4505/Mchedule-exe-file/releases/latest', {
-        headers: { Accept: 'application/vnd.github.v3+json' },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const exeAsset = data.assets?.find((asset: { name?: string; browser_download_url?: string }) => 
-          asset.name?.toLowerCase().endsWith('.exe')
-        );
-
-        if (exeAsset?.browser_download_url) {
-          triggerFileDownload(exeAsset.browser_download_url);
-          return;
-        }
-      }
-
-      // 2. 최신 릴리즈에 에셋이 없거나 404일 경우 전체 릴리즈 목록에서 최신 .exe 탐색
-      const allReleasesResponse = await fetch('https://api.github.com/repos/earoon4505/Mchedule-exe-file/releases', {
-        headers: { Accept: 'application/vnd.github.v3+json' },
-      });
-
-      if (allReleasesResponse.ok) {
-        const releases = await allReleasesResponse.json();
-        if (Array.isArray(releases) && releases.length > 0) {
-          for (const rel of releases) {
-            const asset = rel.assets?.find((a: { name?: string; browser_download_url?: string }) =>
-              a.name?.toLowerCase().endsWith('.exe')
-            );
-            if (asset?.browser_download_url) {
-              triggerFileDownload(asset.browser_download_url);
-              return;
-            }
-          }
-        }
-      }
-
-      // 3. API 조회 실패 시 최신 릴리즈 페이지로 이동
-      triggerFileDownload(repoLatestUrl);
-    } catch {
-      triggerFileDownload(repoReleasesUrl);
-    } finally {
-      setTimeout(() => {
-        setIsDownloadingApp(false);
-      }, 2000);
-    }
   };
 
   const pip: PipSettings = {
@@ -786,30 +716,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </label>
               </div>
             )}
-
-            {/* 메케줄 Window APP 다운로드 버튼 (임시 비활성화: 향후 재사용을 위해 관련 로직은 보존하고 버튼 렌더링만 임시 제외) */}
-            {/*
-            {isWeb && (
-              <div className="pt-2">
-                <button
-                  id="btn-download-window-app"
-                  type="button"
-                  disabled={isDownloadingApp}
-                  onClick={handleDownloadOrInstallApp}
-                  className="w-full p-3 rounded-2xl text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50/80 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-900/40 border border-sky-200 dark:border-sky-800/60 transition-all flex items-center justify-center gap-2 shadow-xs group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  <Monitor className="w-4 h-4 text-sky-500 group-hover:scale-110 transition-transform" />
-                  <span>
-                    {isDownloadingApp ? '설치 파일(.exe) 다운로드 중...' : '메케줄 Windows 데스크톱 앱 (.exe) 다운로드'}
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-200/70 dark:bg-sky-900/80 text-sky-800 dark:text-sky-200 font-bold flex items-center gap-1">
-                    <Download className={`w-2.5 h-2.5 ${isDownloadingApp ? 'animate-bounce' : ''}`} />
-                    최신 버전
-                  </span>
-                </button>
-              </div>
-            )}
-            */}
 
             {/* 데이터 초기화 버튼 */}
             <div className="pt-1">

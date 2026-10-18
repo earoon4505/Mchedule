@@ -38,7 +38,7 @@ npm install -D electron electron-builder
 ## 📦 생성된 배포용 .exe 파일 확인
 
 빌드가 완료되면 프로젝트 루트 내 **`release/`** 폴더에 실행 파일이 생성됩니다:
-- `release/메케줄 Setup 1.1.0.exe` (다른 사람에게 전송/배포할 수 있는 정식 인스톨러)
+- `release/maple-schedule-setup-1.1.0.exe` (다른 사람에게 전송/배포할 수 있는 정식 인스톨러, 깃허브 자동 업데이트 규격)
 - `release/메케줄 1.1.0.exe` (USB나 폴더에서 바로 켜는 무설치 단일 실행 파일)
 
 ---

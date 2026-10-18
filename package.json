@@ -40,7 +40,7 @@
     ],
     "win": {
       "icon": "public/icon.ico",
-      "artifactName": "${productName} Setup ${version}.${ext}",
+      "artifactName": "${name}-setup-${version}.${ext}",
       "target": [
         {
           "target": "nsis",
