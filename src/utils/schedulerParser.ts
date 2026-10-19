@@ -119,18 +119,37 @@ export function normalizeDifficulty(diffStr: string): string {
  * 지역/키워드 기반 일일/주간 태스크 ID 매핑 테이블
  */
 const KEYWORD_TASK_MAP: Array<{ keywords: string[]; taskId: string; isWeekly?: boolean }> = [
-  // 1. 아케인리버 일일 심볼 퀘스트
+  // 1. 에픽 던전 (인게임 스케줄러 명칭과 정확히 일치하거나 명확한 키워드만 매칭)
+  { keywords: ['에픽던전하이마운틴', '하이마운틴', 'highmountain'], taskId: 'weekly_epic_high_mountain', isWeekly: true },
+  { keywords: ['에픽던전앵글러컴퍼니', '앵글러컴퍼니'], taskId: 'weekly_epic_angler_company', isWeekly: true },
+  { keywords: ['에픽던전악몽선경', '악몽선경'], taskId: 'weekly_epic_nightmare_fairyland', isWeekly: true },
+  { keywords: ['에픽던전아우룸레기스', '아우룸레기스', 'aurumregis', 'aurum'], taskId: 'weekly_epic_aurum_regis', isWeekly: true },
+
+  // 2. 주간 아케인 퀘스트 (일일 퀘스트와의 명칭 충돌 방지를 위해 일일보다 우선 매칭)
+  { keywords: ['프로텍트에스페라', '프로텍트_에스페라', '에스페라주간', '에스페라주간퀘스트', '프로텍트'], taskId: 'weekly_arcane_espera', isWeekly: true },
+  { keywords: ['에르다스펙트럼', '여로주간', '여로주간퀘스트', '스펙트럼', '에르다'], taskId: 'weekly_arcane_vanishing', isWeekly: true },
+  { keywords: ['배고픈무토', '무토', '츄츄주간', '츄츄주간퀘스트', '배고픈'], taskId: 'weekly_arcane_chuchu', isWeekly: true },
+  { keywords: ['미드나잇체이서', '미드나잇', '체이서', '레헬른주간', '레헬른주간퀘스트', '드림브레이커', '드림브레이커주간', 'dreambreaker'], taskId: 'weekly_arcane_lachelein', isWeekly: true },
+  { keywords: ['스피릿세이비어', '아르카나주간', '아르카나주간퀘스트', '스세', '세이비어', '스피릿'], taskId: 'weekly_arcane_arcana', isWeekly: true },
+  { keywords: ['엔하임디펜스', '엔하임시드', '모라스주간', '모라스주간퀘스트', '엔하임', '디펜스'], taskId: 'weekly_arcane_morass', isWeekly: true },
+
+  // 3. 길드 / 주간 컨텐츠 (점수형 컨텐츠 포함)
+  { keywords: ['샤레니안의지하수로', '샤레니안지하수로', '샤레니안의지하 수로', '샤레니안', '지하수로', '지하 수로', '수로', 'sharenian', 'culvert', 'sharenianculvert', '아르카누스', '길드지하수로', '길드수로'], taskId: 'weekly_sharenian_culvert', isWeekly: true },
+  { keywords: ['플래그레이스', '플래그', '플래그레이스도전', '플래그도전', 'flagrace', 'flag'], taskId: 'weekly_flag_race', isWeekly: true },
+  { keywords: ['무릉도장', '무릉', '무릉도장도전', '무릉도장최고기록', 'mulung', 'dojang'], taskId: 'weekly_mulung_dojang', isWeekly: true },
+
+  // 4. 아케인리버 일일 심볼 퀘스트
   { keywords: ['소멸의여로', '여로조사', '여로일일', '소멸의여로일일', '소멸의여로조사', '아케인심볼소멸의여로', '아케인소멸의여로', '여로'], taskId: 'daily_arcane_vanishing', isWeekly: false },
   { keywords: ['츄츄아일랜드', '츄츄일일', '츄츄조사', '츄츄아일랜드조사', '아케인심볼츄츄아일랜드', '아케인츄츄', '츄츄'], taskId: 'daily_arcane_chuchu', isWeekly: false },
   { keywords: ['레헬른', '레헬른일일', '꿈의도시레헬른', '레헬른조사', '아케인심볼레헬른', '아케인레헬른', '꿈의도시'], taskId: 'daily_arcane_lachelein', isWeekly: false },
   { keywords: ['아르카나', '아르카나일일', '신비의숲아르카나', '아르카나조사', '아케인심볼아르카나', '아케인아르카나', '신비의숲'], taskId: 'daily_arcane_arcana', isWeekly: false },
   { keywords: ['모라스', '모라스일일', '기억의늪모라스', '모라스조사', '아케인심볼모라스', '아케인모라스', '기억의늪'], taskId: 'daily_arcane_morass', isWeekly: false },
-  { keywords: ['에스페라', '에스페라일일', '시작의바다에스페라', '태초의바다에스페라', '에스페라조사', '아케인심볼에스페라', '아케인에스페라', '시작의바다', '태초의바다'], taskId: 'daily_arcane_espera', isWeekly: false },
+  { keywords: ['에스페라조사', '태초의바다에스페라조사', '시작의바다에스페라조사', '에스페라일일', '시작의바다에스페라', '태초의바다에스페라', '에스페라안정화', '아케인심볼에스페라', '아케인에스페라', '시작의바다', '태초의바다', '에스페라'], taskId: 'daily_arcane_espera', isWeekly: false },
   { keywords: ['문브릿지', '문브릿지일일', '문브릿지조사', '사상의경계', '미지의안개'], taskId: 'daily_arcane_moonbridge', isWeekly: false },
   { keywords: ['고통의미궁', '미궁일일', '미궁조사', '고통의미궁조사', '미궁'], taskId: 'daily_arcane_labyrinth', isWeekly: false },
   { keywords: ['리멘', '리멘일일', '리멘조사', '세계의눈물'], taskId: 'daily_arcane_limen', isWeekly: false },
 
-  // 2. 그란디스 일일 어센틱심볼 퀘스트 (모든 게임 내 퀘스트 명칭/지역명/어센틱 표기 포괄 매핑)
+  // 5. 그란디스 일일 어센틱심볼 퀘스트 (모든 게임 내 퀘스트 명칭/지역명/어센틱 표기 포괄 매핑)
   { keywords: ['세르니움', '신의도시세르니움', '신의도시', '불타는세르니움', '세르니움조사', '세르니움일일', '후르니움', '전초기지', '전초기지의평화를위해', '어센틱심볼세르니움', '어센틱세르니움', 'cernium'], taskId: 'daily_grandis_cernium', isWeekly: false },
   { keywords: ['호텔아르크스', '아르크스', '무법자들의황무지', '황무지', '아르크스조사', '호텔아르크스조사', '아르크스일일', '어센틱심볼호텔아르크스', '어센틱심볼아르크스', '어센틱아르크스', '황무지조사', '무법자들의황무지조사', 'arcus'], taskId: 'daily_grandis_arcus', isWeekly: false },
   { keywords: ['오디움', '눈뜬거인의요람', '거인의요람', '눈뜬거인', '오디움조사', '오디움일일', '어센틱심볼오디움', '어센틱오디움', '요람조사', '눈뜬거인의요람조사', 'odium'], taskId: 'daily_grandis_odium', isWeekly: false },
@@ -139,25 +158,6 @@ const KEYWORD_TASK_MAP: Array<{ keywords: string[]; taskId: string; isWeekly?: b
   { keywords: ['카르시온', '생명의요람카르시온', '생명의요람', '생명의요람조사', '카르시온조사', '카르시온일일', '어센틱심볼카르시온', '어센틱카르시온', '생명의요람카르시온조사', 'carcion'], taskId: 'daily_grandis_carcion', isWeekly: false },
   { keywords: ['탈라하트', '별바다탈라하트', '별바다', '별바다조사', '탈라하트조사', '탈라하트일일', '어센틱심볼탈라하트', '어센틱탈라하트', '별바다탈라하트조사', 'tallahart'], taskId: 'daily_grandis_tallahart', isWeekly: false },
   { keywords: ['기어드락', '시간의균열기어드락', '시간의균열', '시간의균열조사', '기어드락조사', '기어드락일일', '어센틱심볼기어드락', '어센틱기어드락', '시간의균열기어드락조사', 'geardrock'], taskId: 'daily_grandis_geardrock', isWeekly: false },
-
-  // 3. 에픽 던전 (인게임 스케줄러 명칭과 정확히 일치하거나 명확한 키워드만 매칭)
-  { keywords: ['에픽던전하이마운틴', '하이마운틴', 'highmountain'], taskId: 'weekly_epic_high_mountain', isWeekly: true },
-  { keywords: ['에픽던전앵글러컴퍼니', '앵글러컴퍼니'], taskId: 'weekly_epic_angler_company', isWeekly: true },
-  { keywords: ['에픽던전악몽선경', '악몽선경'], taskId: 'weekly_epic_nightmare_fairyland', isWeekly: true },
-  { keywords: ['에픽던전아우룸레기스', '아우룸레기스', 'aurumregis', 'aurum'], taskId: 'weekly_epic_aurum_regis', isWeekly: true },
-
-  // 4. 주간 아케인 퀘스트
-  { keywords: ['에르다스펙트럼', '여로주간', '스펙트럼'], taskId: 'weekly_arcane_vanishing', isWeekly: true },
-  { keywords: ['배고픈무토', '무토', '츄츄주간'], taskId: 'weekly_arcane_chuchu', isWeekly: true },
-  { keywords: ['미드나잇체이서', '미드나잇', '체이서', '레헬른주간'], taskId: 'weekly_arcane_lachelein', isWeekly: true },
-  { keywords: ['스피릿세이비어', '아르카나주간', '스세'], taskId: 'weekly_arcane_arcana', isWeekly: true },
-  { keywords: ['엔하임디펜스', '엔하임시드', '모라스주간', '엔하임'], taskId: 'weekly_arcane_morass', isWeekly: true },
-  { keywords: ['프로텍트에스페라', '에스페라주간', '프로텍트'], taskId: 'weekly_arcane_espera', isWeekly: true },
-
-  // 5. 길드 / 주간 컨텐츠 (점수형 컨텐츠 포함)
-  { keywords: ['샤레니안의지하수로', '샤레니안지하수로', '샤레니안의지하 수로', '샤레니안', '지하수로', '지하 수로', '수로', 'sharenian', 'culvert', 'sharenianculvert', '아르카누스', '길드지하수로', '길드수로'], taskId: 'weekly_sharenian_culvert', isWeekly: true },
-  { keywords: ['플래그레이스', '플래그', '플래그레이스도전', '플래그도전', 'flagrace', 'flag'], taskId: 'weekly_flag_race', isWeekly: true },
-  { keywords: ['무릉도장', '무릉', '무릉도장도전', '무릉도장최고기록', 'mulung', 'dojang'], taskId: 'weekly_mulung_dojang', isWeekly: true },
 ];
 
 /**
@@ -584,7 +584,16 @@ export function findBlackMageTaskId(
  * 콘텐츠 이름으로 일일/주간 태스크 ID 찾기
  * (몬스터파크 일반 vs 몬스터파크 익스트림 분리 완벽 지원)
  */
-export function findTaskItemId(contentName: string): { taskId: string; isWeekly: boolean } | null {
+/**
+ * 콘텐츠 이름으로 일일/주간 태스크 ID 찾기
+ * (몬스터파크 일반 vs 몬스터파크 익스트림 분리 완벽 지원)
+ * - isWeeklyHint가 제공될 경우 현재 파싱 중인 카테고리(일일 vs 주간)를 우선 매칭하여 상호 오인식 원천 차단
+ * - 프로텍트 에스페라(주간) vs 에스페라(일일) 간섭 완벽 방어 가드 내장
+ */
+export function findTaskItemId(
+  contentName: string,
+  isWeeklyHint?: boolean
+): { taskId: string; isWeekly: boolean } | null {
   if (!contentName) return null;
   const norm = normalizeName(contentName);
 
@@ -597,10 +606,91 @@ export function findTaskItemId(contentName: string): { taskId: string; isWeekly:
     return { taskId: 'daily_monster_park', isWeekly: false };
   }
 
-  // 3) 키워드 맵핑 테이블 (샤레니안의 지하수로, 무릉도장, 플래그레이스, 에픽던전, 심볼 등)
-  const foundKeyword = KEYWORD_TASK_MAP.find((entry) =>
-    entry.keywords.some((kw) => norm.includes(normalizeName(kw)))
-  );
+  // 헬퍼: 특정 엔트리가 현재 검색어와 매칭되는지 판정 (일일 에스페라의 주간/프로텍트 오매칭 방어)
+  const isEntryMatched = (entry: (typeof KEYWORD_TASK_MAP)[0]): boolean => {
+    // 일일 에스페라 매칭 방어: 검색어에 '프로텍트'나 '주간'이 포함된 경우 일일 에스페라로 매칭되지 않도록 방어
+    if (
+      entry.taskId === 'daily_arcane_espera' &&
+      (norm.includes('프로텍트') || norm.includes('주간'))
+    ) {
+      return false;
+    }
+    return entry.keywords.some((kw) => norm.includes(normalizeName(kw)));
+  };
+
+  // 2) isWeeklyHint가 주어진 경우 해당 컨텍스트(일일 vs 주간) 우선 1차 매칭
+  if (isWeeklyHint !== undefined) {
+    if (isWeeklyHint) {
+      // 주간 컨텐츠 카테고리인 경우: 주간 아케인 퀘스트는 지역명이나 특수컨텐츠명 포함 시 100% 해당 주간 퀘스트로 즉시 직결 매칭
+      if (norm.includes('프로텍트') || norm.includes('에스페라')) {
+        return { taskId: 'weekly_arcane_espera', isWeekly: true };
+      }
+      if (norm.includes('스펙트럼') || norm.includes('소멸의여로') || norm.includes('여로')) {
+        return { taskId: 'weekly_arcane_vanishing', isWeekly: true };
+      }
+      if (norm.includes('무토') || norm.includes('츄츄아일랜드') || norm.includes('츄츄')) {
+        return { taskId: 'weekly_arcane_chuchu', isWeekly: true };
+      }
+      if (
+        norm.includes('체이서') ||
+        norm.includes('미드나잇') ||
+        norm.includes('레헬른') ||
+        norm.includes('드림브레이커') ||
+        norm.includes('드림') ||
+        norm.includes('야시장')
+      ) {
+        return { taskId: 'weekly_arcane_lachelein', isWeekly: true };
+      }
+      if (norm.includes('세이비어') || norm.includes('스피릿') || norm.includes('아르카나')) {
+        return { taskId: 'weekly_arcane_arcana', isWeekly: true };
+      }
+      if (norm.includes('디펜스') || norm.includes('엔하임') || norm.includes('모라스')) {
+        return { taskId: 'weekly_arcane_morass', isWeekly: true };
+      }
+
+      const weeklyContextMatch = KEYWORD_TASK_MAP.find((entry) => {
+        if (!entry.isWeekly) return false;
+        return isEntryMatched(entry);
+      });
+      if (weeklyContextMatch) {
+        return { taskId: weeklyContextMatch.taskId, isWeekly: true };
+      }
+    } else {
+      const dailyContextMatch = KEYWORD_TASK_MAP.find((entry) => {
+        if (entry.isWeekly) return false;
+        return isEntryMatched(entry);
+      });
+      if (dailyContextMatch) {
+        return { taskId: dailyContextMatch.taskId, isWeekly: false };
+      }
+    }
+
+    // ALL_TASKS_MAP 컨텍스트 1차 매칭
+    for (const [taskId, taskItem] of ALL_TASKS_MAP.entries()) {
+      const isTaskWeekly = taskId.startsWith('weekly_');
+      if (isWeeklyHint !== isTaskWeekly) continue;
+
+      const taskNorm = normalizeName(taskItem.name);
+      const regionNorm = taskItem.region ? normalizeName(taskItem.region) : '';
+
+      // 일일 에스페라 오인식 가드
+      if (taskId === 'daily_arcane_espera' && (norm.includes('프로텍트') || norm.includes('주간'))) {
+        continue;
+      }
+
+      if (norm === taskNorm || (regionNorm && norm === regionNorm)) {
+        return { taskId, isWeekly: isTaskWeekly };
+      }
+      if (!taskId.startsWith('weekly_epic_') && !taskId.includes('monster_park')) {
+        if (norm.includes(taskNorm) || (regionNorm && norm.includes(regionNorm))) {
+          return { taskId, isWeekly: isTaskWeekly };
+        }
+      }
+    }
+  }
+
+  // 3) 전체 키워드 맵핑 테이블 순회 (주간 아케인 퀘스트 우선 매칭 및 에스페라 충돌 방어)
+  const foundKeyword = KEYWORD_TASK_MAP.find((entry) => isEntryMatched(entry));
   if (foundKeyword) {
     return { taskId: foundKeyword.taskId, isWeekly: !!foundKeyword.isWeekly };
   }
@@ -609,6 +699,10 @@ export function findTaskItemId(contentName: string): { taskId: string; isWeekly:
   for (const [taskId, taskItem] of ALL_TASKS_MAP.entries()) {
     const taskNorm = normalizeName(taskItem.name);
     const regionNorm = taskItem.region ? normalizeName(taskItem.region) : '';
+
+    if (taskId === 'daily_arcane_espera' && (norm.includes('프로텍트') || norm.includes('주간'))) {
+      continue;
+    }
 
     if (norm === taskNorm || (regionNorm && norm === regionNorm)) {
       return { taskId, isWeekly: taskId.startsWith('weekly_') };
@@ -636,11 +730,14 @@ export function evaluateContentProgress(item: any, taskId: string): {
 } {
   if (!item) return { isCompleted: false, currentCount: 0, maxCount: 1 };
 
-  // 1. 명시적 완료/보상/참여 플래그 확인
+  // 1. 명시적 완료/보상/참여 플래그 확인 (넥슨 공식 is_cleared 필드 완벽 지원)
   const hasCompleteFlag = 
     isFlagTrue(item.complete_flag) ||
+    isFlagTrue(item.is_cleared) ||
     isFlagTrue(item.clear_yn) ||
     isFlagTrue(item.clear_flag) ||
+    isFlagTrue(item.clear_status) ||
+    isFlagTrue(item.clear) ||
     isFlagTrue(item.reward_flag) ||
     isFlagTrue(item.receive_flag) ||
     isFlagTrue(item.is_clear) ||
@@ -652,8 +749,8 @@ export function evaluateContentProgress(item: any, taskId: string): {
     isFlagTrue(item.attend_flag);
 
   // 2. quest_state 확인 ("2" = 완료, "1" = 진행 중, "0" = 기타/미진행)
-  const questStateStr = String(item.quest_state ?? '').trim();
-  const isQuestStateCompleted = questStateStr === '2';
+  const questStateStr = String(item.quest_state ?? item.state ?? item.status ?? '').trim();
+  const isQuestStateCompleted = questStateStr === '2' || questStateStr === '완료' || questStateStr === '클리어';
 
   // 3. 수치 값 추출 (now_count, clear_count, enter_count, play_count, score, point, record)
   const rawNow = Number(item.now_count ?? item.clear_count ?? item.enter_count ?? item.play_count ?? item.count);
@@ -742,12 +839,15 @@ export function evaluateContentProgress(item: any, taskId: string): {
   }
 
   // ----------------------------------------------------
-  // E. 주간 아케인 퀘스트 (에르다 스펙트럼, 무토, 스세, 엔하임, 프로텍트)
+  // E. 주간 아케인 퀘스트 (에르다 스펙트럼, 무토, 스세, 엔하임, 프로텍트 에스페라)
   // ----------------------------------------------------
   if (taskId.startsWith('weekly_arcane_') || taskId.startsWith('weekly_')) {
     const isCompleted = 
       hasCompleteFlag ||
-      isQuestStateCompleted;
+      isQuestStateCompleted ||
+      isBossItemCompleted(item) ||
+      nowCount >= 1 ||
+      (item.remain_count === 0 || item.remain_count === '0');
 
     return {
       isCompleted,
@@ -846,7 +946,7 @@ export function extractInGameRegisteredTasks(apiData: any): {
         return;
       }
 
-      const found = findTaskItemId(rawName);
+      const found = findTaskItemId(rawName, false);
       // 일일 퀘스트 및 몬스터파크(계정 컨텐츠) 등록
       if (
         found && 
@@ -886,7 +986,7 @@ export function extractInGameRegisteredTasks(apiData: any): {
         return;
       }
 
-      const found = findTaskItemId(rawName);
+      const found = findTaskItemId(rawName, true);
       // 주간 퀘스트 및 에픽던전(계정 컨텐츠) 등록
       if (
         found && 
@@ -1031,7 +1131,11 @@ export function extractInGameRegisteredTasks(apiData: any): {
       return;
     }
 
-    const found = findTaskItemId(rawName);
+    const isWeeklyCat = cat.includes('주간') || cat.includes('weekly');
+    const isDailyCat = cat.includes('일일') || cat.includes('daily');
+    const isWeeklyHint = isWeeklyCat ? true : isDailyCat ? false : undefined;
+
+    const found = findTaskItemId(rawName, isWeeklyHint);
     if (
       found &&
       found.taskId !== 'daily_monster_park' &&
@@ -1295,8 +1399,8 @@ export function applyNexonSchedulerData(
         return;
       }
 
-      // 1-3. 일반 일일 태스크
-      const found = findTaskItemId(name);
+      // 1-3. 일반 일일 태스크 (isWeeklyHint: false 명시로 주간 태스크 오인식 차단)
+      const found = findTaskItemId(name, false);
       if (!found) return;
 
       const isCommonTask = found.taskId === 'daily_monster_park' || found.taskId.startsWith('weekly_epic_');
@@ -1307,7 +1411,7 @@ export function applyNexonSchedulerData(
       const evalResult = evaluateContentProgress(item, found.taskId);
       const targetMap = found.isWeekly ? updatedWeekly : updatedDaily;
 
-      let isTaskDone = evalResult.isCompleted;
+      let isTaskDone = isCompleted || evalResult.isCompleted;
       let finalCount = evalResult.currentCount;
       let finalMax = evalResult.maxCount;
 
@@ -1364,34 +1468,37 @@ export function applyNexonSchedulerData(
         return;
       }
 
-      // 2-3. 주간 일반 태스크
-      const found = findTaskItemId(name);
+      // 2-3. 주간 일반 태스크 (isWeeklyHint: true 명시로 일일 태스크 오인식 및 덮어쓰기 완전 차단)
+      const found = findTaskItemId(name, true);
       if (!found) return;
 
+      const evalResult = evaluateContentProgress(item, found.taskId);
+      const isTaskDone = isCompleted || evalResult.isCompleted;
+
       const isCommonTask = found.taskId === 'daily_monster_park' || found.taskId.startsWith('weekly_epic_');
-      if (characterEnabledTaskIds && !characterEnabledTaskIds.includes(found.taskId) && !isCommonTask) {
+      // 유저가 인게임에서 실제로 클리어한 태스크(!isTaskDone이 아닌 완료된 태스크)는 enabledTaskIds에 없더라도 클리어 상태를 보존
+      if (characterEnabledTaskIds && !characterEnabledTaskIds.includes(found.taskId) && !isCommonTask && !isTaskDone) {
         return;
       }
 
-      const evalResult = evaluateContentProgress(item, found.taskId);
       const targetMap = found.isWeekly ? updatedWeekly : updatedDaily;
 
       targetMap[found.taskId] = {
-        completed: evalResult.isCompleted,
-        currentCount: evalResult.currentCount,
+        completed: isTaskDone,
+        currentCount: isTaskDone ? Math.max(1, evalResult.currentCount) : evalResult.currentCount,
         maxCount: evalResult.maxCount,
-        completedAt: evalResult.isCompleted ? (targetMap[found.taskId]?.completedAt || nowIso) : undefined,
+        completedAt: isTaskDone ? (targetMap[found.taskId]?.completedAt || nowIso) : undefined,
         autoSynced: true,
       };
       syncCount++;
     });
   }
 
-  // 2-1. 길드 / 기타 주간 콘텐츠 (guild_contents 등) 파싱
+  // 2-1. 길드 / 기타 주간 콘텐츠 (guild_contents 등) 파싱 (isWeeklyHint: true)
   if (Array.isArray(rawGuild)) {
     rawGuild.forEach((item: any) => {
       const name = item.content_name || item.quest_name || item.name || item.title || '';
-      const found = findTaskItemId(name);
+      const found = findTaskItemId(name, true);
       if (!found) return;
 
       if (characterEnabledTaskIds && !characterEnabledTaskIds.includes(found.taskId)) {
@@ -1490,6 +1597,41 @@ export function applyNexonSchedulerData(
         }
       }
 
+      // 주간 아케인 퀘스트 (프로텍트 에스페라 등) 퀘스트 히스토리 기반 2중 확정 완료 (이번 주 목요일 리셋 주기 내)
+      if (timeKeys.weeklyKey === currentWeeklyThuKst) {
+        let matchedWeeklyArcaneId: string | null = null;
+        if (normQ.includes('프로텍트') || (normQ.includes('에스페라') && (normQ.includes('주간') || normQ.includes('프로텍트')))) {
+          matchedWeeklyArcaneId = 'weekly_arcane_espera';
+        } else if (normQ.includes('스펙트럼') || (normQ.includes('여로') && normQ.includes('주간'))) {
+          matchedWeeklyArcaneId = 'weekly_arcane_vanishing';
+        } else if (normQ.includes('무토') || (normQ.includes('츄츄') && normQ.includes('주간'))) {
+          matchedWeeklyArcaneId = 'weekly_arcane_chuchu';
+        } else if (
+          normQ.includes('미드나잇') ||
+          normQ.includes('체이서') ||
+          normQ.includes('드림브레이커') ||
+          normQ.includes('야시장') ||
+          (normQ.includes('레헬른') && (normQ.includes('주간') || normQ.includes('인형') || normQ.includes('꿈속')))
+        ) {
+          matchedWeeklyArcaneId = 'weekly_arcane_lachelein';
+        } else if (normQ.includes('스피릿') || normQ.includes('세이비어') || (normQ.includes('아르카나') && normQ.includes('주간'))) {
+          matchedWeeklyArcaneId = 'weekly_arcane_arcana';
+        } else if (normQ.includes('엔하임') || (normQ.includes('모라스') && normQ.includes('주간'))) {
+          matchedWeeklyArcaneId = 'weekly_arcane_morass';
+        }
+
+        if (matchedWeeklyArcaneId && !updatedWeekly[matchedWeeklyArcaneId]?.completed) {
+          updatedWeekly[matchedWeeklyArcaneId] = {
+            completed: true,
+            currentCount: 1,
+            maxCount: 1,
+            completedAt: q.quest_complete_time || nowIso,
+            autoSynced: true,
+          };
+          syncCount++;
+        }
+      }
+
       // 검은 마법사 처치/해방 퀘스트 확정 반영 (이번 달 완료된 검은 마법사 관련 퀘스트)
       if (
         q.quest_complete_time &&
@@ -1515,7 +1657,12 @@ export function applyNexonSchedulerData(
       if (handleWeeklyBossSync(name, diff, isCompleted)) return;
 
       // 3-3-4. 일반 일일/주간 퀘스트 동기화
-      const found = findTaskItemId(name);
+      const cat = (item.category_name || item.cycle || '').toLowerCase();
+      const isWeeklyCat = cat.includes('주간') || cat.includes('weekly');
+      const isDailyCat = cat.includes('일일') || cat.includes('daily');
+      const isWeeklyHint = isWeeklyCat ? true : isDailyCat ? false : undefined;
+
+      const found = findTaskItemId(name, isWeeklyHint);
       if (found && ALL_TASKS_MAP.has(found.taskId)) {
         const evalResult = evaluateContentProgress(item, found.taskId);
         const isItemDone = isCompleted || evalResult.isCompleted;

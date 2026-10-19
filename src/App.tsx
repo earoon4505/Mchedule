@@ -197,7 +197,7 @@ export default function App() {
     if (!electron?.onUpdateDownloaded) return;
 
     const unsubscribe = electron.onUpdateDownloaded((info: { version?: string }) => {
-      const ver = info?.version || '1.1.3';
+      const ver = info?.version || '1.1.4';
       setUpdateInfo({
         hasUpdate: true,
         version: ver,

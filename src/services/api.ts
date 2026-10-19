@@ -942,9 +942,31 @@ export async function fetchNexonSchedulerState(
       if (contentType.includes('application/json')) {
         const json = await res.json();
         if (res.ok) {
+          // 웹 환경에서도 퀘스트 히스토리(/character/quest-history)를 병합 조회하여 인게임 스케줄러 미등록 퀘스트까지 2중 감지 지원
+          let questHistoryData: any = null;
+          try {
+            const qDateParam = customDate ? `&date=${encodeURIComponent(customDate)}` : '';
+            const qUrl = `https://open.api.nexon.com/maplestory/v1/character/quest-history?ocid=${encodeURIComponent(ocid)}${qDateParam}`;
+            const qRes = await fetch(qUrl, {
+              headers: {
+                'x-nxopen-api-key': k.apiKey,
+                'Content-Type': 'application/json',
+              },
+            }).catch(() => null);
+            if (qRes && qRes.ok) {
+              questHistoryData = await qRes.json().catch(() => null);
+            }
+          } catch (_) {}
+
+          const combined = {
+            ...(json && typeof json === 'object' ? json : {}),
+            scheduler: json,
+            quest_history: questHistoryData,
+          };
+
           return {
             success: true,
-            data: json,
+            data: combined,
             isMockOrEmpty: false,
           };
         }
