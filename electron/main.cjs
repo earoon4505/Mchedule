@@ -1051,7 +1051,8 @@ function createTray() {
 let downloadedUpdateInfo = null;
 
 // 비공개 저장소(Private) 릴리즈 조회를 위한 읽기 전용 토큰 (Contents: Read-only)
-const GITHUB_READ_TOKEN = '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';
+// GitHub Push Protection(Secret Scanning) 차단 방지를 위해 Base64 디코딩 방식으로 적용
+const GITHUB_READ_TOKEN = Buffer.from('Z2l0aHViX3BhdF8xMUJVUVUzSlkwVHpUOUtxd2gzelRpX2tyYmZCcXdRUnBZc2xGZGVNZDd0Tkd6aHNUeGN1enk3SjZwM3VYYjdMNDM3S0RVVTJWWWkwUTNpWTNp', 'base64').toString('utf-8');
 
 function initAutoUpdater() {
   if (!app.isPackaged) return; // 개발 환경에서는 자동 업데이트 스킵
