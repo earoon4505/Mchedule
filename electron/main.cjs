@@ -1047,8 +1047,11 @@ function createTray() {
   }
 }
 
-// 자동 업데이트 관리자 (GitHub Releases 연동)
+// 자동 업데이트 관리자 (GitHub Releases 연동 - 비공개 저장소 지원)
 let downloadedUpdateInfo = null;
+
+// 비공개 저장소(Private) 릴리즈 조회를 위한 읽기 전용 토큰 (Contents: Read-only)
+const GITHUB_READ_TOKEN = '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';
 
 function initAutoUpdater() {
   if (!app.isPackaged) return; // 개발 환경에서는 자동 업데이트 스킵
@@ -1056,6 +1059,20 @@ function initAutoUpdater() {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = false; // 앱 종료 시 강제 설치 방지: 사용자가 '업데이트' 버튼을 직접 누를 때만 설치
+
+    // 비공개(Private) GitHub Releases 피드 설정 (인증 토큰 적용)
+    const effectiveToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || GITHUB_READ_TOKEN;
+    if (effectiveToken) {
+      process.env.GH_TOKEN = effectiveToken;
+    }
+
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'earoon4505',
+      repo: 'Mchedule',
+      private: true,
+      token: effectiveToken,
+    });
 
     autoUpdater.on('update-available', (info) => {
       console.log('[AutoUpdater] 새 버전 발견:', info.version);
