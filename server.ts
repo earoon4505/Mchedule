@@ -272,6 +272,54 @@ async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => P
   return results.filter((r): r is R => r !== null);
 }
 
+// 넥슨 Open API 점검 vs 메이플 게임 서버 점검 정밀 판별 헬퍼
+function parseNexonMaintenance(status: number, errJson: any) {
+  const errName = (errJson?.error?.name || errJson?.name || errJson?.code || '').toString().toUpperCase();
+  const errMsg = (errJson?.error?.message || errJson?.error || errJson?.message || (typeof errJson === 'string' ? errJson : '')).toString();
+
+  // 1. [게임 서버 점검] - 넥슨 공식: OPENAPI00010 (Game service under maintenance)
+  const isGameMaint = errName === 'OPENAPI00010' ||
+    errMsg.includes('OPENAPI00010') ||
+    errMsg.includes('게임 서버 점검') ||
+    errMsg.includes('게임 점검') ||
+    errMsg.includes('Game under maintenance');
+
+  if (isGameMaint) {
+    return {
+      isMaintenance: true,
+      maintenanceType: 'game_maintenance' as const,
+      errorCode: errName || 'OPENAPI00010',
+      statusCode: status,
+      error: '메이플스토리 or 넥슨 OPEN API 점검 중',
+    };
+  }
+
+  // 2. [넥슨 Open API 점검] - OPENAPI00011, HTTP 503, 502, 504, 500, OPENAPI00001
+  const isApiMaint = status === 503 ||
+    status === 502 ||
+    status === 504 ||
+    status === 500 ||
+    errName === 'OPENAPI00011' ||
+    errName === 'OPENAPI00001' ||
+    errMsg.includes('OPENAPI00011') ||
+    errMsg.includes('OPENAPI00001') ||
+    errMsg.includes('점검') ||
+    (errMsg.includes('통신') && errMsg.includes('지연'));
+
+  if (isApiMaint) {
+    const codeStr = errName || (status ? `HTTP ${status}` : 'OPENAPI00011');
+    return {
+      isMaintenance: true,
+      maintenanceType: 'api_maintenance' as const,
+      errorCode: codeStr,
+      statusCode: status,
+      error: '메이플스토리 or 넥슨 OPEN API 점검 중',
+    };
+  }
+
+  return null;
+}
+
 // ----------------------------------------------------
 // 1. NEXON API Key & Proxy Endpoints
 // ----------------------------------------------------
@@ -622,8 +670,11 @@ app.post('/api/nexon/key/test', async (req, res) => {
   }
 
   try {
+    const { characterName } = req.body || {};
+    const testChar = (characterName && typeof characterName === 'string' && characterName.trim()) ? characterName.trim() : '메이플용사';
+
     // 넥슨 API 테스트 호출 (예: 메이플 기본 식별자 조회)
-    const testUrl = `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent('메이플용사')}`;
+    const testUrl = `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(testChar)}`;
     const testRes = await safeFetch(testUrl, {
       headers: {
         'x-nxopen-api-key': targetKey,
@@ -645,12 +696,16 @@ app.post('/api/nexon/key/test', async (req, res) => {
         });
       }
 
-      // 503 또는 500 점검/오류 상태 코드 전파
-      if (testRes.status === 503 || testRes.status === 500) {
-        return res.status(testRes.status).json({
+      // 점검/장애 상태 코드 및 에러 감지 (parseNexonMaintenance 정밀 분기)
+      const maint = parseNexonMaintenance(testRes.status, testJson);
+      if (maint) {
+        return res.status(testRes.status >= 400 ? testRes.status : 503).json({
           success: false,
-          statusCode: testRes.status,
-          error: errMsg || (testRes.status === 503 ? '현재 넥슨 Open API 점검 중입니다.' : '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.'),
+          isMaintenance: true,
+          maintenanceType: maint.maintenanceType,
+          errorCode: maint.errorCode,
+          statusCode: maint.statusCode,
+          error: maint.error,
         });
       }
 
@@ -820,7 +875,21 @@ app.get('/api/nexon/character/basic', async (req, res) => {
         break;
       } else {
         const errJson = await basicRes.json().catch(() => ({}));
-        lastError = errJson.error?.message || `상태 코드 ${basicRes.status}`;
+        const errName = errJson?.error?.name || '';
+        const errMsg = errJson?.error?.message || '';
+        lastError = errMsg || `상태 코드 ${basicRes.status}`;
+
+        const maint = parseNexonMaintenance(basicRes.status, errJson);
+        if (maint) {
+          return res.status(basicRes.status >= 400 ? basicRes.status : 503).json({
+            success: false,
+            isMaintenance: true,
+            maintenanceType: maint.maintenanceType,
+            errorCode: maint.errorCode,
+            statusCode: maint.statusCode,
+            error: maint.error,
+          });
+        }
       }
     }
 
@@ -1309,6 +1378,18 @@ app.get('/api/nexon/character/scheduler', async (req, res) => {
       schedData = await schedRes.json().catch(() => null);
     } else if (schedRes && schedStatus >= 400) {
       console.warn(`[Nexon Scheduler Warning] status ${schedStatus}`);
+      const errJson = await schedRes.json().catch(() => ({}));
+      const maint = parseNexonMaintenance(schedStatus, errJson);
+      if (maint) {
+        return res.status(schedStatus >= 400 ? schedStatus : 503).json({
+          success: false,
+          isMaintenance: true,
+          maintenanceType: maint.maintenanceType,
+          errorCode: maint.errorCode,
+          statusCode: maint.statusCode,
+          error: maint.error,
+        });
+      }
     }
 
     // 월드리프 등으로 기존 OCID가 만료되어 스케줄러 조회가 실패한 경우:

@@ -17,6 +17,8 @@ export interface SyncSchedulerResult {
   error?: string;
   isMockOrEmpty?: boolean;
   newOcid?: string;
+  isMaintenance?: boolean;
+  maintenanceType?: NexonMaintenanceType;
 }
 
 // 웹 모드 전용 LocalStorage API 키 헬퍼 (다른 사용자와 절대 공유되지 않는 브라우저별 로컬 저장)
@@ -399,7 +401,17 @@ export async function testApiKey(apiKey?: string): Promise<{ success: boolean; m
           };
         }
 
-        // 400, 401, 403 및 키 관련 에러코드(OPENAPI00005, OPENAPI00003, OPENAPI00001 등)
+        // 점검 감지
+        const detected = detectNexonMaintenanceInfo(res.status, data);
+        if (detected.isMaintenance) {
+          dispatchNexonMaintenance(detected.type, detected.message, res.status);
+          return {
+            success: false,
+            error: detected.message,
+          };
+        }
+
+        // 400, 401, 403 및 키 관련 에러코드(OPENAPI00005, OPENAPI00003 등)
         return {
           success: false,
           error: errMsg || '유효하지 않은 API 키이거나 권한이 없습니다. 키를 다시 확인해주세요.',
@@ -422,6 +434,10 @@ export async function testApiKey(apiKey?: string): Promise<{ success: boolean; m
       body: JSON.stringify({ apiKey }),
     });
     const json = await res.json();
+    if (json.isMaintenance) {
+      dispatchNexonMaintenance(json.maintenanceType || 'api_maintenance', json.error, res.status);
+      return { success: false, error: json.error || '넥슨 서버 점검 중입니다.' };
+    }
     if (!res.ok || !json.success) {
       return { success: false, error: json.error || 'API 키 검증에 실패했습니다.' };
     }
@@ -524,7 +540,7 @@ export async function fetchCharacterBasic(
   ocidOrName: { ocid?: string; name?: string },
   force = false,
   apiKeyId?: string
-): Promise<{ success: boolean; basic?: NexonCharacterBasic; newOcid?: string; error?: string }> {
+): Promise<{ success: boolean; basic?: NexonCharacterBasic; newOcid?: string; error?: string; isMaintenance?: boolean; maintenanceType?: NexonMaintenanceType }> {
   // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시 우선 호출
   if (!isWeb) {
     try {
@@ -541,6 +557,16 @@ export async function fetchCharacterBasic(
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const data = await res.json();
+        if (data.isMaintenance) {
+          const mType = data.maintenanceType || 'api_maintenance';
+          dispatchNexonMaintenance(mType, data.error, res.status, data.errorCode);
+          return {
+            success: false,
+            isMaintenance: true,
+            maintenanceType: mType,
+            error: data.error,
+          };
+        }
         if (res.ok && data.success && data.basic) {
           const freshOcid = data.newOcid || (data.ocid && ocidOrName.ocid && data.ocid !== ocidOrName.ocid ? data.ocid : undefined);
           return {
@@ -576,6 +602,18 @@ export async function fetchCharacterBasic(
             const idData = await idRes.json();
             targetOcid = idData.ocid;
             break;
+          } else {
+            const errJson = await idRes.json().catch(() => ({}));
+            const detected = detectNexonMaintenanceInfo(idRes.status, errJson);
+            if (detected.isMaintenance) {
+              dispatchNexonMaintenance(detected.type, detected.message, idRes.status);
+              return {
+                success: false,
+                isMaintenance: true,
+                maintenanceType: detected.type,
+                error: detected.message,
+              };
+            }
           }
         } catch (_) {}
       }
@@ -587,6 +625,8 @@ export async function fetchCharacterBasic(
 
     // 등록된 모든 키를 순회하여 성공하는 키로 기본 정보 조회 (선호 키 최우선)
     let basicData: NexonCharacterBasic | null = null;
+    let lastMaintResult: { isMaintenance: boolean; type: NexonMaintenanceType; message: string } | null = null;
+
     for (const k of orderedKeys) {
       try {
         const basicRes = await fetch(`https://open.api.nexon.com/maplestory/v1/character/basic?ocid=${encodeURIComponent(targetOcid)}`, {
@@ -595,8 +635,25 @@ export async function fetchCharacterBasic(
         if (basicRes.ok) {
           basicData = await basicRes.json();
           break;
+        } else {
+          const errJson = await basicRes.json().catch(() => ({}));
+          const detected = detectNexonMaintenanceInfo(basicRes.status, errJson);
+          if (detected.isMaintenance) {
+            lastMaintResult = detected;
+            dispatchNexonMaintenance(detected.type, detected.message, basicRes.status);
+            break;
+          }
         }
       } catch (_) {}
+    }
+
+    if (lastMaintResult && lastMaintResult.isMaintenance) {
+      return {
+        success: false,
+        isMaintenance: true,
+        maintenanceType: lastMaintResult.type,
+        error: lastMaintResult.message,
+      };
     }
 
     let isOcidUpdated = false;
@@ -891,6 +948,17 @@ export async function fetchNexonSchedulerState(
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const data = await res.json();
+        if (data.isMaintenance) {
+          const mType = data.maintenanceType || 'api_maintenance';
+          dispatchNexonMaintenance(mType, data.error, res.status, data.errorCode);
+          return {
+            success: false,
+            isMaintenance: true,
+            maintenanceType: mType,
+            error: data.error,
+            isMockOrEmpty: true,
+          };
+        }
         if (res.ok && data.success && data.data) {
           return {
             success: true,
@@ -970,6 +1038,20 @@ export async function fetchNexonSchedulerState(
             isMockOrEmpty: false,
           };
         }
+
+        // 점검 감지
+        const detected = detectNexonMaintenanceInfo(res.status, json);
+        if (detected.isMaintenance) {
+          dispatchNexonMaintenance(detected.type, detected.message, res.status);
+          return {
+            success: false,
+            isMaintenance: true,
+            maintenanceType: detected.type,
+            error: detected.message,
+            isMockOrEmpty: true,
+          };
+        }
+
         // 권한(400, 403) 오류인 경우 타 계정 캐릭터일 수 있으므로 다음 키 시도
         if (res.status === 400 || res.status === 403) {
           lastError = json.error?.message || `권한 오류 (${res.status})`;
@@ -1111,11 +1193,89 @@ export interface NexonServerCheckResult {
   isMaintenance: boolean;
   type: NexonMaintenanceType;
   statusCode?: number;
+  errorCode?: string;
   message?: string;
 }
 
+// 응답 상태 코드 및 에러 JSON/메시지로부터 점검 여부 판별 유틸
+export function detectNexonMaintenanceInfo(status: number, errJsonOrMsg?: any): {
+  isMaintenance: boolean;
+  type: NexonMaintenanceType;
+  errorCode?: string;
+  statusCode?: number;
+  message: string;
+} {
+  const errName = (
+    errJsonOrMsg?.error?.name ||
+    errJsonOrMsg?.name ||
+    errJsonOrMsg?.code ||
+    errJsonOrMsg?.errorCode ||
+    ''
+  ).toString().toUpperCase();
+
+  const errMsg = (
+    errJsonOrMsg?.error?.message ||
+    errJsonOrMsg?.error ||
+    errJsonOrMsg?.message ||
+    (typeof errJsonOrMsg === 'string' ? errJsonOrMsg : '')
+  ).toString();
+
+  const explicitType: NexonMaintenanceType | undefined = errJsonOrMsg?.maintenanceType;
+
+  // 1. [게임 서버 점검] - 넥슨 공식: OPENAPI00010 (Game service under maintenance)
+  const isGameMaint =
+    explicitType === 'game_maintenance' ||
+    errName === 'OPENAPI00010' ||
+    errMsg.includes('OPENAPI00010') ||
+    errMsg.includes('게임 서버 점검') ||
+    errMsg.includes('게임 점검') ||
+    errMsg.includes('Game under maintenance');
+
+  if (isGameMaint) {
+    return {
+      isMaintenance: true,
+      type: 'game_maintenance',
+      errorCode: errName || 'OPENAPI00010',
+      statusCode: status,
+      message: '메이플스토리 or 넥슨 OPEN API 점검 중',
+    };
+  }
+
+  // 2. [넥슨 Open API 점검] - OPENAPI00011, HTTP 503, 502, 504, 500, OPENAPI00001
+  const isApiMaint =
+    explicitType === 'api_maintenance' ||
+    status === 503 ||
+    status === 502 ||
+    status === 504 ||
+    status === 500 ||
+    errName === 'OPENAPI00011' ||
+    errName === 'OPENAPI00001' ||
+    errMsg.includes('OPENAPI00011') ||
+    errMsg.includes('OPENAPI00001') ||
+    errMsg.includes('점검') ||
+    (errMsg.includes('통신') && errMsg.includes('지연'));
+
+  if (isApiMaint) {
+    const codeStr = errName || (status ? `HTTP ${status}` : 'OPENAPI00011');
+    return {
+      isMaintenance: true,
+      type: 'api_maintenance',
+      errorCode: codeStr,
+      statusCode: status,
+      message: '메이플스토리 or 넥슨 OPEN API 점검 중',
+    };
+  }
+
+  return { isMaintenance: false, type: 'none', statusCode: status, message: '' };
+}
+
 // 점검 상태 전역 이벤트 알림 함수
-export function dispatchNexonMaintenance(type: NexonMaintenanceType, message?: string, statusCode?: number) {
+export function dispatchNexonMaintenance(
+  type: NexonMaintenanceType,
+  message?: string,
+  statusCode?: number,
+  errorCode?: string
+) {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
       new CustomEvent('mapleschedule:nexon_maintenance', {
@@ -1124,6 +1284,7 @@ export function dispatchNexonMaintenance(type: NexonMaintenanceType, message?: s
           type,
           message,
           statusCode,
+          errorCode,
         },
       })
     );
@@ -1146,9 +1307,36 @@ export async function checkNexonServerStatus(): Promise<NexonServerCheckResult> 
       }
     }
 
-    // 등록된 키가 없으면 점검 여부를 단독 확인하기 어려우므로 'none' 반환
-    if (!activeKey) {
+    if (!activeKey && typeof window !== 'undefined') {
+      try {
+        const cachedRaw = localStorage.getItem('mapleschedule_cached_apikeys_v1');
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (Array.isArray(cached) && cached[0]?.apiKey) {
+            activeKey = cached[0].apiKey;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 웹 환경에서는 등록된 키가 없으면 점검 여부를 단독 확인하기 어려우므로 'none' 반환
+    // (데스크톱은 서버 환경변수나 storage.json 키가 동작하므로 키가 없어도 호출 허용)
+    if (!activeKey && isWeb) {
       return { isMaintenance: false, type: 'none' };
+    }
+
+    // 등록된 첫 번째 캐릭터명을 테스트용으로 활용 (등록된 캐릭터가 없으면 '메이플용사' 사용)
+    let testCharName = '메이플용사';
+    if (typeof window !== 'undefined') {
+      try {
+        const rawData = localStorage.getItem('mapleschedule_data_v1');
+        if (rawData) {
+          const parsed = JSON.parse(rawData);
+          if (Array.isArray(parsed?.characters) && parsed.characters[0]?.characterName) {
+            testCharName = parsed.characters[0].characterName;
+          }
+        }
+      } catch (_) {}
     }
 
     let status = 200;
@@ -1157,7 +1345,7 @@ export async function checkNexonServerStatus(): Promise<NexonServerCheckResult> 
     if (isWeb) {
       // 웹: 브라우저에서 가벼운 핑 테스트 호출
       const testRes = await fetch(
-        `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent('메이플용사')}`,
+        `https://open.api.nexon.com/maplestory/v1/id?character_name=${encodeURIComponent(testCharName)}`,
         {
           headers: {
             'x-nxopen-api-key': activeKey,
@@ -1172,38 +1360,26 @@ export async function checkNexonServerStatus(): Promise<NexonServerCheckResult> 
       const testRes = await fetch('/api/nexon/key/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: activeKey }),
+        body: JSON.stringify({ apiKey: activeKey, characterName: testCharName }),
       });
       status = testRes.status;
       errJson = await testRes.json().catch(() => ({}));
     }
 
-    // 1. 503: 넥슨 Open API 자체 점검
-    if (status === 503) {
+    const detected = detectNexonMaintenanceInfo(status, errJson);
+    if (detected.isMaintenance) {
       const result: NexonServerCheckResult = {
         isMaintenance: true,
-        type: 'api_maintenance',
-        statusCode: 503,
-        message: '현재 넥슨 Open API 서버가 점검 중입니다.',
+        type: detected.type,
+        statusCode: status,
+        errorCode: detected.errorCode,
+        message: detected.message,
       };
-      dispatchNexonMaintenance(result.type, result.message, 503);
+      dispatchNexonMaintenance(result.type, result.message, status, detected.errorCode);
       return result;
     }
 
-    // 2. 500: 메이플 게임 서버 점검 또는 내부 시스템 통신 지연
-    if (status === 500) {
-      const errMsg = errJson?.error?.message || errJson?.error || '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.';
-      const result: NexonServerCheckResult = {
-        isMaintenance: true,
-        type: 'game_maintenance',
-        statusCode: 500,
-        message: errMsg.includes('점검') ? errMsg : '메이플스토리 게임 서버 점검 또는 넥슨 내부 통신 지연 중입니다.',
-      };
-      dispatchNexonMaintenance(result.type, result.message, 500);
-      return result;
-    }
-
-    // 3. 정상 응답 (200) 또는 일반 클라이언트 코드 (400, 403, 429 등)는 점검이 아님
+    // 정상 응답(200) 또는 단순 클라이언트 오류(키 불일치, 캐릭터 없음 등)는 점검이 아님
     dispatchNexonMaintenance('none');
     return { isMaintenance: false, type: 'none', statusCode: status };
   } catch (e: any) {
