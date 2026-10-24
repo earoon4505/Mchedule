@@ -31,9 +31,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('pip-closed', handler);
     return () => ipcRenderer.removeListener('pip-closed', handler);
   },
-  // 환산 스펙 (환산 주스탯, 헥사 환산, 보스 배율) 백그라운드 크롤러 IPC
-  fetchScouterStats: (characterName) => ipcRenderer.invoke('fetch-scouter-stats', characterName),
-
   // 데스크톱 자동 업데이트 IPC
   quitAndInstall: () => ipcRenderer.send('quit-and-install'),
   onUpdateDownloaded: (callback) => {

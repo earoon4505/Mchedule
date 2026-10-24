@@ -1,5 +1,5 @@
 {
-  "name": "메케줄 1.1.9",
+  "name": "메케줄 1.2.0",
   "description": "NEXON Open API 연동 메이플스토리 스케줄러",
   "requestFramePermissions": [
     "notifications"

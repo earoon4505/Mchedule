@@ -540,7 +540,7 @@ export async function fetchCharacterBasic(
   ocidOrName: { ocid?: string; name?: string },
   force = false,
   apiKeyId?: string
-): Promise<{ success: boolean; basic?: NexonCharacterBasic; newOcid?: string; error?: string; isMaintenance?: boolean; maintenanceType?: NexonMaintenanceType }> {
+): Promise<{ success: boolean; basic?: NexonCharacterBasic; newOcid?: string; error?: string; isMaintenance?: boolean; maintenanceType?: NexonMaintenanceType; errorCode?: string; statusCode?: number }> {
   // 1차: 데스크톱(Electron) 환경에서는 로컬 Express 프록시 우선 호출
   if (!isWeb) {
     try {
@@ -565,6 +565,8 @@ export async function fetchCharacterBasic(
             isMaintenance: true,
             maintenanceType: mType,
             error: data.error,
+            errorCode: data.errorCode,
+            statusCode: res.status,
           };
         }
         if (res.ok && data.success && data.basic) {

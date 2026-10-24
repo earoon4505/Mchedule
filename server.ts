@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { calculateScouterBossData } from './src/utils/scouterEngine.ts';
 
 const currentDirname = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
@@ -1029,74 +1028,6 @@ app.get('/api/nexon/character/stat', async (req, res) => {
     authenticForce,
     stat: statData,
   });
-});
-
-// 환산 스펙 (환산 주스탯, 헥사 환산, 보스 배율) 웹 프록시 엔드포인트
-app.get('/api/scouter/stats', async (req, res) => {
-  const name = req.query.name as string;
-  if (!name || !name.trim()) {
-    return res.status(400).json({ success: false, error: '캐릭터명이 필요합니다.' });
-  }
-
-  const targetName = name.trim();
-  const cacheKey = `scouter_${targetName.toLowerCase()}`;
-  const cached = getFromCache(cacheKey);
-  if (cached) {
-    return res.json({ success: true, stats: cached, cached: true });
-  }
-
-  try {
-    const scouterApiUrl = `https://api.maplescouter.com/api/id?name=${encodeURIComponent(targetName)}`;
-    const scouterRes = await safeFetch(scouterApiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-        'api-key': '01ce8bc7-43a0-4122-ae05-e23f07640b9c',
-        'Referer': 'https://maplescouter.com/',
-        'Origin': 'https://maplescouter.com',
-        'Content-Type': 'application/json',
-      },
-    }, 9000);
-
-    const json = await scouterRes.json().catch(() => null);
-
-    if (json && json.calculatedData) {
-      const calc = json.calculatedData;
-      const mainStatNum = calc.boss300_stat || calc.boss380_stat || 0;
-      const hexaStatNum = calc.boss300_hexaStat || calc.boss380_hexaStat || 0;
-
-      // 메이플스카우터 공식 큐빅 스플라인 및 레벨/포스 반감 엔진으로 보스 배율 및 순서 정밀 계산
-      const { multipliers: bossMultipliers, bossList } = calculateScouterBossData(json);
-
-      const stats = {
-        mainStat: mainStatNum ? mainStatNum.toLocaleString('ko-KR') : '-',
-        hexaStat: hexaStatNum ? hexaStatNum.toLocaleString('ko-KR') : '-',
-        bossMultiplier: '-',
-        combatPower: calc.combatPower ? String(calc.combatPower) : undefined,
-        characterClass: calc.class || undefined,
-        arcaneForce: Number(json.userStat?.stat?.arcaneForce || 0),
-        authenticForce: Number(json.userStat?.stat?.authenticForce || 0),
-        userSymbol: json.userApiData?.symbol || json.userSymbol || undefined,
-        bossMultipliers,
-        bossList,
-        updatedAt: new Date().toISOString(),
-      };
-
-      setCache(cacheKey, stats, 5 * 60 * 1000); // 5분 캐시
-      return res.json({ success: true, stats });
-    }
-
-    if (json && json.message) {
-      return res.status(400).json({ success: false, error: json.message });
-    }
-
-    return res.status(400).json({
-      success: false,
-      error: '메이플스카우터에서 해당 캐릭터의 환산 데이터를 찾지 못했습니다.',
-    });
-  } catch (err: any) {
-    console.error('Scouter fetch error in server.ts:', err);
-    return res.status(500).json({ success: false, error: err.message || '환산 정보 조회 중 오류' });
-  }
 });
 
 // API 계정 내 전체 캐릭터 목록 조회 (/maplestory/v1/character/list)

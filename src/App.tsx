@@ -26,6 +26,7 @@ import {
   fetchNexonSchedulerState, 
   searchNexonCharacter,
   fetchCharacterBasic,
+  fetchCharacterCombatPower,
   fetchApiKeys,
   restoreApiKeys,
   checkNexonServerStatus,
@@ -64,7 +65,6 @@ import { BlackMageCard } from './components/tasks/BlackMageCard';
 import { CustomTaskList } from './components/tasks/CustomTaskList';
 import { ContentConfigModal } from './components/tasks/ContentConfigModal';
 import { ProgressPanel } from './components/stats/ProgressPanel';
-import { ConversionPageView } from './components/conversion/ConversionPageView';
 import { SettingsModal } from './components/settings/SettingsModal';
 // import { AdSenseBanner } from './components/ads/AdSenseBanner'; // 추후 광고 배너 활성화 시 주석 해제
 import { ApiKeyModal } from './components/settings/ApiKeyModal';
@@ -83,7 +83,7 @@ import {
   evaluateAccountAlerts,
   getActiveAlertCycleKey 
 } from './utils/alertNotifier';
-import { Plus, SlidersHorizontal, Calendar, Flame, Crown, LayoutGrid, ShieldAlert, AlertTriangle, X, RefreshCw, ChevronLeft, Users, Package, BarChart3, Calculator } from 'lucide-react';
+import { Plus, SlidersHorizontal, Calendar, Flame, Crown, LayoutGrid, ShieldAlert, AlertTriangle, X, RefreshCw, ChevronLeft, Users, Package, BarChart3 } from 'lucide-react';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { motion, LayoutGroup } from 'motion/react';
 import { isWeb, isElectron, supportsPiP, LOCAL_STORAGE_DATA_KEY } from './utils/platform';
@@ -150,8 +150,6 @@ export default function App() {
   const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
   const [autoSyncCountdown, setAutoSyncCountdown] = useState<number>(300);
 
-  // 중앙 뷰 모드: 'schedule' (스케줄 페이지) | 'conversion' (환산 페이지)
-  const [mainViewMode, setMainViewMode] = useState<'schedule' | 'conversion'>('schedule');
   // 중앙 탭: 'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom'
   const [activeTab, setActiveTab] = useState<'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom'>('all');
   const [collapseTrigger, setCollapseTrigger] = useState<number>(0);
@@ -197,7 +195,7 @@ export default function App() {
     if (!electron?.onUpdateDownloaded) return;
 
     const unsubscribe = electron.onUpdateDownloaded((info: { version?: string }) => {
-      const ver = info?.version || '1.1.9';
+      const ver = info?.version || '1.2.0';
       setUpdateInfo({
         hasUpdate: true,
         version: ver,
@@ -367,6 +365,7 @@ export default function App() {
     }
   }, [settings.darkMode]);
 
+
   // 페이지 새로고침(F5) 또는 탭 닫기 시 디바운스 대기 중인 최신 데이터 즉시 서버 동기화 (데스크톱 전용)
   useEffect(() => {
     if (isWeb) return; // 웹 모드는 LocalStorage를 사용하므로 서버 비콘 동기화 불필요
@@ -448,6 +447,42 @@ export default function App() {
     },
     []
   );
+
+  // 활성 캐릭터의 아케인포스 / 어센틱포스 / 전투력 자동 로드 (보스 카드 공식 스펙 배율 정밀 연동)
+  useEffect(() => {
+    if (!activeCharacterId) return;
+    const char = characters.find((c) => c.id === activeCharacterId);
+    if (!char || !char.ocid || char.ocid.startsWith('manual_')) return;
+
+    // 포스 정보가 아직 로드되지 않은 경우 백그라운드에서 1회 조회
+    if (char.arcaneForce == null || char.authenticForce == null || !char.combatPower) {
+      let isMounted = true;
+      fetchCharacterCombatPower(char.ocid, char.apiKeyId)
+        .then((res) => {
+          if (!isMounted || !res.success) return;
+          setCharacters((prev) => {
+            const next = prev.map((c) =>
+              c.id === char.id
+                ? {
+                    ...c,
+                    combatPower: res.combatPower || c.combatPower,
+                    arcaneForce: typeof res.arcaneForce === 'number' ? res.arcaneForce : c.arcaneForce,
+                    authenticForce: typeof res.authenticForce === 'number' ? res.authenticForce : c.authenticForce,
+                  }
+                : c
+            );
+            charactersRef.current = next;
+            persistData(next, recordsRef.current, settingsRef.current, activeCharacterIdRef.current, false);
+            return next;
+          });
+        })
+        .catch(() => {});
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [activeCharacterId, characters, persistData]);
 
   // PiP 창 및 다중 창 간 실시간 수신 리스너
   useEffect(() => {
@@ -2173,7 +2208,6 @@ export default function App() {
             }}
             onSelectTab={(tab) => {
               setActiveTab(tab);
-              setMainViewMode('schedule');
               setMobileCharacterSubView('detail');
             }}
             onOpenLegalModal={handleOpenLegalModal}
@@ -2243,7 +2277,7 @@ export default function App() {
                         { id: 'bosses', label: '주간 보스', icon: Crown, activeBg: 'bg-purple-600', activeText: 'text-white' },
                         { id: 'custom', label: '커스텀', icon: Plus, activeBg: 'bg-black dark:bg-white', activeText: 'text-white dark:text-black' },
                       ].map((tab) => {
-                        const isActive = mainViewMode === 'schedule' && activeTab === tab.id;
+                        const isActive = activeTab === tab.id;
                         const Icon = tab.icon;
                         return (
                           <button
@@ -2251,7 +2285,6 @@ export default function App() {
                             id={`tab-btn-${tab.id}`}
                             onClick={() => {
                               setActiveTab(tab.id as any);
-                              setMainViewMode('schedule');
                             }}
                             className={`relative px-3 sm:px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer z-10 select-none ${
                               isActive
@@ -2276,25 +2309,6 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* 환산 버튼 (데스크톱 전용: 웹 빌드 시 트리쉐이킹으로 코드 자체 100% 제거) */}
-                  {__DESKTOP_SCOUTER_ENABLED__ && (
-                    <button
-                      type="button"
-                      id="btn-scouter-conversion"
-                      onClick={() => {
-                        setMainViewMode((prev) => (prev === 'conversion' ? 'schedule' : 'conversion'));
-                      }}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 shadow-xs whitespace-nowrap cursor-pointer active:scale-95 ${
-                        mainViewMode === 'conversion'
-                          ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500 shadow-sm'
-                          : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
-                      }`}
-                    >
-                      <Calculator className={`w-3.5 h-3.5 ${mainViewMode === 'conversion' ? 'text-white' : 'text-orange-500'}`} />
-                      <span>환산</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={() => setConfigCharacterId(activeCharacter.id)}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-colors flex items-center gap-1.5 shadow-xs whitespace-nowrap cursor-pointer"
@@ -2306,20 +2320,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 환산 페이지 뷰 or 스케줄 목록 뷰 조건부 렌더링 (웹 빌드 시 완전 증발) */}
-              {__DESKTOP_SCOUTER_ENABLED__ && mainViewMode === 'conversion' ? (
-                <ConversionPageView 
-                  character={activeCharacter} 
-                  onUpdateCharacter={(updatedChar) => {
-                    const nextChars = characters.map((c) => (c.id === updatedChar.id ? updatedChar : c));
-                    setCharacters(nextChars);
-                    charactersRef.current = nextChars;
-                    persistData(nextChars, recordsRef.current, settingsRef.current, activeCharacterId);
-                  }}
-                />
-              ) : (
-                /* 스크롤 가능한 콘텐츠 뷰 (모바일 브라우저 하단 툴바 및 하단바 가림 방지 여유 공간 확보) */
-                <div className="flex-1 overflow-y-scroll p-4 sm:p-6 space-y-6 custom-scrollbar [scrollbar-gutter:stable] pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-6">
+              {/* 스크롤 가능한 콘텐츠 뷰: 우측 슬라이드 바(스크롤바) 숨김 적용 (마우스 휠 스크롤은 정상 작동) */}
+              {/* 맨 아래줄 보스 카드 호버 시 화면 흔들림 방지를 위한 최적의 하단 여유 패딩(lg:pb-26) */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] lg:pb-26">
                 {(activeTab === 'all' || activeTab === 'daily') && (
                   <DailyTaskList
                     key={`${activeCharacter.id}-${collapseTrigger}-daily`}
@@ -2404,7 +2407,6 @@ export default function App() {
                   />
                 )}
               </div>
-              )}
             </div>
               );
             })()
