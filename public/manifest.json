@@ -1,0 +1,24 @@
+{
+  "name": "메케줄 - 메이플스토리 스케줄러",
+  "short_name": "메케줄",
+  "description": "NEXON Open API 연동 메이플스토리 스케줄러",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#f97316",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-transparent.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

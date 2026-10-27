@@ -1,0 +1,927 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Settings as SettingsIcon, 
+  Monitor, 
+  Volume2, 
+  Download, 
+  Upload, 
+  RotateCcw, 
+  AlertTriangle,
+  CheckCircle2,
+  Moon,
+  Sun,
+  Tv,
+  Eye,
+  Sliders,
+  EyeOff,
+  LayoutGrid,
+  Star,
+  User,
+  RefreshCw,
+  RotateCw,
+  Trash2,
+  Minus,
+  Plus,
+  Maximize2,
+  Sparkles,
+  Bell,
+  Clock,
+  ExternalLink,
+  X,
+  Check,
+  Scale
+} from 'lucide-react';
+import { AppSettings, PipDirection, PipSettings, NotificationSettings } from '../../types';
+import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
+import { supportsPiP, supportsAutoStart, supportsFileBackup, isWeb } from '../../utils/platform';
+import { SwitchToggle } from '../common/SwitchToggle';
+import { APP_VERSION } from '../../constants/version';
+
+interface SettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  settings: AppSettings;
+  onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
+  hasApiKey: boolean;
+  onOpenApiKeyModal?: () => void;
+  onExportData: () => void;
+  onImportData: (file: File) => void;
+  onResetAllData: () => void;
+  onOpenLegalModal?: (tab?: 'terms' | 'privacy') => void;
+}
+
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+  isOpen,
+  onClose,
+  settings,
+  onUpdateSettings,
+  hasApiKey,
+  onOpenApiKeyModal,
+  onExportData,
+  onImportData,
+  onResetAllData,
+  onOpenLegalModal,
+}) => {
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [notificationMsg, setNotificationMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    // 웹 환경 기본 로직
+  }, []);
+
+  if (!isOpen) return null;
+
+  const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
+    setNotificationMsg({ text, type });
+    setTimeout(() => {
+      setNotificationMsg(null);
+    }, 3000);
+  };
+
+  const pip: PipSettings = {
+    enabled: false,
+    opacity: 100,
+    direction: 'horizontal',
+    align: 'right',
+    position: 'top',
+    hideCompleted: false,
+    onlyFavorites: false,
+    onlyAvatar: false,
+    visibleCount: 6,
+    showCommonContent: false,
+    ...settings.pip,
+  };
+
+  const notifier: NotificationSettings = {
+    enabled: false,
+    hours: 1,
+    minutes: 0,
+    onlyFavorites: false,
+    ...settings.notifier,
+  };
+
+  const updateNotifier = (partial: Partial<NotificationSettings>) => {
+    onUpdateSettings({
+      notifier: {
+        ...notifier,
+        ...partial,
+      },
+    });
+  };
+
+  const updatePipSettings = (partial: Partial<PipSettings>) => {
+    onUpdateSettings({
+      pip: {
+        ...pip,
+        ...partial,
+      },
+    });
+  };
+
+  const handleExecuteResetAll = () => {
+    onResetAllData();
+    setIsConfirmingReset(false);
+    showNotification('모든 데이터가 성공적으로 초기화되었습니다.');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingImportFile(file);
+      e.target.value = '';
+    }
+  };
+
+  const handleExecuteImport = () => {
+    if (pendingImportFile) {
+      onImportData(pendingImportFile);
+      setPendingImportFile(null);
+      showNotification('데이터 복원이 성공적으로 시작되었습니다.');
+    }
+  };
+
+  return (
+    <div 
+      id="settings-modal-backdrop"
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+    >
+      <div 
+        id="settings-modal"
+        className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[82dvh] sm:max-h-[90vh]"
+      >
+        {/* 헤더 */}
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-500">
+              <SettingsIcon className="w-4 h-4" />
+            </div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">설정</h3>
+              <span className="px-2 py-0.5 text-[11px] font-bold rounded-md bg-orange-100/80 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400 border border-orange-200/80 dark:border-orange-900/60 tracking-tight">
+                v{APP_VERSION}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="닫기"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 상단 알림 메시지 배너 */}
+        {notificationMsg && (
+          <div className={`px-6 py-2.5 flex items-center gap-2 text-xs font-semibold ${
+            notificationMsg.type === 'success' 
+              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-b border-emerald-200 dark:border-emerald-800' 
+              : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-b border-rose-200 dark:border-rose-800'
+          }`}>
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{notificationMsg.text}</span>
+          </div>
+        )}
+
+        {/* 본문 (스크롤바 숨김: no-scrollbar) */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar touch-pan-y overscroll-contain min-h-0">
+          {/* 1. 테마 설정 (다크 모드 / 라이트 모드) */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              화면 테마
+            </h4>
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center gap-2">
+                {settings.darkMode ? (
+                  <Moon className="w-3.5 h-3.5 text-orange-400" />
+                ) : (
+                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+                )}
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  {settings.darkMode ? '다크 모드' : '라이트 모드'}
+                </span>
+              </div>
+
+              <SwitchToggle
+                id="btn-settings-darkmode-toggle"
+                checked={!!settings.darkMode}
+                onChange={(checked) => onUpdateSettings({ darkMode: checked })}
+                activeColor="bg-orange-500"
+                ariaLabel={settings.darkMode ? '다크 모드' : '라이트 모드'}
+              />
+            </div>
+          </div>
+
+          {/* 2. PiP 모드 & 캐릭터 카드 정렬 스타일 설정 (데스크톱 전용) */}
+          {supportsPiP && (
+          <div className="space-y-3.5 p-4 rounded-2xl bg-orange-50/40 dark:bg-slate-800/60 border border-orange-200/70 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                  <Tv className="w-4 h-4" />
+                </div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                  PiP모드
+                </h4>
+              </div>
+
+              {/* PiP 모드 ON/OFF 토글 */}
+              <SwitchToggle
+                id="btn-settings-pip-toggle"
+                checked={!!pip.enabled}
+                onChange={(checked) => {
+                  updatePipSettings({ enabled: checked });
+                }}
+                activeColor="bg-orange-500"
+                ariaLabel="PiP모드 토글"
+              />
+            </div>
+
+            {/* 프로필 사진만 나오게 축소 (onlyAvatar) */}
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <User className="w-3.5 h-3.5 text-orange-500" />
+                <span>프로필 사진만 표시</span>
+              </div>
+
+              <SwitchToggle
+                id="switch-pip-only-avatar"
+                checked={!!pip.onlyAvatar}
+                onChange={(checked) => updatePipSettings({ onlyAvatar: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="프로필 사진만 표시"
+              />
+            </div>
+
+            {/* 모든 스케줄 완료 시 해당 캐릭터 카드 pip 안 보이게 하기 */}
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <EyeOff className="w-3.5 h-3.5 text-orange-500" />
+                <span>완료된 캐릭터 숨기기</span>
+              </div>
+
+              <SwitchToggle
+                id="switch-pip-hide-completed"
+                checked={!!pip.hideCompleted}
+                onChange={(checked) => updatePipSettings({ hideCompleted: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="완료된 캐릭터 숨기기"
+              />
+            </div>
+
+            {/* 즐겨찾기 한 캐릭터 카드만 PiP에 표시 */}
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <Star className="w-3.5 h-3.5 text-amber-500" />
+                <span>즐겨찾기만 표시</span>
+              </div>
+
+              <SwitchToggle
+                id="switch-pip-only-favorites"
+                checked={!!pip.onlyFavorites}
+                onChange={(checked) => updatePipSettings({ onlyFavorites: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="즐겨찾기만 표시"
+              />
+            </div>
+
+            {/* 계정 컨텐츠 표시 */}
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                <span>계정 컨텐츠 표시</span>
+              </div>
+
+              <SwitchToggle
+                id="switch-pip-show-common-content"
+                checked={!!pip.showCommonContent}
+                onChange={(checked) => updatePipSettings({ showCommonContent: checked })}
+                size="sm"
+                activeColor="bg-orange-500"
+                ariaLabel="계정 컨텐츠 표시"
+              />
+            </div>
+
+            {/* 정렬 방법 : 가로 or 세로 */}
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <LayoutGrid className="w-3.5 h-3.5 text-orange-500" />
+                <span>정렬 방법</span>
+              </div>
+
+              <div className="flex rounded-xl bg-white dark:bg-slate-900 p-0.5 border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => updatePipSettings({ direction: 'horizontal' })}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    pip.direction === 'horizontal'
+                      ? 'bg-orange-500 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-orange-500'
+                  }`}
+                >
+                  가로
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updatePipSettings({ direction: 'vertical' })}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    pip.direction === 'vertical'
+                      ? 'bg-orange-500 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-orange-500'
+                  }`}
+                >
+                  세로
+                </button>
+              </div>
+            </div>
+
+            {/* PiP 크기 조절 (1 ~ 8) */}
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <Maximize2 className="w-3.5 h-3.5 text-orange-500" />
+                <span>PiP 크기 조절</span>
+              </div>
+
+              <div className="flex items-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-0.5 shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = pip.visibleCount ?? (pip.direction === 'horizontal' ? 6 : 4);
+                    if (current > 1) {
+                      updatePipSettings({ visibleCount: current - 1 });
+                    }
+                  }}
+                  disabled={(pip.visibleCount ?? (pip.direction === 'horizontal' ? 6 : 4)) <= 1}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="크기 줄이기 (-1)"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+
+                <span className="w-8 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none">
+                  {pip.visibleCount ?? (pip.direction === 'horizontal' ? 6 : 4)}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = pip.visibleCount ?? (pip.direction === 'horizontal' ? 6 : 4);
+                    if (current < 8) {
+                      updatePipSettings({ visibleCount: current + 1 });
+                    }
+                  }}
+                  disabled={(pip.visibleCount ?? (pip.direction === 'horizontal' ? 6 : 4)) >= 8}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="크기 늘리기 (+1)"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* 투명도 슬라이더 */}
+            <div className="pt-2 border-t border-orange-200/60 dark:border-slate-700 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                <Eye className="w-3.5 h-3.5 text-orange-500" />
+                <span>투명도 ({pip.opacity}%)</span>
+              </div>
+              <div className="flex items-center gap-2 flex-1 max-w-[180px]">
+                <span className="text-[10px] text-slate-400 font-medium">20%</span>
+                <input
+                  type="range"
+                  min="20"
+                  max="100"
+                  step="5"
+                  value={pip.opacity}
+                  onChange={(e) => updatePipSettings({ opacity: parseInt(e.target.value, 10) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                />
+                <span className="text-[10px] text-slate-400 font-medium">100%</span>
+              </div>
+            </div>
+          </div>
+          )}
+
+          {/* 3. 알림이 기능 설정 */}
+          <div className="space-y-3.5 p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                    알림이
+                  </h4>
+                </div>
+              </div>
+
+              {/* 즐겨찾기 캐릭터만 적용 버튼 및 알림이 토글 스위치 */}
+              <div className="flex flex-col items-end gap-1.5">
+                {/* 알림이 토글 버튼 위: 즐겨찾기 캐릭터만 적용 버튼 */}
+                <button
+                  type="button"
+                  id="btn-notifier-only-favorites"
+                  onClick={() => updateNotifier({ onlyFavorites: !notifier.onlyFavorites })}
+                  disabled={!notifier.enabled}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer shadow-2xs ${
+                    !notifier.enabled
+                      ? 'opacity-35 pointer-events-none bg-slate-100 dark:bg-slate-800/60 text-slate-400 border-slate-200 dark:border-slate-700'
+                      : notifier.onlyFavorites
+                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                  title="즐겨찾기로 등록된 캐릭터만 초기화 알림을 받습니다"
+                >
+                  <Star
+                    className={`w-3 h-3 ${
+                      notifier.onlyFavorites && notifier.enabled
+                        ? 'fill-amber-400 text-amber-500'
+                        : 'text-slate-400'
+                    }`}
+                  />
+                  <span className="whitespace-nowrap">즐겨찾기 캐릭터만 적용</span>
+                </button>
+
+                {/* 알림이 토글 스위치 */}
+                <SwitchToggle
+                  id="btn-settings-notifier-toggle"
+                  checked={!!notifier.enabled}
+                  onChange={(checked) => updateNotifier({ enabled: checked })}
+                  activeColor="bg-rose-500"
+                  ariaLabel={notifier.enabled ? '알림이 끄기' : '알림이 켜기'}
+                />
+              </div>
+            </div>
+
+            {/* 시간 및 분 조절 칸 (모바일: 1열 세로 정렬로 폰트 깨짐 방지 / 데스크톱: 기존 2열 가로 정렬 100% 보존) */}
+            {notifier.enabled && (
+              <div className="pt-3 border-t border-rose-200/60 dark:border-rose-900/40 space-y-3 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                  {/* 시간 조절 칸 (0시 ~ 23시) */}
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-slate-800 flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Clock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">시간 설정</span>
+                    </div>
+
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                      <button
+                        type="button"
+                        id="btn-notifier-hours-minus"
+                        onClick={() => {
+                          const cur = notifier.hours || 0;
+                          if (cur > 0) updateNotifier({ hours: cur - 1 });
+                        }}
+                        disabled={(notifier.hours || 0) <= 0}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-rose-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        title="시간 줄이기 (-1시간)"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+
+                      <span className="w-12 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none whitespace-nowrap">
+                        {notifier.hours || 0}시간
+                      </span>
+
+                      <button
+                        type="button"
+                        id="btn-notifier-hours-plus"
+                        onClick={() => {
+                          const cur = notifier.hours || 0;
+                          if (cur < 23) updateNotifier({ hours: cur + 1 });
+                        }}
+                        disabled={(notifier.hours || 0) >= 23}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-rose-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        title="시간 늘리기 (+1시간)"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 분 조절 칸 (0분 ~ 55분, 5분 단위) */}
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-slate-800 flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Clock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">분 설정</span>
+                    </div>
+
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                      <button
+                        type="button"
+                        id="btn-notifier-minutes-minus"
+                        onClick={() => {
+                          const cur = notifier.minutes || 0;
+                          if (cur >= 5) updateNotifier({ minutes: cur - 5 });
+                        }}
+                        disabled={(notifier.minutes || 0) <= 0}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-rose-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        title="분 줄이기 (-5분)"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+
+                      <span className="w-12 text-center text-xs font-black text-slate-800 dark:text-slate-100 select-none whitespace-nowrap">
+                        {notifier.minutes || 0}분
+                      </span>
+
+                      <button
+                        type="button"
+                        id="btn-notifier-minutes-plus"
+                        onClick={() => {
+                          const cur = notifier.minutes || 0;
+                          if (cur <= 50) updateNotifier({ minutes: cur + 5 });
+                        }}
+                        disabled={(notifier.minutes || 0) >= 55}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-rose-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        title="분 늘리기 (+5분)"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 설정 안내 문구 */}
+                <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-rose-200/40 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0 animate-ping" />
+                  <span className="leading-snug break-keep">
+                    컨텐츠 초기화 <strong className="text-rose-600 dark:text-rose-400 font-bold">{notifier.hours}시간 {notifier.minutes}분 전</strong>에 미완료된 컨텐츠, 캐릭터를 알립니다.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 4. 기타 시스템 옵션 (자동 갱신 주기, Windows 시작 시 자동 실행, 사운드) */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              시스템 및 편의 옵션
+            </h4>
+
+            {/* 자동 갱신 주기 선택 */}
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <RotateCw className="w-3.5 h-3.5 text-orange-500" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">자동 갱신 주기</span>
+                </div>
+                <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
+                  {settings.autoSyncIntervalSec < 60
+                    ? `${settings.autoSyncIntervalSec}초`
+                    : `${Math.floor(settings.autoSyncIntervalSec / 60)}분`}마다
+                </span>
+              </div>
+
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 pt-1">
+                {[
+                  { label: '10초', value: 10 },
+                  { label: '30초', value: 30 },
+                  { label: '1분', value: 60 },
+                  { label: '2분', value: 120 },
+                  { label: '3분', value: 180 },
+                  { label: '5분', value: 300 },
+                  { label: '10분', value: 600 },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onUpdateSettings({ autoSyncIntervalSec: opt.value })}
+                    className={`py-1.5 px-1 text-xs font-bold rounded-xl transition-all border text-center ${
+                      (settings.autoSyncIntervalSec || 300) === opt.value
+                        ? 'bg-orange-500 text-white border-orange-600 shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Windows 시작 시 자동 실행 (데스크톱 전용) */}
+            {supportsAutoStart && (
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <Monitor className="w-3.5 h-3.5 text-sky-500" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">Windows 시작 시 자동 실행</span>
+                </div>
+
+                <SwitchToggle
+                  id="switch-settings-auto-start"
+                  checked={!!settings.autoStart}
+                  onChange={(checked) => {
+                    onUpdateSettings({ autoStart: checked });
+                    if (typeof window !== 'undefined' && (window as any).electronAPI?.setAutoStart) {
+                      (window as any).electronAPI.setAutoStart(checked);
+                    }
+                  }}
+                  activeColor="bg-sky-500"
+                  ariaLabel="Windows 시작 시 자동 실행"
+                />
+              </div>
+            )}
+
+            {/* 사운드 효과음 */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center gap-2">
+                <Volume2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">체크 사운드 효과음</span>
+              </div>
+
+              <SwitchToggle
+                id="switch-settings-sound"
+                checked={!!settings.soundEnabled}
+                onChange={(checked) => onUpdateSettings({ soundEnabled: checked })}
+                activeColor="bg-emerald-500"
+                ariaLabel="체크 사운드 효과음"
+              />
+            </div>
+          </div>
+
+          {/* 4. 캐릭터 카드 완료 기준 설정 */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              캐릭터 카드 완료 기준 설정
+            </h4>
+
+            {/* 검은 마법사 포함 여부 */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center gap-2">
+                <BlackMageSilhouetteIcon
+                  size={16}
+                  className="text-red-500 flex-shrink-0"
+                />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">검은 마법사 포함</span>
+              </div>
+
+              <SwitchToggle
+                id="btn-settings-include-black-mage"
+                checked={!!settings.includeBlackMageInCompletion}
+                onChange={(checked) => onUpdateSettings({ includeBlackMageInCompletion: checked })}
+                activeColor="bg-red-600"
+                ariaLabel="검은 마법사 포함"
+              />
+            </div>
+
+            {/* 커스텀 스케줄 포함 여부 */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center gap-2">
+                <Plus className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">커스텀 스케줄 포함</span>
+              </div>
+
+              <SwitchToggle
+                id="btn-settings-include-custom"
+                checked={!!settings.includeCustomInCompletion}
+                onChange={(checked) => onUpdateSettings({ includeCustomInCompletion: checked })}
+                activeColor="bg-zinc-900 dark:bg-zinc-100"
+                ariaLabel="커스텀 스케줄 포함"
+              />
+            </div>
+          </div>
+
+          {/* 5. 데이터 백업 및 복원 & 데이터 초기화 */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              데이터 관리 및 초기화
+            </h4>
+            
+            {/* 백업 / 복원 버튼 (웹 및 데스크톱 공통 지원) */}
+            {supportsFileBackup && (
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={onExportData}
+                  className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-sky-500" />
+                  <span>데이터 백업 (JSON)</span>
+                </button>
+
+                <label className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850">
+                  <Upload className="w-3.5 h-3.5 text-amber-500" />
+                  <span>데이터 복원</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
+            )}
+
+            {/* 데이터 초기화 버튼 */}
+            <div className="pt-1">
+              <button
+                id="btn-reset-all-start"
+                type="button"
+                onClick={() => setIsConfirmingReset(true)}
+                className="w-full p-2.5 rounded-2xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>데이터 초기화</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 7. 운영 정책 및 법적 고지 (모바일 화면 폭에 맞춰 단정하고 깔끔하게 정렬) */}
+          <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              운영 정책 및 라이선스
+            </h4>
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    이용약관 및 개인정보처리방침
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                  {isWeb ? (
+                    <>
+                      <a
+                        href="/terms"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onClose();
+                          if (window.location.pathname !== '/terms') {
+                            window.history.pushState({}, '', '/terms');
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                      >
+                        이용약관
+                      </a>
+                      <a
+                        href="/privacy"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onClose();
+                          if (window.location.pathname !== '/privacy') {
+                            window.history.pushState({}, '', '/privacy');
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                      >
+                        개인정보
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenLegalModal?.('terms');
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                      >
+                        이용약관
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenLegalModal?.('privacy');
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                      >
+                        개인정보
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <div>
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">메케줄 v{APP_VERSION}</span>
+                  <span className="mx-1.5">·</span>
+                  <span>Data based on NEXON Open API</span>
+                </div>
+                <div>공식 문의: mchedule4505@gmail.com</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 푸터 */}
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+
+      {/* 화면 중앙에 표시되는 데이터 복원 전용 확인 모달 */}
+      {pendingImportFile && (
+        <div 
+          id="restore-confirm-modal-backdrop"
+          className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div 
+            id="restore-confirm-modal"
+            className="w-full max-w-md bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">
+                <Upload className="w-6 h-6" />
+              </div>
+              <div className="space-y-1.5 flex-1">
+                <h4 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
+                  백업 파일로부터 데이터를 복원하시겠습니까?
+                </h4>
+                <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed space-y-1">
+                  <p>
+                    선택한 파일: <strong className="text-slate-800 dark:text-slate-200 font-semibold">{pendingImportFile.name}</strong>
+                  </p>
+                  <p>
+                    백업 파일에 저장된 캐릭터 목록, 숙제 체크 기록, 화면 설정 및 넥슨 API 키 정보로 현재 브라우저 데이터가 교체됩니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setPendingImportFile(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                id="btn-confirm-restore-data"
+                type="button"
+                onClick={handleExecuteImport}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>데이터 복원 진행</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 화면 중앙에 표시되는 데이터 초기화 전용 확인 모달 */}
+      {isConfirmingReset && (
+        <div 
+          id="reset-confirm-modal-backdrop"
+          className="fixed inset-0 z-60 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div 
+            id="reset-confirm-modal"
+            className="w-full max-w-md bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="space-y-1.5 flex-1">
+                <h4 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
+                  정말 모든 데이터를 완전히 초기화하시겠습니까?
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  등록된 모든 메이플스토리 캐릭터, 설정, 완료 기록 및 <strong className="text-rose-600 dark:text-rose-400 font-bold">저장되어 있는 API 키도 영구히 삭제</strong>됩니다. 이 작업은 되돌릴 수 없습니다.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsConfirmingReset(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                id="btn-confirm-reset-all"
+                type="button"
+                onClick={handleExecuteResetAll}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>데이터 초기화 실행</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
