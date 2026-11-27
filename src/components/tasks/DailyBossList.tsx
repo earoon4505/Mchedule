@@ -23,6 +23,8 @@ interface DailyBossListProps {
   onOpenContentConfig: () => void;
   soundEnabled: boolean;
   collapsible?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
   isAlertActive?: boolean;
 }
 
@@ -35,13 +37,23 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
   onOpenContentConfig,
   soundEnabled,
   collapsible = false,
+  isCollapsed: controlledCollapsed,
+  onToggleCollapse,
   isAlertActive = false,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(collapsible);
+  // 외부 제어 상태가 주어지면 사용자 설정(전체 탭 펼침/접힘)을 그대로 유지하고, 개별 탭(collapsible=false)에서는 항상 펼침
+  const [internalCollapsed, setInternalCollapsed] = useState(collapsible);
+  const isControlled = controlledCollapsed !== undefined && onToggleCollapse !== undefined;
+  const isCollapsed = collapsible ? (isControlled ? controlledCollapsed : internalCollapsed) : false;
 
-  useEffect(() => {
-    setIsCollapsed(collapsible);
-  }, [collapsible]);
+  const handleToggleCollapse = () => {
+    if (!collapsible) return;
+    if (isControlled) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed((prev) => !prev);
+    }
+  };
 
   const toggleBossFn = onToggleDailyBoss || onToggleBoss || (() => {});
 
@@ -78,7 +90,7 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
   if (selectedBosses.length === 0 && unselectedClearedBosses.length === 0) {
     if (collapsible) return null;
     return (
-      <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl text-slate-400">
+      <div className="p-8 text-center bg-th-card border border-th-border-card rounded-2xl text-slate-400">
         <p className="text-xs font-semibold">선택된 일일 보스가 없습니다.</p>
         <button
           onClick={onOpenContentConfig}
@@ -129,7 +141,7 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
     <div id="daily-boss-list">
       {/* 일일 보스 상단 요약 바 (sky 계열, 박스 전체 클릭 시 펼치기/접기 지원) */}
       <div 
-        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
+        onClick={collapsible ? handleToggleCollapse : undefined}
         className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
           collapsible ? 'cursor-pointer select-none' : ''
         } ${
@@ -137,7 +149,7 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
           ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
           : isAllCompleted
           ? 'bg-sky-100/90 dark:bg-sky-950/60 border-sky-300 dark:border-sky-700 ring-1 ring-sky-400/30'
-          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
+          : 'bg-th-card border-th-border-card'
       }`}>
         {/* 숙제 완료 비율 게이지 */}
         {!isAllCompleted && progressPercent > 0 && (
@@ -191,12 +203,12 @@ export const DailyBossList: React.FC<DailyBossListProps> = React.memo(({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsCollapsed((prev) => !prev);
+                handleToggleCollapse();
               }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-sky-200 dark:border-sky-800 bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-800'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-500 hover:text-sky-600'
+                  : 'border-th-border-card dark:border-th-border-pill bg-th-card dark:bg-th-pill-soft hover:bg-th-panel dark:hover:bg-th-pill-hover text-slate-500 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400'
               }`}
               title={isCollapsed ? '목록 펼치기' : '목록 접기'}
             >

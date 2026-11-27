@@ -2,9 +2,96 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * 멀티 테마 프리셋 CSS 변수 정의
+ * - 라이트 기본값('classic'): 기존 화이트/슬레이트 톤 (#F8FAFC / #FFFFFF)
+ * - 라이트 'cream': 살구 크림 톤 (#FBF3EB / #FFFDFB)
+ * - 다크 기본값('deep'): 4단계 딥 차콜 톤 (#0B0E14 / #111620 / #171E2C / #20293B)
+ * - 다크 'classic': 이전 슬레이트 클래식 다크 (#020617 / #0F172A / #1E293B)
+ */
+:root {
+  --th-canvas: #F8FAFC;
+  --th-panel: #FFFFFF;
+  --th-card: #FFFFFF;
+  --th-card-hover: #F8FAFC;
+  --th-pill-soft: #F8FAFC;
+  --th-pill: #F1F5F9;
+  --th-pill-hover: #E2E8F0;
+  --th-border-panel: #E2E8F0;
+  --th-border-card: #E2E8F0;
+  --th-border-pill: #CBD5E1;
+  --th-border-strong: #CBD5E1;
+  --th-border-strong-hover: #94A3B8;
+  --th-footer: #F8FAFC;
+}
+
+:root:not(.dark)[data-light-theme="cream"] {
+  --th-canvas: #FBF3EB;
+  --th-panel: #FCF6EF;
+  --th-card: #FFFDFB;
+  --th-card-hover: #FDF8F2;
+  --th-pill-soft: #F8EDE1;
+  --th-pill: #F5E8DA;
+  --th-pill-hover: #F2E2D1;
+  --th-border-panel: #EEDFD0;
+  --th-border-card: #EEDFD0;
+  --th-border-pill: #EBDACA;
+  --th-border-strong: #DEC8B3;
+  --th-border-strong-hover: #C8AD94;
+  --th-footer: #FAF2E8;
+}
+
+:root.dark {
+  --th-canvas: #0B0E14;
+  --th-panel: #111620;
+  --th-card: #171E2C;
+  --th-card-hover: #1D2536;
+  --th-pill-soft: #20293B;
+  --th-pill: #20293B;
+  --th-pill-hover: #2A354C;
+  --th-border-panel: #222B3C;
+  --th-border-card: #283347;
+  --th-border-pill: #303D56;
+  --th-border-strong: #3E4E6E;
+  --th-border-strong-hover: #4E6187;
+  --th-footer: #0E131C;
+}
+
+:root.dark[data-dark-theme="classic"] {
+  --th-canvas: #020617;
+  --th-panel: #0F172A;
+  --th-card: #0F172A;
+  --th-card-hover: #1E293B;
+  --th-pill-soft: #1E293B;
+  --th-pill: #1E293B;
+  --th-pill-hover: #334155;
+  --th-border-panel: #1E293B;
+  --th-border-card: #1E293B;
+  --th-border-pill: #334155;
+  --th-border-strong: #475569;
+  --th-border-strong-hover: #64748B;
+  --th-footer: #0F172A;
+}
+
+@theme {
+  --color-th-canvas: var(--th-canvas);
+  --color-th-panel: var(--th-panel);
+  --color-th-card: var(--th-card);
+  --color-th-card-hover: var(--th-card-hover);
+  --color-th-pill-soft: var(--th-pill-soft);
+  --color-th-pill: var(--th-pill);
+  --color-th-pill-hover: var(--th-pill-hover);
+  --color-th-border-panel: var(--th-border-panel);
+  --color-th-border-card: var(--th-border-card);
+  --color-th-border-pill: var(--th-border-pill);
+  --color-th-border-strong: var(--th-border-strong);
+  --color-th-border-strong-hover: var(--th-border-strong-hover);
+  --color-th-footer: var(--th-footer);
+}
+
 @layer base {
   body {
-    @apply bg-[#F8F9FB] text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased overflow-hidden select-none;
+    @apply bg-th-canvas text-slate-800 dark:text-slate-100 font-sans antialiased overflow-hidden select-none;
     -webkit-user-select: none;
     user-select: none;
   }
@@ -113,7 +200,7 @@ a {
   50% {
     border-color: #f87171; /* red-400 */
     box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 2px 5px rgba(239, 68, 68, 0.1);
-    background-color: #ffffff; /* white (완전 불투명) */
+    background-color: var(--th-card); /* 현재 라이트 테마 카드 배경 */
   }
 }
 
@@ -126,7 +213,7 @@ a {
   50% {
     border-color: #f87171;
     box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 2px 5px rgba(239, 68, 68, 0.1);
-    background-color: #0f172a; /* slate-900 (완전 불투명) */
+    background-color: var(--th-card); /* 현재 다크 테마 카드 배경 */
   }
 }
 
@@ -174,6 +261,26 @@ a {
 .dark .alert-badge-pulse {
   animation: alert-badge-pulse-red-dark 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   opacity: 1 !important;
+}
+
+/* API 발급 방법 버튼 강조 펄스 (텍스트 선명도를 유지하며 강한 오렌지 링 글로우·미세 스케일 펄스) */
+@keyframes api-guide-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.85), 0 4px 12px rgba(249, 115, 22, 0.35);
+  }
+  55% {
+    transform: scale(1.022);
+    box-shadow: 0 0 0 8px rgba(249, 115, 22, 0), 0 6px 18px rgba(249, 115, 22, 0.55);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0), 0 4px 12px rgba(249, 115, 22, 0.35);
+  }
+}
+
+.api-guide-pulse {
+  animation: api-guide-pulse 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 

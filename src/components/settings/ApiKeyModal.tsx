@@ -359,10 +359,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
         <div 
           id="api-key-modal"
-          className="w-full h-auto max-h-[82dvh] sm:h-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+          className="w-full h-auto max-h-[82dvh] sm:h-[464px] bg-th-canvas border border-th-border-panel rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
         >
         {/* 모달 헤더 */}
-        <div className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900 flex-shrink-0">
+        <div className="px-6 py-3.5 border-b border-th-border-panel flex items-center justify-between bg-th-panel flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow-xs">
               <Key className="w-4 h-4" />
@@ -376,7 +376,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         </div>
 
         {/* 상단 탭 메뉴 (API 등록, API 목록) - 기본값: API 등록 */}
-        <div className="px-6 pt-3 pb-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-shrink-0">
+        <div className="px-6 pt-3 pb-0 bg-th-panel border-b border-th-border-panel flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -413,42 +413,32 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
               keys.length > 0 
                 ? 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300' 
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                : 'bg-th-pill-soft text-slate-500 dark:text-slate-400'
             }`}>
               {keys.length}
             </span>
           </button>
         </div>
 
-        {/* 본문 영역 (모바일 및 데스크톱 스크롤 완벽 지원: flex-1 overflow-y-auto touch-pan-y min-h-0) */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 custom-scrollbar touch-pan-y overscroll-contain min-h-0">
+        {/* 본문 영역 (스크롤바 숨김: no-scrollbar, 등록 탭은 균등 간격 배분으로 공백/흔들림 방지) */}
+        <div
+          className={`flex-1 overflow-y-auto no-scrollbar touch-pan-y overscroll-contain min-h-0 ${
+            activeTab === 'list' && !hasAnyKey ? 'p-5 bg-th-card' : 'p-4 sm:px-6 sm:py-5'
+          }`}
+        >
 
           {/* ============================== */}
           {/* 1. [API 등록] 탭 내용 (기본값) */}
           {/* ============================== */}
           {activeTab === 'register' && (
-            <div className="space-y-4 animate-in fade-in duration-150 flex flex-col justify-between min-h-full">
-              {/* 신규 API 키 입력 및 등록 폼 */}
-              <form onSubmit={handleAddKey} className="space-y-3.5">
-                {/* API 이름 입력 */}
+            <form
+              onSubmit={handleAddKey}
+              className="animate-in fade-in duration-150 min-h-full flex flex-col justify-between gap-3.5"
+            >
+              {/* 1) API 키 입력 (필수) */}
                 <div className="space-y-1">
-                  <label htmlFor="input-api-alias" className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                    계정 별칭 (선택)
-                  </label>
-                  <input
-                    id="input-api-alias"
-                    type="text"
-                    value={aliasInput}
-                    onChange={(e) => setAliasInput(e.target.value)}
-                    placeholder="예: 본계정, 부계정"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-base sm:text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                {/* API 키 입력 */}
-                <div className="space-y-1">
-                  <label htmlFor="input-api-key" className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                    API 키
+                  <label htmlFor="input-api-key" className="block text-sm font-extrabold text-slate-800 dark:text-slate-100">
+                    API 키 <span className="text-xs font-bold text-orange-600 dark:text-orange-400">(필수)</span>
                   </label>
                   <div className="relative">
                     <input
@@ -457,7 +447,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                       value={apiKeyInput}
                       onChange={(e) => setApiKeyInput(e.target.value.trim())}
                       placeholder="live_..."
-                      className="w-full pl-3.5 pr-20 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-base sm:text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      className="w-full pl-3.5 pr-20 py-2.5 bg-th-card border border-th-border-card rounded-xl text-base sm:text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     />
 
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -482,38 +472,54 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                     </div>
                   </div>
 
-                  {/* 실시간 규격 및 중복 검사 인디케이터 (높이 고정하여 하단 버튼 밀림 원천 방지) */}
-                  <div className="h-4.5 flex items-center">
-                    {(() => {
-                      const trimmed = apiKeyInput.trim();
-                      if (!trimmed) return null;
-                      const isDuplicate = keys.some((k) => k.apiKey === trimmed);
-                      if (isDuplicate) {
-                        return (
-                          <p className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 animate-in fade-in duration-100">
+                  {/* 실시간 규격 및 중복 검사 인디케이터 (입력 시에만 표시하여 API 키와 별칭 사이 불필요한 공백 방지) */}
+                  {apiKeyInput.trim() && (
+                    <div className="pt-0.5 flex items-center">
+                      {(() => {
+                        const trimmed = apiKeyInput.trim();
+                        const isDuplicate = keys.some((k) => k.apiKey === trimmed);
+                        if (isDuplicate) {
+                          return (
+                            <p className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 animate-in fade-in duration-100">
+                              <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                              이미 등록되어 있는 API 키입니다.
+                            </p>
+                          );
+                        }
+                        const format = checkKeyFormat(trimmed);
+                        if (!format) return null;
+                        return format.isValid ? (
+                          <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 animate-in fade-in duration-100">
+                            <Check className="w-3 h-3 flex-shrink-0" />
+                            {format.message}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 animate-in fade-in duration-100">
                             <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                            이미 등록되어 있는 API 키입니다.
+                            {format.message}
                           </p>
                         );
-                      }
-                      const format = checkKeyFormat(trimmed);
-                      if (!format) return null;
-                      return format.isValid ? (
-                        <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 animate-in fade-in duration-100">
-                          <Check className="w-3 h-3 flex-shrink-0" />
-                          {format.message}
-                        </p>
-                      ) : (
-                        <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 animate-in fade-in duration-100">
-                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                          {format.message}
-                        </p>
-                      );
-                    })()}
-                  </div>
+                      })()}
+                    </div>
+                  )}
                 </div>
 
-                {/* 등록 버튼 */}
+                {/* 2) 별칭 입력 (선택) */}
+                <div className="space-y-1">
+                  <label htmlFor="input-api-alias" className="block text-sm font-extrabold text-slate-800 dark:text-slate-100">
+                    별칭 <span className="text-xs font-semibold text-slate-400 dark:text-slate-400">(선택)</span>
+                  </label>
+                  <input
+                    id="input-api-alias"
+                    type="text"
+                    value={aliasInput}
+                    onChange={(e) => setAliasInput(e.target.value)}
+                    placeholder="예: 본계정, 부계정"
+                    className="w-full px-3.5 py-2.5 bg-th-card border border-th-border-card rounded-xl text-base sm:text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                {/* 3) 등록 버튼 */}
                 <div>
                   <button
                     type="submit"
@@ -534,11 +540,20 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                     )}
                   </button>
                 </div>
-              </form>
 
-              {/* 하단: 바로가기 및 가이드 열기 버튼 (감싸는 박스 제거하고 버튼 2열 배치) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                {/* 1) 넥슨 Open API 바로가기 (새창 열기) */}
+              {/* 4) 하단: API 발급 방법 및 바로가기 버튼 (좌: API 발급 방법 / 우: 넥슨 Open API 바로가기) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* 1) API 발급 방법 (가이드 팝업 열기 - 펄스 강조 효과 적용) */}
+                <button
+                  type="button"
+                  onClick={() => setIsGuideOpen(true)}
+                  className="py-2.5 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer api-guide-pulse"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-white/90" />
+                  <span>API 발급 방법</span>
+                </button>
+
+                {/* 2) 넥슨 Open API 바로가기 (새창 열기) */}
                 <a
                   href="https://openapi.nexon.com"
                   target="_blank"
@@ -549,25 +564,15 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                   <span>넥슨 Open API 바로가기</span>
                   <ExternalLink className="w-3.5 h-3.5 text-white/90" />
                 </a>
-
-                {/* 2) API 발급 방법 (가이드 팝업 열기) */}
-                <button
-                  type="button"
-                  onClick={() => setIsGuideOpen(true)}
-                  className="py-2.5 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-white/90" />
-                  <span>API 발급 방법</span>
-                </button>
               </div>
-            </div>
+            </form>
           )}
 
           {/* ============================== */}
           {/* 2. [API 목록] 탭 내용 */}
           {/* ============================== */}
           {activeTab === 'list' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
+            <div className={`animate-in fade-in duration-150 ${!hasAnyKey ? 'min-h-full flex flex-col items-center justify-center' : 'space-y-4'}`}>
               {/* 목록 렌더링 */}
               {hasAnyKey ? (
                 <div className="space-y-2.5">
@@ -579,7 +584,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                     return (
                       <div
                         key={item.id}
-                        className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col gap-2 transition-all"
+                        className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-xs flex flex-col gap-2 transition-all"
                       >
                         {isEditing ? (
                           <div className="space-y-2 p-1 animate-in fade-in duration-150">
@@ -600,7 +605,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                 value={editingAlias}
                                 onChange={(e) => setEditingAlias(e.target.value)}
                                 placeholder="예: 본계정, 부계정"
-                                className="w-full px-2.5 py-1.5 text-base sm:text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500"
+                                className="w-full px-2.5 py-1.5 text-base sm:text-xs font-bold bg-th-panel border border-th-border-pill rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') handleSaveEdit(item);
                                   if (e.key === 'Escape') setEditingKeyId(null);
@@ -619,7 +624,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                   value={editingApiKey}
                                   onChange={(e) => setEditingApiKey(e.target.value.trim())}
                                   placeholder="live_..."
-                                  className="w-full pl-2.5 pr-8 py-1.5 text-base sm:text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500 select-all"
+                                  className="w-full pl-2.5 pr-8 py-1.5 text-base sm:text-xs font-mono bg-th-panel border border-th-border-pill rounded-lg text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-orange-500 select-all"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSaveEdit(item);
                                     if (e.key === 'Escape') setEditingKeyId(null);
@@ -659,7 +664,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                 type="button"
                                 onClick={() => setEditingKeyId(null)}
                                 disabled={isLoading}
-                                className="px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                                className="px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-th-pill-soft rounded-lg transition-colors cursor-pointer"
                               >
                                 취소
                               </button>
@@ -690,7 +695,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
                                 {/* 실시간 넥슨 Open API 연결 상태 뱃지 */}
                                 {keyStatuses[item.id] === 'checking' && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 animate-pulse">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-th-pill-soft text-slate-500 dark:text-slate-400 animate-pulse">
                                     <RefreshCw className="w-2.5 h-2.5 animate-spin text-slate-400" />
                                     <span>연결 확인 중...</span>
                                   </span>
@@ -731,7 +736,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                     <button
                                       type="button"
                                       onClick={() => handleStartEdit(item)}
-                                      className="p-1.5 text-slate-500 hover:text-orange-500 dark:text-slate-400 dark:hover:text-orange-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                                      className="p-1.5 text-slate-500 hover:text-orange-500 dark:text-slate-400 dark:hover:text-orange-400 hover:bg-th-pill-soft rounded-lg transition-colors cursor-pointer"
                                       title="API 키 및 별칭 수정"
                                     >
                                       <Edit2 className="w-3.5 h-3.5" />
@@ -771,7 +776,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                                     type="button"
                                     onClick={() => setDeletingKeyId(null)}
                                     disabled={isLoading}
-                                    className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 rounded-lg cursor-pointer transition-all"
+                                    className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-200 bg-th-card dark:bg-th-pill-soft border border-th-border-card dark:border-th-border-pill hover:bg-th-pill-soft dark:hover:bg-th-pill-hover active:scale-95 rounded-lg cursor-pointer transition-all"
                                   >
                                     취소
                                   </button>
@@ -780,7 +785,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                             )}
 
                             {/* 보안 마스킹 토글 및 실제 API 키 텍스트 및 복사 버튼 */}
-                            <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60">
+                            <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-th-pill-soft/70 dark:bg-th-pill-soft border border-th-border-pill">
                               <code className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-200 truncate select-all flex-1">
                                 {revealedKeyIds.has(item.id)
                                   ? item.apiKey
@@ -822,15 +827,15 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                   })}
                 </div>
               ) : (
-                <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 space-y-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center mx-auto text-slate-400">
+                <div className="py-6 text-center space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-th-pill-soft border border-th-border-pill flex items-center justify-center mx-auto text-slate-500 dark:text-slate-400">
                     <Key className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       등록된 API 키가 없습니다.
                     </p>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       상단의 'API 등록' 탭에서 새 API 키를 등록해주세요.
                     </p>
                   </div>
@@ -849,11 +854,11 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         </div>
 
         {/* 모달 푸터 */}
-        <div className="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex justify-end flex-shrink-0">
+        <div className="px-6 py-3.5 border-t border-th-border-panel bg-th-panel flex justify-end flex-shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            className="px-4 py-2 bg-th-pill-soft hover:bg-th-pill-hover border border-th-border-pill text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
           >
             닫기
           </button>

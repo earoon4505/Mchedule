@@ -28,10 +28,9 @@ import {
   Clock,
   ExternalLink,
   X,
-  Check,
   Scale
 } from 'lucide-react';
-import { AppSettings, PipDirection, PipSettings, NotificationSettings } from '../../types';
+import { AppSettings, PipDirection, PipSettings, NotificationSettings, LightThemePreset, DarkThemePreset } from '../../types';
 import { BlackMageSilhouetteIcon } from '../common/BlackMageIcon';
 import { supportsPiP, supportsAutoStart, supportsFileBackup, isWeb } from '../../utils/platform';
 import { SwitchToggle } from '../common/SwitchToggle';
@@ -148,10 +147,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     >
       <div 
         id="settings-modal"
-        className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[82dvh] sm:max-h-[90vh]"
+        className="w-full max-w-lg bg-th-canvas border border-th-border-panel rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[82dvh] sm:max-h-[90vh]"
       >
         {/* 헤더 */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900">
+        <div className="px-6 py-4 border-b border-th-border-panel flex items-center justify-between bg-th-panel">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-500">
               <SettingsIcon className="w-4 h-4" />
@@ -166,7 +165,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-th-pill-soft transition-colors cursor-pointer"
             title="닫기"
           >
             <X className="w-4 h-4" />
@@ -187,36 +186,156 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* 본문 (스크롤바 숨김: no-scrollbar) */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar touch-pan-y overscroll-contain min-h-0">
-          {/* 1. 테마 설정 (다크 모드 / 라이트 모드) */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              화면 테마
-            </h4>
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center gap-2">
-                {settings.darkMode ? (
-                  <Moon className="w-3.5 h-3.5 text-orange-400" />
-                ) : (
-                  <Sun className="w-3.5 h-3.5 text-amber-500" />
-                )}
-                <span className="text-xs font-bold text-slate-900 dark:text-white">
-                  {settings.darkMode ? '다크 모드' : '라이트 모드'}
-                </span>
-              </div>
+          {/* 1. 화면 테마 설정 (토글 버튼 + 라이트/다크 통합 테마 박스) */}
+          <div className="space-y-2.5">
+            {/* 상단: 섹션 제목 + 라이트/다크 모드 전환 토글 버튼 (아래 카드 내 토글 버튼들과 우측 위치 정렬) */}
+            <div className="flex items-center justify-between pr-4">
+              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                화면 테마
+              </h4>
 
               <SwitchToggle
                 id="btn-settings-darkmode-toggle"
                 checked={!!settings.darkMode}
                 onChange={(checked) => onUpdateSettings({ darkMode: checked })}
                 activeColor="bg-orange-500"
+                thumbIcon={
+                  settings.darkMode ? (
+                    <Moon className="w-3 h-3 text-orange-500 fill-orange-500/20" />
+                  ) : (
+                    <Sun className="w-3 h-3 text-amber-500 fill-amber-400/30" />
+                  )
+                }
                 ariaLabel={settings.darkMode ? '다크 모드' : '라이트 모드'}
               />
+            </div>
+
+            {/* 하단: 라이트(좌) / 다크(우) 테마 프리셋 통합 박스 (현재 저장된 프리셋은 주황 강조 유지) */}
+            <div className="p-3 rounded-2xl bg-th-card border border-th-border-card shadow-xs">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                {(
+                  [
+                    {
+                      groupKey: 'light',
+                      groupLabel: '라이트',
+                      presets: [
+                        {
+                          key: 'light-classic',
+                          mode: 'light',
+                          id: 'classic',
+                          label: '화이트',
+                          swatchStyle: {
+                            background: 'linear-gradient(135deg, #FFFFFF 55%, #F1F5F9 55%)',
+                            borderColor: '#CBD5E1',
+                          },
+                        },
+                        {
+                          key: 'light-cream',
+                          mode: 'light',
+                          id: 'cream',
+                          label: '베이지',
+                          swatchStyle: {
+                            background: 'linear-gradient(135deg, #FBF3EB 55%, #F2E2D1 55%)',
+                            borderColor: '#DEC8B3',
+                          },
+                        },
+                      ],
+                    },
+                    {
+                      groupKey: 'dark',
+                      groupLabel: '다크',
+                      presets: [
+                        {
+                          key: 'dark-deep',
+                          mode: 'dark',
+                          id: 'deep',
+                          label: '딥 차콜',
+                          swatchStyle: {
+                            background: 'linear-gradient(135deg, #0B0E14 55%, #171E2C 55%)',
+                            borderColor: '#303D56',
+                          },
+                        },
+                        {
+                          key: 'dark-classic',
+                          mode: 'dark',
+                          id: 'classic',
+                          label: '네이비',
+                          swatchStyle: {
+                            background: 'linear-gradient(135deg, #020617 55%, #0F172A 55%)',
+                            borderColor: '#475569',
+                          },
+                        },
+                      ],
+                    },
+                  ] as Array<{
+                    groupKey: 'light' | 'dark';
+                    groupLabel: string;
+                    presets: Array<
+                      | {
+                          key: string;
+                          mode: 'light';
+                          id: LightThemePreset;
+                          label: string;
+                          swatchStyle: { background: string; borderColor: string };
+                        }
+                      | {
+                          key: string;
+                          mode: 'dark';
+                          id: DarkThemePreset;
+                          label: string;
+                          swatchStyle: { background: string; borderColor: string };
+                        }
+                    >;
+                  }>
+                ).map((group) => (
+                  <div key={group.groupKey} className="space-y-2">
+                    <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 px-0.5">
+                      {group.groupLabel}
+                    </div>
+                    <div className="grid grid-cols-1 min-[430px]:grid-cols-2 gap-1.5 sm:gap-2">
+                      {group.presets.map((preset) => {
+                        const currentLight = settings.lightTheme === 'cream' ? 'cream' : 'classic';
+                        const currentDark = settings.darkTheme === 'classic' ? 'classic' : 'deep';
+                        const isSavedPreset =
+                          preset.mode === 'light'
+                            ? currentLight === preset.id
+                            : currentDark === preset.id;
+
+                        return (
+                          <button
+                            key={preset.key}
+                            id={`btn-theme-${preset.mode}-${preset.id}`}
+                            type="button"
+                            onClick={() =>
+                              preset.mode === 'light'
+                                ? onUpdateSettings({ darkMode: false, lightTheme: preset.id })
+                                : onUpdateSettings({ darkMode: true, darkTheme: preset.id })
+                            }
+                            className={`relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-2 rounded-xl border text-left transition-all cursor-pointer active:scale-[0.98] ${
+                              isSavedPreset
+                                ? 'bg-orange-50/70 dark:bg-orange-950/35 border-orange-500 ring-2 ring-orange-500/20 text-slate-900 dark:text-white'
+                                : 'bg-th-pill-soft/60 border-th-border-pill text-slate-600 dark:text-slate-300 hover:bg-th-pill-hover hover:border-th-border-strong'
+                            }`}
+                            title={`${preset.label} 테마 적용`}
+                          >
+                            <span
+                              className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border shrink-0 shadow-2xs"
+                              style={preset.swatchStyle}
+                            />
+                            <span className="text-xs font-bold truncate flex-1">{preset.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* 2. PiP 모드 & 캐릭터 카드 정렬 스타일 설정 (데스크톱 전용) */}
           {supportsPiP && (
-          <div className="space-y-3.5 p-4 rounded-2xl bg-orange-50/40 dark:bg-slate-800/60 border border-orange-200/70 dark:border-slate-700">
+          <div className="space-y-3.5 p-4 rounded-2xl bg-orange-50/55 dark:bg-th-card border border-orange-200/75 dark:border-orange-900/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
@@ -240,7 +359,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 프로필 사진만 나오게 축소 (onlyAvatar) */}
-            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-th-border-card">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <User className="w-3.5 h-3.5 text-orange-500" />
                 <span>프로필 사진만 표시</span>
@@ -257,7 +376,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 모든 스케줄 완료 시 해당 캐릭터 카드 pip 안 보이게 하기 */}
-            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-th-border-card">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <EyeOff className="w-3.5 h-3.5 text-orange-500" />
                 <span>완료된 캐릭터 숨기기</span>
@@ -274,7 +393,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 즐겨찾기 한 캐릭터 카드만 PiP에 표시 */}
-            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-th-border-card">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <Star className="w-3.5 h-3.5 text-amber-500" />
                 <span>즐겨찾기만 표시</span>
@@ -291,7 +410,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 계정 컨텐츠 표시 */}
-            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-th-border-card">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <Sparkles className="w-3.5 h-3.5 text-purple-500" />
                 <span>계정 컨텐츠 표시</span>
@@ -308,13 +427,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 정렬 방법 : 가로 or 세로 */}
-            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-th-border-card">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <LayoutGrid className="w-3.5 h-3.5 text-orange-500" />
                 <span>정렬 방법</span>
               </div>
 
-              <div className="flex rounded-xl bg-white dark:bg-slate-900 p-0.5 border border-slate-200 dark:border-slate-700">
+              <div className="flex rounded-xl bg-th-card dark:bg-th-pill-soft p-0.5 border border-th-border-pill">
                 <button
                   type="button"
                   onClick={() => updatePipSettings({ direction: 'horizontal' })}
@@ -341,13 +460,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* PiP 크기 조절 (1 ~ 8) */}
-            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-slate-700">
+            <div className="flex items-center justify-between pt-2 border-t border-orange-200/60 dark:border-th-border-card">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <Maximize2 className="w-3.5 h-3.5 text-orange-500" />
                 <span>PiP 크기 조절</span>
               </div>
 
-              <div className="flex items-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-0.5 shadow-xs">
+              <div className="flex items-center rounded-xl bg-th-card dark:bg-th-pill-soft border border-th-border-pill p-0.5 shadow-xs">
                 <button
                   type="button"
                   onClick={() => {
@@ -385,7 +504,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 투명도 슬라이더 */}
-            <div className="pt-2 border-t border-orange-200/60 dark:border-slate-700 flex items-center justify-between gap-3 text-xs">
+            <div className="pt-2 border-t border-orange-200/60 dark:border-th-border-card flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                 <Eye className="w-3.5 h-3.5 text-orange-500" />
                 <span>투명도 ({pip.opacity}%)</span>
@@ -399,7 +518,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   step="5"
                   value={pip.opacity}
                   onChange={(e) => updatePipSettings({ opacity: parseInt(e.target.value, 10) })}
-                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                  className="w-full h-1.5 bg-th-pill rounded-lg appearance-none cursor-pointer accent-orange-500"
                 />
                 <span className="text-[10px] text-slate-400 font-medium">100%</span>
               </div>
@@ -408,7 +527,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
 
           {/* 3. 알림이 기능 설정 */}
-          <div className="space-y-3.5 p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/60">
+          <div className="space-y-3.5 p-4 rounded-2xl bg-rose-50/55 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
@@ -431,10 +550,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   disabled={!notifier.enabled}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer shadow-2xs ${
                     !notifier.enabled
-                      ? 'opacity-35 pointer-events-none bg-slate-100 dark:bg-slate-800/60 text-slate-400 border-slate-200 dark:border-slate-700'
+                      ? 'opacity-35 pointer-events-none bg-th-pill-soft/100 dark:bg-th-pill-soft/60 text-slate-400 border-th-border-pill'
                       : notifier.onlyFavorites
                       ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50'
-                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                      : 'bg-th-card text-slate-600 dark:text-slate-300 border-th-border-card hover:bg-th-pill-soft hover:text-slate-800 dark:hover:text-slate-100'
                   }`}
                   title="즐겨찾기로 등록된 캐릭터만 초기화 알림을 받습니다"
                 >
@@ -464,13 +583,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="pt-3 border-t border-rose-200/60 dark:border-rose-900/40 space-y-3 animate-in fade-in duration-150">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   {/* 시간 조절 칸 (0시 ~ 23시) */}
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-slate-800 flex items-center justify-between shadow-2xs">
+                  <div className="p-2.5 rounded-xl bg-th-card border border-rose-200/60 dark:border-th-border-card flex items-center justify-between shadow-2xs">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Clock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">시간 설정</span>
                     </div>
 
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    <div className="flex items-center bg-th-pill-soft rounded-xl p-0.5 border border-th-border-pill flex-shrink-0">
                       <button
                         type="button"
                         id="btn-notifier-hours-minus"
@@ -506,13 +625,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
 
                   {/* 분 조절 칸 (0분 ~ 55분, 5분 단위) */}
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-slate-800 flex items-center justify-between shadow-2xs">
+                  <div className="p-2.5 rounded-xl bg-th-card border border-rose-200/60 dark:border-th-border-card flex items-center justify-between shadow-2xs">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Clock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">분 설정</span>
                     </div>
 
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    <div className="flex items-center bg-th-pill-soft rounded-xl p-0.5 border border-th-border-pill flex-shrink-0">
                       <button
                         type="button"
                         id="btn-notifier-minutes-minus"
@@ -549,7 +668,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 {/* 설정 안내 문구 */}
-                <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-rose-200/40 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-th-card/85 dark:bg-th-card/80 border border-rose-200/50 dark:border-th-border-card text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0 animate-ping" />
                   <span className="leading-snug break-keep">
                     컨텐츠 초기화 <strong className="text-rose-600 dark:text-rose-400 font-bold">{notifier.hours}시간 {notifier.minutes}분 전</strong>에 미완료된 컨텐츠, 캐릭터를 알립니다.
@@ -561,12 +680,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* 4. 기타 시스템 옵션 (자동 갱신 주기, Windows 시작 시 자동 실행, 사운드) */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               시스템 및 편의 옵션
             </h4>
 
             {/* 자동 갱신 주기 선택 */}
-            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-th-card border border-th-border-card shadow-xs space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <RotateCw className="w-3.5 h-3.5 text-orange-500" />
@@ -596,7 +715,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     className={`py-1.5 px-1 text-xs font-bold rounded-xl transition-all border text-center ${
                       (settings.autoSyncIntervalSec || 300) === opt.value
                         ? 'bg-orange-500 text-white border-orange-600 shadow-xs'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        : 'bg-th-pill-soft text-slate-600 dark:text-slate-300 border-th-border-pill hover:bg-th-pill-hover hover:border-th-border-strong'
                     }`}
                   >
                     {opt.label}
@@ -607,7 +726,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Windows 시작 시 자동 실행 (데스크톱 전용) */}
             {supportsAutoStart && (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-th-card border border-th-border-card shadow-xs">
                 <div className="flex items-center gap-2">
                   <Monitor className="w-3.5 h-3.5 text-sky-500" />
                   <span className="text-xs font-bold text-slate-900 dark:text-white">Windows 시작 시 자동 실행</span>
@@ -629,7 +748,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
 
             {/* 사운드 효과음 */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-th-card border border-th-border-card shadow-xs">
               <div className="flex items-center gap-2">
                 <Volume2 className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-xs font-bold text-slate-900 dark:text-white">체크 사운드 효과음</span>
@@ -647,12 +766,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* 4. 캐릭터 카드 완료 기준 설정 */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               캐릭터 카드 완료 기준 설정
             </h4>
 
             {/* 검은 마법사 포함 여부 */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-th-card border border-th-border-card shadow-xs">
               <div className="flex items-center gap-2">
                 <BlackMageSilhouetteIcon
                   size={16}
@@ -671,7 +790,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* 커스텀 스케줄 포함 여부 */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-th-card border border-th-border-card shadow-xs">
               <div className="flex items-center gap-2">
                 <Plus className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100" />
                 <span className="text-xs font-bold text-slate-900 dark:text-white">커스텀 스케줄 포함</span>
@@ -689,7 +808,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* 5. 데이터 백업 및 복원 & 데이터 초기화 */}
           <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               데이터 관리 및 초기화
             </h4>
             
@@ -698,13 +817,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   onClick={onExportData}
-                  className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer"
+                  className="p-3 rounded-2xl bg-th-card border border-th-border-card hover:border-th-border-strong text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors shadow-xs hover:bg-th-pill-soft cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 text-sky-500" />
                   <span>데이터 백업 (JSON)</span>
                 </button>
 
-                <label className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850">
+                <label className="p-3 rounded-2xl bg-th-card border border-th-border-card hover:border-th-border-strong text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center shadow-xs hover:bg-th-pill-soft">
                   <Upload className="w-3.5 h-3.5 text-amber-500" />
                   <span>데이터 복원</span>
                   <input
@@ -732,11 +851,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* 7. 운영 정책 및 법적 고지 (모바일 화면 폭에 맞춰 단정하고 깔끔하게 정렬) */}
-          <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <div className="space-y-2.5 pt-2 border-t border-th-border-panel">
+            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               운영 정책 및 라이선스
             </h4>
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-th-card border border-th-border-card space-y-2.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Scale className="w-4 h-4 text-orange-500 flex-shrink-0" />
@@ -757,7 +876,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             window.dispatchEvent(new PopStateEvent('popstate'));
                           }
                         }}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-th-pill-soft border border-th-border-pill hover:bg-th-pill-hover hover:text-orange-600 dark:hover:text-orange-400 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
                       >
                         이용약관
                       </a>
@@ -771,7 +890,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             window.dispatchEvent(new PopStateEvent('popstate'));
                           }
                         }}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-th-pill-soft border border-th-border-pill hover:bg-th-pill-hover hover:text-orange-600 dark:hover:text-orange-400 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center justify-center"
                       >
                         개인정보
                       </a>
@@ -784,7 +903,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           onClose();
                           onOpenLegalModal?.('terms');
                         }}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-th-pill-soft border border-th-border-pill hover:bg-th-pill-hover hover:text-orange-600 dark:hover:text-orange-400 active:scale-95 transition-all shadow-2xs cursor-pointer"
                       >
                         이용약관
                       </button>
@@ -794,7 +913,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           onClose();
                           onOpenLegalModal?.('privacy');
                         }}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:text-orange-500 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-th-pill-soft border border-th-border-pill hover:bg-th-pill-hover hover:text-orange-600 dark:hover:text-orange-400 active:scale-95 transition-all shadow-2xs cursor-pointer"
                       >
                         개인정보
                       </button>
@@ -802,7 +921,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                 </div>
               </div>
-              <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <div className="pt-1.5 border-t border-th-border-card text-[10.5px] text-slate-400 dark:text-slate-500 leading-relaxed flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <div>
                   <span className="font-semibold text-slate-600 dark:text-slate-300">메케줄 v{APP_VERSION}</span>
                   <span className="mx-1.5">·</span>
@@ -815,10 +934,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* 푸터 */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex justify-end">
+        <div className="px-6 py-4 border-t border-th-border-panel bg-th-panel flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
+            className="px-5 py-2 bg-slate-900 dark:bg-th-pill-soft hover:bg-slate-800 dark:hover:bg-th-pill-hover border border-transparent dark:border-th-border-pill text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
           >
             닫기
           </button>
@@ -833,7 +952,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         >
           <div 
             id="restore-confirm-modal"
-            className="w-full max-w-md bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
+            className="w-full max-w-md bg-th-card border border-amber-200 dark:border-amber-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
           >
             <div className="flex items-start gap-3.5">
               <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">
@@ -854,11 +973,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-th-border-card">
               <button
                 type="button"
                 onClick={() => setPendingImportFile(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-th-pill-soft border border-th-border-pill text-slate-700 dark:text-slate-200 hover:bg-th-pill-hover transition-colors cursor-pointer"
               >
                 취소
               </button>
@@ -884,7 +1003,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         >
           <div 
             id="reset-confirm-modal"
-            className="w-full max-w-md bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
+            className="w-full max-w-md bg-th-card border border-rose-200 dark:border-rose-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
           >
             <div className="flex items-start gap-3.5">
               <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 shrink-0">
@@ -900,11 +1019,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-th-border-card">
               <button
                 type="button"
                 onClick={() => setIsConfirmingReset(false)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-th-pill-soft border border-th-border-pill text-slate-700 dark:text-slate-200 hover:bg-th-pill-hover transition-colors cursor-pointer"
               >
                 취소
               </button>

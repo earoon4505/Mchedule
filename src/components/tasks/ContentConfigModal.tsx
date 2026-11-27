@@ -239,7 +239,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
           return 'bg-slate-800 text-white border-slate-900';
       }
     }
-    return 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-slate-200';
+    return 'bg-th-pill-soft text-slate-600 dark:text-slate-300 border-th-border-pill hover:bg-th-pill-hover hover:text-slate-900 dark:hover:text-white';
   };
 
   return (
@@ -249,10 +249,10 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
     >
       <div 
         id="content-config-modal" 
-        className="w-full max-w-lg sm:max-w-4xl h-[82dvh] sm:h-[720px] max-h-[82dvh] sm:max-h-[90vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
+        className="w-full max-w-lg sm:max-w-4xl h-[82dvh] sm:h-[720px] max-h-[82dvh] sm:max-h-[90vh] bg-th-canvas border border-th-border-panel rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col"
       >
         {/* 모달 헤더 (모바일: 캐릭터 닉네임 및 '인게임 동기화'만 배치 / 데스크톱: 스케줄 설정 타이틀 + 닉네임 뱃지 + 전체 버튼명 유지) */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/80">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-th-border-panel flex items-center justify-between bg-th-panel">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             {/* 데스크톱 전용 아이콘 및 '스케줄 설정' 타이틀 */}
             <div className="hidden sm:flex w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 items-center justify-center text-orange-500 flex-shrink-0">
@@ -272,7 +272,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
               <span className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[150px]">
                 {character.characterName}
               </span>
-              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded flex-shrink-0">
+              <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-th-pill-soft border border-th-border-pill px-1.5 py-0.5 rounded flex-shrink-0">
                 Lv.{character.characterLevel}
               </span>
             </div>
@@ -309,7 +309,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
           </div>
         )}
         {/* 탭 네비게이션: 모바일에서는 2~3줄로 꺾이지 않고 부드러운 한 줄 가로 스와이프 스크롤(스크롤바 완전 숨김) 적용 */}
-        <div className="px-4 sm:px-6 pt-2.5 pb-0.5 sm:pt-2.5 sm:pb-1 flex items-center justify-between gap-2 bg-white dark:bg-slate-900 min-w-0">
+        <div className="px-4 sm:px-6 pt-2.5 pb-0.5 sm:pt-2.5 sm:pb-1 flex items-center justify-between gap-2 bg-th-canvas min-w-0">
           {/* 부드러운 가로 스와이프 스크롤 래퍼 (스크롤바 숨김 & 터치 pan-x & 마우스 휠 지원) */}
           <div
             ref={tabScrollRef}
@@ -326,7 +326,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
             }}
           >
             <LayoutGroup id="configModalTabsGroup">
-              <div className="inline-flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold relative select-none flex-nowrap">
+              <div className="inline-flex items-center bg-th-card p-1 rounded-xl border border-th-border-card text-xs font-bold relative select-none flex-nowrap">
                 {[
                   { id: 'daily', label: '일일 컨텐츠', icon: Calendar, activeBg: 'bg-amber-500', activeText: 'text-white' },
                   { id: 'daily_boss', label: '일일 보스', icon: Crown, activeBg: 'bg-sky-600', activeText: 'text-white' },
@@ -370,7 +370,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
 
           {/* 데스크톱 전용: 주간 보스 탭일 때의 완료 기준 조작 버튼 */}
           {activeTab === 'bosses' ? (
-            <div className="hidden sm:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 flex-shrink-0">
+            <div className="hidden sm:flex items-center gap-1.5 bg-th-card px-2.5 py-1 rounded-xl border border-th-border-card flex-shrink-0">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mr-1 select-none">
                 완료 기준
               </span>
@@ -378,7 +378,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                 type="button"
                 onClick={() => setWeeklyBossThreshold((prev) => Math.max(0, prev - 1))}
                 disabled={weeklyBossThreshold <= 0}
-                className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                className="w-6 h-6 rounded-lg bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 border border-th-border-pill flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs transition-colors cursor-pointer"
                 title="완료 기준 1마리 감소"
               >
                 <Minus className="w-3 h-3" />
@@ -390,7 +390,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                 type="button"
                 onClick={() => setWeeklyBossThreshold((prev) => Math.min(12, prev + 1))}
                 disabled={weeklyBossThreshold >= 12}
-                className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                className="w-6 h-6 rounded-lg bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 border border-th-border-pill flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs transition-colors cursor-pointer"
                 title="완료 기준 1마리 증가"
               >
                 <Plus className="w-3 h-3" />
@@ -403,16 +403,16 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
 
         {/* 모바일 전용: 주간 보스 탭일 때 탭과 부딪히지 않는 독립된 전용 완료 기준 조작 바 */}
         {activeTab === 'bosses' && (
-          <div className="sm:hidden px-4 py-2 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+          <div className="sm:hidden px-4 py-2 bg-th-panel border-b border-th-border-panel flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
               주간 보스 완료 기준
             </span>
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 bg-th-card px-2 py-1 rounded-xl border border-th-border-card">
               <button
                 type="button"
                 onClick={() => setWeeklyBossThreshold((prev) => Math.max(0, prev - 1))}
                 disabled={weeklyBossThreshold <= 0}
-                className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs"
+                className="w-6 h-6 rounded-lg bg-th-pill-soft active:scale-95 text-slate-700 dark:text-slate-200 border border-th-border-pill flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs"
               >
                 <Minus className="w-3 h-3" />
               </button>
@@ -423,7 +423,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                 type="button"
                 onClick={() => setWeeklyBossThreshold((prev) => Math.min(12, prev + 1))}
                 disabled={weeklyBossThreshold >= 12}
-                className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs"
+                className="w-6 h-6 rounded-lg bg-th-pill-soft active:scale-95 text-slate-700 dark:text-slate-200 border border-th-border-pill flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold shadow-xs"
               >
                 <Plus className="w-3 h-3" />
               </button>
@@ -450,8 +450,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         onClick={() => toggleTask(task.id)}
                         className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer select-none ${
                           isSelected
-                            ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800 shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                            ? 'bg-amber-50/75 dark:bg-amber-950/25 border-amber-300 dark:border-amber-800 shadow-xs'
+                            : 'bg-th-card border-th-border-card hover:border-th-border-strong dark:hover:border-th-border-pill shadow-xs'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
@@ -467,7 +467,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                           className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                             isSelected
                               ? 'bg-amber-500 border-amber-500 text-white'
-                              : 'border-slate-300 dark:border-slate-600'
+                              : 'border-th-border-strong dark:border-th-border-pill bg-th-pill-soft'
                           }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -492,8 +492,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         onClick={() => toggleTask(task.id)}
                         className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer select-none ${
                           isSelected
-                            ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800 shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                            ? 'bg-amber-50/75 dark:bg-amber-950/25 border-amber-300 dark:border-amber-800 shadow-xs'
+                            : 'bg-th-card border-th-border-card hover:border-th-border-strong dark:hover:border-th-border-pill shadow-xs'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
@@ -509,7 +509,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                           className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                             isSelected
                               ? 'bg-amber-500 border-amber-500 text-white'
-                              : 'border-slate-300 dark:border-slate-600'
+                              : 'border-th-border-strong dark:border-th-border-pill bg-th-pill-soft'
                           }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -535,8 +535,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                     key={group.baseName}
                     className={`p-3 sm:px-4 sm:py-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 ${
                       isAnySelectedInGroup
-                        ? 'bg-sky-50/40 dark:bg-sky-950/20 border-sky-300/80 dark:border-sky-800/80 shadow-xs'
-                        : 'bg-white dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        ? 'bg-sky-50/60 dark:bg-sky-950/20 border-sky-300/80 dark:border-sky-800/80 shadow-xs'
+                        : 'bg-th-card border-th-border-card hover:border-th-border-strong dark:hover:border-th-border-pill'
                     }`}
                   >
                     {/* 좌측: 보스 아이콘 및 이름 & 선택된 난이도 결정석 메소 가격 */}
@@ -574,7 +574,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                             <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px] flex-shrink-0 ${
                               isSelected 
                                 ? 'bg-white text-slate-900 border-white' 
-                                : 'border-slate-300 dark:border-slate-600'
+                                : 'border-th-border-strong'
                             }`}>
                               {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                             </span>
@@ -606,8 +606,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         onClick={() => toggleTask(task.id)}
                         className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer select-none ${
                           isSelected
-                            ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800 shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                            ? 'bg-rose-50/75 dark:bg-rose-950/25 border-rose-300 dark:border-rose-800 shadow-xs'
+                            : 'bg-th-card border-th-border-card hover:border-th-border-strong dark:hover:border-th-border-pill shadow-xs'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
@@ -623,7 +623,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                           className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                             isSelected
                               ? 'bg-rose-600 border-rose-600 text-white'
-                              : 'border-slate-300 dark:border-slate-600'
+                              : 'border-th-border-strong dark:border-th-border-pill bg-th-pill-soft'
                           }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -648,8 +648,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                         onClick={() => toggleTask(task.id)}
                         className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer select-none ${
                           isSelected
-                            ? 'bg-orange-50/60 dark:bg-orange-950/20 border-orange-300 dark:border-orange-800 shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                            ? 'bg-orange-50/75 dark:bg-orange-950/25 border-orange-300 dark:border-orange-800 shadow-xs'
+                            : 'bg-th-card border-th-border-card hover:border-th-border-strong dark:hover:border-th-border-pill shadow-xs'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
@@ -665,7 +665,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                           className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                             isSelected
                               ? 'bg-orange-500 border-orange-500 text-white'
-                              : 'border-slate-300 dark:border-slate-600'
+                              : 'border-th-border-strong dark:border-th-border-pill bg-th-pill-soft'
                           }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -692,8 +692,8 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                       key={group.baseName}
                       className={`p-3 sm:px-4 sm:py-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 ${
                         isAnySelectedInGroup
-                          ? 'bg-purple-50/40 dark:bg-purple-950/20 border-purple-300/80 dark:border-purple-800/80 shadow-xs'
-                          : 'bg-white dark:bg-slate-900/80 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                          ? 'bg-purple-50/60 dark:bg-purple-950/20 border-purple-300/80 dark:border-purple-800/80 shadow-xs'
+                          : 'bg-th-card border-th-border-card hover:border-th-border-strong dark:hover:border-th-border-pill'
                       }`}
                     >
                       {/* 좌측: 보스 아이콘 및 이름 & 선택된 난이도 결정석 메소 가격 */}
@@ -731,7 +731,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                               <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[10px] flex-shrink-0 ${
                                 isSelected 
                                   ? 'bg-white text-slate-900 border-white' 
-                                  : 'border-slate-300 dark:border-slate-600'
+                                  : 'border-th-border-strong'
                               }`}>
                                 {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                               </span>
@@ -772,7 +772,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                       className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 ${
                         isSelected
                           ? 'bg-black dark:bg-black border-red-600 dark:border-red-600 text-white ring-1 ring-red-600/40 shadow-xs'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-red-900/50 text-slate-800 dark:text-slate-200'
+                          : 'bg-th-card border-th-border-card hover:border-red-900/50 text-slate-800 dark:text-slate-200'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -801,7 +801,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                       <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${
                         isSelected 
                           ? 'bg-black border-red-600 text-red-500' 
-                          : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-transparent'
+                          : 'border-th-border-strong dark:border-th-border-pill bg-th-pill-soft text-transparent'
                       }`}>
                         <Check className={`w-3.5 h-3.5 ${isSelected ? 'scale-100' : 'scale-0'}`} />
                       </div>
@@ -829,7 +829,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
               </div>
 
               {customTasks.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                <div className="p-8 text-center bg-th-card border border-dashed border-th-border-card rounded-xl">
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                     등록된 커스텀 컨텐츠가 없습니다.
                   </p>
@@ -846,11 +846,11 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                     return (
                       <div
                         key={task.id}
-                        className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                        className="p-3.5 rounded-xl border border-th-border-card bg-th-card flex items-center justify-between gap-3 text-slate-800 dark:text-slate-200 hover:border-th-border-strong dark:hover:border-th-border-pill transition-colors"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-xs font-bold truncate">{task.title}</span>
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-th-pill-soft text-slate-600 dark:text-slate-300 border border-th-border-pill flex-shrink-0">
                             {resetLabel}
                           </span>
                         </div>
@@ -859,7 +859,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
                           <button
                             type="button"
                             onClick={() => setEditingCustomTask(task)}
-                            className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            className="px-2.5 py-1 rounded-lg border border-th-border-pill bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
                             title="커스텀 컨텐츠 수정"
                           >
                             <Edit3 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
@@ -885,7 +885,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
         </div>
 
         {/* 모달 푸터 (모바일: 간결 요약 '선택: 퀘스트 N · 일보 N · 주보 N' / 데스크톱: 전체 요약 문구 유지) */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-900/80">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-th-border-panel flex items-center justify-between gap-2 bg-th-panel">
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 min-w-0 flex-1 truncate mr-2">
             {/* 데스크톱 전용 전체 요약 문구 */}
             <span className="hidden sm:inline">
@@ -901,7 +901,7 @@ export const ContentConfigModal: React.FC<ContentConfigModalProps> = ({
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               onClick={onClose}
-              className="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer active:scale-95"
+              className="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-th-pill-soft border border-th-border-pill hover:bg-th-pill-hover transition-colors cursor-pointer active:scale-95"
             >
               취소
             </button>

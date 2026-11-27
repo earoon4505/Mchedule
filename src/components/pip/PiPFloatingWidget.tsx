@@ -35,7 +35,7 @@ export const PiPFloatingWidget: React.FC<PiPFloatingWidgetProps> = ({
       className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end select-none"
     >
       {/* PIP 텍스트 및 토글 버튼 */}
-      <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-200/80 dark:bg-slate-800/80 backdrop-blur-xs border border-slate-300/60 dark:border-slate-700/60 shadow-xs transition-colors">
+      <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-th-pill-soft/90 dark:bg-th-card/90 backdrop-blur-xs border border-th-border-pill dark:border-th-border-card shadow-xs transition-colors">
         <span className="text-[11px] font-bold tracking-wider text-slate-700 dark:text-slate-300">
           PIP
         </span>

@@ -48,10 +48,10 @@ export const GuidePage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden bg-[#F8F9FB] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white custom-scrollbar">
+    <div className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden bg-th-canvas text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white custom-scrollbar">
       
       {/* 1. 상단 글로벌 네비게이션 헤더 */}
-      <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-2xs">
+      <header className="sticky top-0 z-40 bg-th-panel/95 backdrop-blur-md border-b border-th-border-panel shadow-2xs">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a 
@@ -67,7 +67,7 @@ export const GuidePage: React.FC = () => {
                 메케줄
               </span>
             </a>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-th-border-strong dark:text-th-border-pill">|</span>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
               이용 가이드
             </span>
@@ -90,7 +90,7 @@ export const GuidePage: React.FC = () => {
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10">
         
         {/* 대제목 (Hero) */}
-        <section className="text-center space-y-2.5 pb-6 border-b border-slate-200/80 dark:border-slate-800">
+        <section className="text-center space-y-2.5 pb-6 border-b border-th-border-panel">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-900/40 text-orange-600 dark:text-orange-400 text-xs font-bold">
             <BookOpen className="w-3.5 h-3.5" />
             <span>공식 이용 가이드</span>
@@ -109,33 +109,33 @@ export const GuidePage: React.FC = () => {
         </div>
 
         {/* 목차 (TOC) - 단정하고 깔끔한 통일 규격 */}
-        <nav className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2.5">
+        <nav className="p-4 sm:p-5 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2.5">
           <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             목차 바로가기
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-medium">
-            <a href="#section-1" className="p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
+            <a href="#section-1" className="p-2 rounded-xl hover:bg-th-pill-soft text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
                 <span className="w-4 text-orange-500 font-bold text-[11px]">01</span>
                 <span>메케줄 소개 및 7대 핵심 기능</span>
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             </a>
-            <a href="#section-2" className="p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
+            <a href="#section-2" className="p-2 rounded-xl hover:bg-th-pill-soft text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
                 <span className="w-4 text-orange-500 font-bold text-[11px]">02</span>
                 <span>넥슨 API 연동 및 갱신 규칙</span>
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             </a>
-            <a href="#section-3" className="p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
+            <a href="#section-3" className="p-2 rounded-xl hover:bg-th-pill-soft text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
                 <span className="w-4 text-orange-500 font-bold text-[11px]">03</span>
                 <span>자주 묻는 질문 (FAQ)</span>
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             </a>
-            <a href="#section-4" className="p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
+            <a href="#section-4" className="p-2 rounded-xl hover:bg-th-pill-soft text-slate-700 dark:text-slate-300 flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
                 <span className="w-4 text-orange-500 font-bold text-[11px]">04</span>
                 <span>100% 로컬 보안 원칙</span>
@@ -147,7 +147,7 @@ export const GuidePage: React.FC = () => {
 
         {/* ================= 섹션 1: 메케줄 소개 및 7대 핵심 기능 ================= */}
         <section id="section-1" className="space-y-4 pt-2">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-th-border-panel">
             <span className="px-2 py-0.5 rounded-md bg-orange-500 text-white font-bold text-xs">01</span>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               메케줄 소개 및 7대 핵심 기능
@@ -161,7 +161,7 @@ export const GuidePage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
             
             {/* 1. 인게임 자동 동기화 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -179,7 +179,7 @@ export const GuidePage: React.FC = () => {
             </div>
 
             {/* 2. 다계정 지원 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -197,7 +197,7 @@ export const GuidePage: React.FC = () => {
             </div>
 
             {/* 3. 계정 컨텐츠 통합 관리 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -215,7 +215,7 @@ export const GuidePage: React.FC = () => {
             </div>
 
             {/* 4. 나만의 커스텀 숙제 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -233,7 +233,7 @@ export const GuidePage: React.FC = () => {
             </div>
 
             {/* 5. 초기화 임박 알림이 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -251,7 +251,7 @@ export const GuidePage: React.FC = () => {
             </div>
 
             {/* 6. 검은 마법사 & 커스텀 완료기준 추가/해제 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -269,7 +269,7 @@ export const GuidePage: React.FC = () => {
             </div>
 
             {/* 7. 데이터 백업 & 원클릭 복원 */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2 md:col-span-2">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2 md:col-span-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -291,7 +291,7 @@ export const GuidePage: React.FC = () => {
 
         {/* ================= 섹션 2: 넥슨 API 연동 ================= */}
         <section id="section-2" className="space-y-4 pt-2">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-th-border-panel">
             <span className="px-2 py-0.5 rounded-md bg-orange-500 text-white font-bold text-xs">02</span>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               NEXON Open API 연동 방법 및 데이터 갱신 규칙
@@ -299,7 +299,7 @@ export const GuidePage: React.FC = () => {
           </div>
           
           {/* API 발급 3단계 카드 */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-3">
+          <div className="p-4 sm:p-5 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-3">
             <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
               <Key className="w-4 h-4 text-orange-500" />
               <span>API 키 발급 간단 3단계</span>
@@ -327,7 +327,7 @@ export const GuidePage: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-1 gap-2.5">
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-[10px] flex items-center justify-center font-bold">1</span>
                   <span>인게임 최신 데이터 반영 주기 & 즉시 반영 팁</span>
@@ -340,7 +340,7 @@ export const GuidePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-[10px] flex items-center justify-center font-bold">2</span>
                   <span>신규 등록 전 1회 이상 게임 접속 권장</span>
@@ -351,7 +351,7 @@ export const GuidePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 text-[10px] flex items-center justify-center font-bold">3</span>
                   <span>몬스터파크: 마지막 접속 캐릭터 월드 기록 & 2회 이상 클리어</span>
@@ -368,7 +368,7 @@ export const GuidePage: React.FC = () => {
 
         {/* ================= 섹션 3: 자주 묻는 질문 FAQ ================= */}
         <section id="section-3" className="space-y-4 pt-2">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-th-border-panel">
             <span className="px-2 py-0.5 rounded-md bg-orange-500 text-white font-bold text-xs">03</span>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               자주 묻는 질문 (FAQ)
@@ -376,7 +376,7 @@ export const GuidePage: React.FC = () => {
           </div>
 
           <div className="space-y-2.5">
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">Q.</span>
                 <span>새로 추가한 캐릭터의 보스 처치 이력이나 스케줄러가 불러와지지 않아요.</span>
@@ -386,7 +386,7 @@ export const GuidePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">Q.</span>
                 <span>게임에서 보스를 잡았는데 메케줄에 바로 체크가 안 돼요.</span>
@@ -396,7 +396,7 @@ export const GuidePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">Q.</span>
                 <span>몬스터파크를 클리어했는데 왜 메케줄에 안 뜨나요?</span>
@@ -406,7 +406,7 @@ export const GuidePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">Q.</span>
                 <span>캐릭터 닉네임을 변경하거나 서버 이전(월드리프)을 했습니다.</span>
@@ -416,7 +416,7 @@ export const GuidePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">Q.</span>
                 <span>다른 PC나 모바일 기기로 내 캐릭터 체크 기록을 옮길 수 있나요?</span>
@@ -426,7 +426,7 @@ export const GuidePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-4 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">Q.</span>
                 <span>브라우저 캐시 삭제 시 데이터가 날아가나요?</span>
@@ -440,13 +440,13 @@ export const GuidePage: React.FC = () => {
 
         {/* ================= 섹션 4: 보안 및 개인정보 ================= */}
         <section id="section-4" className="space-y-4 pt-2">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-th-border-panel">
             <span className="px-2 py-0.5 rounded-md bg-orange-500 text-white font-bold text-xs">04</span>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               100% 안전한 보안 및 개인정보 비수집 원칙
             </h2>
           </div>
-          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
             <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
               <span>No-Server 완벽 로컬 아키텍처</span>
@@ -463,7 +463,7 @@ export const GuidePage: React.FC = () => {
         </div>
 
         {/* 하단 푸터 네비게이션 */}
-        <div className="pt-6 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500">
+        <div className="pt-6 border-t border-th-border-panel flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500">
           <div>
             <span>Data based on NEXON Open API | MapleStory © NEXON Korea Corp.</span>
           </div>

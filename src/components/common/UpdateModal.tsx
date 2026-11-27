@@ -33,7 +33,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
     >
       <div
         id="update-modal"
-        className="w-full max-w-sm bg-white dark:bg-slate-900 border border-orange-200 dark:border-orange-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
+        className="w-full max-w-sm bg-th-canvas border border-orange-200 dark:border-orange-900/60 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100"
       >
         <div className="flex items-start gap-3.5">
           <div className="p-2.5 rounded-2xl bg-orange-500/10 text-orange-600 dark:text-orange-400 shrink-0">
@@ -53,11 +53,11 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-th-border-panel">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold rounded-xl bg-th-pill-soft border border-th-border-pill text-slate-700 dark:text-slate-200 hover:bg-th-pill-hover transition-colors cursor-pointer"
           >
             나중에 하기
           </button>

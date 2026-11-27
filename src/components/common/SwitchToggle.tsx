@@ -11,6 +11,9 @@ export interface SwitchToggleProps {
   disabled?: boolean;
   ariaLabel?: string;
   className?: string;
+  thumbIcon?: React.ReactNode;
+  trackLeftIcon?: React.ReactNode;
+  trackRightIcon?: React.ReactNode;
 }
 
 /**
@@ -28,6 +31,9 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = React.memo(({
   disabled = false,
   ariaLabel,
   className = '',
+  thumbIcon,
+  trackLeftIcon,
+  trackRightIcon,
 }) => {
   // 사이즈별 트랙 및 썸 규격 정의
   const dimensions = {
@@ -69,6 +75,16 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = React.memo(({
         checked ? activeColor : inactiveColor
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     >
+      {trackLeftIcon && (
+        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+          {trackLeftIcon}
+        </span>
+      )}
+      {trackRightIcon && (
+        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+          {trackRightIcon}
+        </span>
+      )}
       <motion.span
         layout
         transition={{
@@ -79,8 +95,10 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = React.memo(({
         animate={{
           x: checked ? dimensions.checkedOffset : dimensions.uncheckedOffset,
         }}
-        className={`block rounded-full bg-white shadow-xs pointer-events-none ${dimensions.thumb}`}
-      />
+        className={`relative z-10 flex items-center justify-center rounded-full bg-white shadow-xs pointer-events-none ${dimensions.thumb}`}
+      >
+        {thumbIcon}
+      </motion.span>
     </motion.button>
   );
 });

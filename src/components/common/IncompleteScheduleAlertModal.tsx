@@ -69,7 +69,7 @@ export const IncompleteScheduleAlertModal: React.FC<IncompleteScheduleAlertModal
     >
       <div 
         id="incomplete-schedule-alert-modal"
-        className="w-full max-w-lg bg-white dark:bg-slate-900 border-2 border-red-500/80 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[82dvh] sm:max-h-[85vh] ring-4 ring-red-500/20 animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg bg-th-canvas border-2 border-red-500/80 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[82dvh] sm:max-h-[85vh] ring-4 ring-red-500/20 animate-in zoom-in-95 duration-200"
       >
         {/* 상단 알림 헤더: 모바일/데스크톱 텍스트 줄바꿈 방지 */}
         <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-red-500 to-rose-600 text-white flex items-center shadow-xs flex-shrink-0">
@@ -106,7 +106,7 @@ export const IncompleteScheduleAlertModal: React.FC<IncompleteScheduleAlertModal
                 {incompleteAccountTasks.map((item) => (
                   <div
                     key={item.id}
-                    className="p-2 sm:p-2.5 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-red-200/80 dark:border-red-900/50 flex items-center justify-between gap-2.5 shadow-2xs"
+                    className="p-2 sm:p-2.5 rounded-lg bg-th-card/95 border border-red-200/80 dark:border-red-900/50 flex items-center justify-between gap-2.5 shadow-2xs"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <MapleIcon
@@ -165,7 +165,7 @@ export const IncompleteScheduleAlertModal: React.FC<IncompleteScheduleAlertModal
                           {character.characterName}
                         </h4>
                         {/* 데스크톱 전용: 월드명 노출 (모바일에서는 폰트 깨짐 방지를 위해 숨김) */}
-                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold truncate flex-shrink-0">
+                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-th-pill-soft border border-th-border-pill text-slate-600 dark:text-slate-400 font-semibold truncate flex-shrink-0">
                           {character.worldName}
                         </span>
                       </div>
@@ -228,7 +228,7 @@ export const IncompleteScheduleAlertModal: React.FC<IncompleteScheduleAlertModal
         </div>
 
         {/* 하단 확인 버튼 (클릭 시 팝업 닫히고 소리 멈춤) */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-end">
+        <div className="px-6 py-4 border-t border-th-border-panel bg-th-panel flex items-center justify-end">
           <button
             type="button"
             id="btn-confirm-schedule-alert"

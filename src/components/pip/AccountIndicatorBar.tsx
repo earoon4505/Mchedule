@@ -156,7 +156,7 @@ export const AccountIndicatorBar: React.FC<AccountIndicatorBarProps> = React.mem
               whileTap={{ scale: 0.8 }}
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               title={`[${acc.alias || `계정 ${index + 1}`}] 계정으로 전환 (${acc.charCount}개 캐릭터)`}
-              className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 hover:bg-orange-400 dark:hover:bg-orange-400 transition-colors duration-200 cursor-pointer flex-shrink-0 focus:outline-hidden"
+              className="w-2.5 h-2.5 rounded-full bg-th-border-strong dark:bg-slate-500 hover:bg-orange-400 dark:hover:bg-orange-400 transition-colors duration-200 cursor-pointer flex-shrink-0 focus:outline-hidden"
               aria-label={acc.alias || `계정 ${index + 1}`}
             />
           );

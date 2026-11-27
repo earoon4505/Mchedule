@@ -24,6 +24,8 @@ interface WeeklyTaskListProps {
   onOpenContentConfig: () => void;
   soundEnabled: boolean;
   collapsible?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
   isAlertActive?: boolean;
 }
 
@@ -35,13 +37,23 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
   onOpenContentConfig,
   soundEnabled,
   collapsible = false,
+  isCollapsed: controlledCollapsed,
+  onToggleCollapse,
   isAlertActive = false,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(collapsible);
+  // 외부 제어 상태가 주어지면 사용자 설정(전체 탭 펼침/접힘)을 그대로 유지하고, 개별 탭(collapsible=false)에서는 항상 펼침
+  const [internalCollapsed, setInternalCollapsed] = useState(collapsible);
+  const isControlled = controlledCollapsed !== undefined && onToggleCollapse !== undefined;
+  const isCollapsed = collapsible ? (isControlled ? controlledCollapsed : internalCollapsed) : false;
 
-  useEffect(() => {
-    setIsCollapsed(collapsible);
-  }, [collapsible]);
+  const handleToggleCollapse = () => {
+    if (!collapsible) return;
+    if (isControlled) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed((prev) => !prev);
+    }
+  };
 
   // 활성화된 주간 태스크 확인 헬퍼
   const enabledIds = character.enabledTaskIds || [];
@@ -78,7 +90,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
     <div id="weekly-task-list">
       {/* 주간 컨텐츠 상단 요약 바 (모두 완료 시 박스 색상 변경, 박스 전체 클릭 시 펼치기/접기 지원) */}
       <div 
-        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
+        onClick={collapsible ? handleToggleCollapse : undefined}
         className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
           collapsible ? 'cursor-pointer select-none' : ''
         } ${
@@ -86,7 +98,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
           ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
           : isAllCompleted
           ? 'bg-rose-100/90 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 ring-1 ring-rose-400/30'
-          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
+          : 'bg-th-card border-th-border-card'
       }`}>
         {/* 숙제 완료 비율에 따른 왼쪽 게이지 채움 (전부 완료 전) */}
         {!isAllCompleted && progressPercent > 0 && (
@@ -128,12 +140,12 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsCollapsed((prev) => !prev);
+                handleToggleCollapse();
               }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-rose-200 dark:border-rose-800 bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 hover:bg-rose-200 dark:hover:bg-rose-800'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-500 hover:text-rose-600'
+                  : 'border-th-border-card dark:border-th-border-pill bg-th-card dark:bg-th-pill-soft hover:bg-th-panel dark:hover:bg-th-pill-hover text-slate-500 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400'
               }`}
               title={isCollapsed ? '목록 펼치기' : '목록 접기'}
             >
@@ -180,7 +192,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
               className="pt-3.5 space-y-4"
             >
               {totalCount === 0 ? (
-            <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl text-slate-400">
+            <div className="p-8 text-center bg-th-card border border-th-border-card rounded-2xl text-slate-400">
               <p className="text-xs font-semibold">설정된 주간 컨텐츠가 없습니다.</p>
               <button
                 onClick={onOpenContentConfig}
@@ -210,7 +222,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
                       className={`relative h-[86px] p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between select-none shadow-2xs ${
                         isDone
                           ? 'bg-rose-100 dark:bg-rose-950 border-rose-300 dark:border-rose-700 ring-1 ring-rose-400/40 shadow-xs'
-                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800'
+                          : 'bg-th-card border-th-border-card hover:border-rose-300 dark:hover:border-rose-700'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
@@ -255,7 +267,7 @@ export const WeeklyTaskList: React.FC<WeeklyTaskListProps> = React.memo(({
                       className={`relative h-[86px] p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between select-none shadow-2xs ${
                         isDone
                           ? 'bg-rose-100 dark:bg-rose-950 border-rose-300 dark:border-rose-700 ring-1 ring-rose-400/40 shadow-xs'
-                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800'
+                          : 'bg-th-card border-th-border-card hover:border-rose-300 dark:hover:border-rose-700'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">

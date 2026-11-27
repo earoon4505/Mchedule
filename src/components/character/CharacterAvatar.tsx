@@ -46,7 +46,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
       } ${
         isAllCompleted
           ? 'bg-emerald-100 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-700'
-          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+          : 'bg-th-pill border-th-border-pill'
       } ${containerClassName}`}
     >
       <img

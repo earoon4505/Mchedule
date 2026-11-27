@@ -113,12 +113,19 @@ export interface ApiKeyItem {
   createdAt: string;
 }
 
+// 라이트 모드 색상 프리셋 ('classic': 기존 기본 화이트, 'cream': 살구 크림)
+export type LightThemePreset = 'classic' | 'cream';
+// 다크 모드 색상 프리셋 ('deep': 현재 4단계 딥 차콜, 'classic': 이전 슬레이트 클래식 다크)
+export type DarkThemePreset = 'deep' | 'classic';
+
 export interface AppSettings {
   autoStart: boolean;
   backgroundNotification?: boolean;
   incompleteCharacterIcon: boolean;
   showCompletedIcon: boolean;
   darkMode: boolean;
+  lightTheme?: LightThemePreset; // 라이트 모드 색상 프리셋 (기본 'classic')
+  darkTheme?: DarkThemePreset;   // 다크 모드 색상 프리셋 (기본 'deep')
   autoSyncIntervalSec: number; // 기본 120초 (2분)
   soundEnabled: boolean;
   includeCustomInCardCompletion?: boolean; // 커스텀을 캐릭터 카드 완료 기준에 포함 여부

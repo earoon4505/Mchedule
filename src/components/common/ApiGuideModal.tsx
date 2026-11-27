@@ -19,7 +19,7 @@ interface GuideSlide {
  * - 우측 상단 X 버튼 없음
  * - 좌우 화살표 버튼 분리(플렉스 3단)로 사진과 겹침 없음
  * - 4번 페이지: '서비스 설명에 다음 문구를 입력해주세요.' 마침표 수정, [복사] 버튼
- * - 5번 페이지: 5번 사진 + (6번 사진과 설명문 가로 나란히 배치), 'https://mchedule.com' [복사] 버튼
+ * - 5번 페이지: 5번 사진 + (설명문 좌측 & 6번 사진 우측 가로 나란히 배치), 'https://mchedule.com' [복사] 버튼
  * - 6번 페이지: 사진 상단에 '발급된 API 가져오기' 뱃지 표시
  */
 export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose }) => {
@@ -129,11 +129,11 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
       <div
         id="api-guide-modal"
         onWheel={handleWheel}
-        className="w-full max-w-lg sm:w-[820px] sm:max-w-[96vw] max-h-[82dvh] sm:h-[720px] sm:max-h-[94vh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg sm:w-[820px] sm:max-w-[96vw] max-h-[82dvh] sm:h-[720px] sm:max-h-[94vh] bg-th-canvas border border-th-border-panel rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 상단 헤더 (우측 상단 X 버튼 없음) */}
-        <div className="h-14 px-5 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40 shrink-0">
+        <div className="h-14 px-5 border-b border-th-border-panel flex items-center justify-between bg-th-panel shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold text-xs shadow-xs">
               {currentStep + 1}
@@ -142,13 +142,13 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
               NEXON Open API 키 발급 방법
             </h3>
           </div>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full">
+          <span className="text-xs font-semibold px-2.5 py-1 bg-th-pill-soft border border-th-border-pill text-slate-700 dark:text-slate-300 rounded-full">
             {currentStep + 1} / {slides.length}
           </span>
         </div>
 
         {/* 본문: 좌측 버튼 - 중앙 (사진 + 설명) - 우측 버튼 */}
-        <div className="flex-1 w-full bg-slate-100 dark:bg-slate-950 flex items-center justify-between p-3 sm:p-4 gap-2 sm:gap-3 overflow-hidden select-none min-h-0">
+        <div className="flex-1 w-full bg-th-canvas flex items-center justify-between p-3 sm:p-4 gap-2 sm:gap-3 overflow-hidden select-none min-h-0">
           {/* 이전 단계 버튼 */}
           <div className="shrink-0 flex items-center justify-center">
             <button
@@ -156,7 +156,7 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
               onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
               disabled={currentStep === 0}
               title="이전 단계 (← 또는 휠 위로)"
-              className="p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-md border border-slate-200 dark:border-slate-700 transition-all disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+              className="p-2 sm:p-2.5 rounded-full bg-th-card text-slate-700 dark:text-slate-200 hover:bg-th-pill-soft shadow-md border border-th-border-card transition-all disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -172,23 +172,14 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
                   <img
                     src={current.images[0].src}
                     alt={current.images[0].alt}
-                    className="max-h-full max-w-full object-contain rounded-lg shadow-xs border border-slate-200/70 dark:border-slate-800"
+                    className="max-h-full max-w-full object-contain rounded-lg shadow-xs border border-th-border-card"
                   />
                 </div>
 
-                {/* 6번 사진과 설명 문구를 가로로 나란히 배치 */}
-                <div className="w-full shrink-0 flex items-stretch gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs rounded-xl p-3 border border-slate-200/80 dark:border-slate-800 shadow-xs">
-                  {/* 6번 사진 (왼쪽) */}
-                  <div className="shrink-0 flex items-center justify-center">
-                    <img
-                      src={current.images[1].src}
-                      alt={current.images[1].alt}
-                      className="h-[120px] w-auto max-w-[210px] sm:max-w-[260px] object-contain rounded-lg shadow-xs border border-slate-200/70 dark:border-slate-800 bg-white"
-                    />
-                  </div>
-
-                  {/* 설명 문구 (6번 사진 오른쪽) & URL 복사 버튼 */}
-                  <div className="flex-1 flex flex-col justify-between py-0.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 gap-1.5">
+                {/* 설명 문구(좌측)와 6번 등록 사진(우측)을 가로로 나란히 배치 */}
+                <div className="w-full shrink-0 flex items-stretch gap-3 bg-th-card/95 backdrop-blur-xs rounded-xl p-3 border border-th-border-card shadow-xs">
+                  {/* 설명 문구 (왼쪽) & URL 복사 버튼 */}
+                  <div className="flex-1 flex flex-col justify-between py-0.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 gap-1.5 min-w-0">
                     <div className="space-y-1">
                       <p className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0"></span>
@@ -209,7 +200,7 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
                     </div>
 
                     {/* 4번 항목: URL 복사 상자 & 버튼 */}
-                    <div className="mt-1 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                    <div className="mt-1 p-2 rounded-lg bg-th-pill-soft border border-th-border-pill flex items-center justify-between gap-2">
                       <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 select-all truncate">
                         {urlText}
                       </span>
@@ -232,6 +223,15 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
                       </button>
                     </div>
                   </div>
+
+                  {/* 6번 등록 사진 (오른쪽) */}
+                  <div className="shrink-0 flex items-center justify-center">
+                    <img
+                      src={current.images[1].src}
+                      alt={current.images[1].alt}
+                      className="h-[120px] w-auto max-w-[210px] sm:max-w-[260px] object-contain rounded-lg shadow-xs border border-th-border-card bg-white"
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -253,13 +253,13 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
                     key={current.src}
                     src={current.src}
                     alt={`API 발급 가이드 ${current.title}`}
-                    className="max-h-full max-w-full object-contain rounded-lg shadow-xs border border-slate-200/70 dark:border-slate-800"
+                    className="max-h-full max-w-full object-contain rounded-lg shadow-xs border border-th-border-card"
                   />
                 </div>
 
                 {/* 사진 아래 설명 박스 */}
                 <div className="w-full shrink-0 pt-2 pb-1 px-2">
-                  <div className="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs rounded-xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+                  <div className="w-full bg-th-card/95 backdrop-blur-xs rounded-xl p-3 sm:p-3.5 border border-th-border-card shadow-xs">
                     {/* 1번 페이지 설명 */}
                     {current.step === 1 && (
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
@@ -330,7 +330,7 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
                         </div>
 
                         {/* 복사 상자 & 2번 항목: '복사' 버튼 */}
-                        <div className="mt-1.5 p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2.5">
+                        <div className="mt-1.5 p-2.5 rounded-lg bg-th-pill-soft border border-th-border-pill flex items-center justify-between gap-2.5">
                           <span className="text-xs font-normal text-slate-700 dark:text-slate-300 select-all leading-relaxed">
                             {descText}
                           </span>
@@ -401,7 +401,7 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
               onClick={() => setCurrentStep((prev) => Math.min(slides.length - 1, prev + 1))}
               disabled={currentStep === slides.length - 1}
               title="다음 단계 (→ 또는 휠 아래로)"
-              className="p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-md border border-slate-200 dark:border-slate-700 transition-all disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+              className="p-2 sm:p-2.5 rounded-full bg-th-card text-slate-700 dark:text-slate-200 hover:bg-th-pill-soft shadow-md border border-th-border-card transition-all disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -409,7 +409,7 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* 슬라이드 인디케이터 (도트) */}
-        <div className="h-10 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-1.5 shrink-0 px-4">
+        <div className="h-10 bg-th-panel border-t border-th-border-panel flex items-center justify-center gap-1.5 shrink-0 px-4">
           {slides.map((item, idx) => (
             <button
               key={item.step}
@@ -418,7 +418,7 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
               className={`h-2 rounded-full transition-all cursor-pointer ${
                 idx === currentStep
                   ? 'w-6 bg-orange-500'
-                  : 'w-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600'
+                  : 'w-2 bg-th-border-strong dark:bg-th-border-pill hover:bg-th-border-strong-hover dark:hover:bg-th-border-strong'
               }`}
               title={`${idx + 1}단계 보기`}
             />
@@ -426,11 +426,11 @@ export const ApiGuideModal: React.FC<ApiGuideModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* 하단 푸터: 우측 하단 닫기 버튼 단독 배치 */}
-        <div className="h-14 px-5 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-end shrink-0">
+        <div className="h-14 px-5 border-t border-th-border-panel bg-th-panel flex items-center justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+            className="px-5 py-2 bg-th-pill-soft hover:bg-th-pill-hover border border-th-border-pill text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>닫기</span>

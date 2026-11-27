@@ -126,7 +126,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
   return (
     <aside 
       id="character-sidebar"
-      className="w-full lg:w-72 lg:min-w-[280px] lg:max-w-[288px] bg-slate-50/90 dark:bg-slate-950/80 border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-hidden h-full"
+      className="w-full lg:w-72 lg:min-w-[280px] lg:max-w-[288px] bg-th-panel border-r border-th-border-panel flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-hidden h-full"
     >
       {/* 사이드바 상단: 다계정 등록 시 계정별 캐릭터 필터 탭 (PC/모바일 공통) & 모바일 전용 편집 버튼 (API 목록과 같은 칸 우측) */}
       <div className={`${hasMultipleAccounts ? 'flex' : 'flex lg:hidden'} p-3 pb-1.5 items-center justify-between gap-2 flex-shrink-0`}>
@@ -140,7 +140,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                 className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold transition-all cursor-pointer ${
                   selectedApiKeyFilter === 'all'
                     ? 'bg-orange-500 text-white shadow-2xs'
-                    : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    : 'bg-th-pill-soft text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 전체
@@ -156,7 +156,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold transition-all cursor-pointer truncate max-w-[100px] ${
                       isSelected
                         ? 'bg-orange-500 text-white shadow-2xs'
-                        : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        : 'bg-th-pill-soft text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                     title={alias}
                   >
@@ -181,7 +181,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
             className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer select-none active:scale-95 ${
               isEditMode
                 ? 'bg-orange-500 text-white shadow-xs'
-                : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-orange-500 border border-slate-300/70 dark:border-slate-700'
+                : 'bg-th-pill-soft text-slate-700 dark:text-slate-200 hover:text-orange-500 border border-th-border-pill'
             }`}
           >
             {isEditMode ? (
@@ -261,14 +261,14 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                   }}
                   className={`group relative p-3 rounded-2xl border transition-colors cursor-pointer ${
                     isCardAlerting
-                      ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
+                      ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-th-card'
                       : isAllCompleted
                       ? isActive
                         ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
                         : 'bg-emerald-50 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 shadow-xs'
                       : isActive
-                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs hover:shadow-sm'
+                      ? 'bg-th-card border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
+                      : 'bg-th-card border-th-border-card hover:border-th-border-strong hover:bg-th-card-hover shadow-xs hover:shadow-sm'
                   }`}
                 >
                 {/* 1. 캐릭터 기본 헤더 (프로필 사진과 닉네임/정보를 세로 중앙 정렬) */}
@@ -310,7 +310,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
                         isAllCompleted
                           ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                          : 'bg-th-pill-soft text-slate-600 dark:text-slate-300'
                       }`}>
                         Lv.{char.characterLevel}
                       </span>
@@ -333,7 +333,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                   {isEditMode && (
                     <div 
                       onClick={(e) => e.stopPropagation()} 
-                      className="lg:hidden flex items-center gap-0.5 flex-shrink-0 bg-slate-100/95 dark:bg-slate-800/95 p-1 rounded-xl border border-slate-200/90 dark:border-slate-700 shadow-2xs"
+                      className="lg:hidden flex items-center gap-0.5 flex-shrink-0 bg-th-pill-soft/95 p-1 rounded-xl border border-th-border-card dark:border-th-border-pill shadow-2xs"
                     >
                       {/* 즐겨찾기 */}
                       <button
@@ -353,7 +353,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                         disabled={index === 0}
                         onClick={(e) => onMoveCharacter(char.id, 'up', e)}
                         className={`p-1.5 rounded-lg active:scale-90 transition-all cursor-pointer ${
-                          index === 0 ? 'opacity-25 cursor-not-allowed text-slate-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 active:bg-slate-200 dark:active:bg-slate-700'
+                          index === 0 ? 'opacity-25 cursor-not-allowed text-slate-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 active:bg-th-pill-hover'
                         }`}
                         title="위로 이동"
                       >
@@ -366,7 +366,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                         disabled={index === displayedCharacters.length - 1}
                         onClick={(e) => onMoveCharacter(char.id, 'down', e)}
                         className={`p-1.5 rounded-lg active:scale-90 transition-all cursor-pointer ${
-                          index === displayedCharacters.length - 1 ? 'opacity-25 cursor-not-allowed text-slate-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 active:bg-slate-200 dark:active:bg-slate-700'
+                          index === displayedCharacters.length - 1 ? 'opacity-25 cursor-not-allowed text-slate-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 active:bg-th-pill-hover'
                         }`}
                         title="아래로 이동"
                       >
@@ -406,7 +406,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                         ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
                         : isDailyBossAllDone
                         ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                        : 'text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 border-transparent'
+                        : 'text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/60 border-transparent'
                     }`}
                   >
                     <Crown className="w-2.5 h-2.5 flex-shrink-0" />
@@ -427,7 +427,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                         ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
                         : isBossAllDone
                         ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                        : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 border-transparent'
+                        : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 border-transparent'
                     }`}
                   >
                     <Crown className="w-2.5 h-2.5 flex-shrink-0" />
@@ -472,7 +472,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                   ) : (
                     <div
                       title="검은 마법사 미등록"
-                      className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-600 bg-slate-100/50 dark:bg-slate-900/40 select-none"
+                      className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-400/80 bg-th-pill-soft/50 dark:bg-th-pill-soft/65 select-none"
                     >
                       <span className="truncate">검마 -</span>
                     </div>
@@ -492,7 +492,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                         ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
                         : isDailyAllDone
                         ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                        : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border-transparent'
+                        : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border-transparent'
                     }`}
                   >
                     <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
@@ -513,7 +513,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                         ? 'text-red-700 dark:text-red-300 border-red-500 alert-badge-pulse font-bold'
                         : isWeeklyAllDone
                         ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 font-bold border-transparent'
-                        : 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 border-transparent'
+                        : 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border-transparent'
                     }`}
                   >
                     <Flame className="w-2.5 h-2.5 flex-shrink-0" />
@@ -544,7 +544,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                   ) : (
                     <div
                       title="커스텀 컨텐츠 미등록"
-                      className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-600 bg-slate-100/50 dark:bg-slate-900/40 select-none"
+                      className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-400/80 bg-th-pill-soft/50 dark:bg-th-pill-soft/65 select-none"
                     >
                       <span className="truncate">커스텀 -</span>
                     </div>
@@ -554,17 +554,17 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
 
                 {/* 3. PC 데스크톱 전용: 마우스 호버 시 노출되는 도구 아이콘 모음 (모바일에서는 카드 위에 뜨지 않도록 hidden lg:flex로 완전 격리) */}
                 {!isDeletingThis && (
-                  <div className="hidden lg:flex absolute top-2 right-2 opacity-0 lg:group-hover:opacity-100 transition-opacity bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-lg p-1 border border-slate-200 dark:border-slate-700 items-center gap-1 shadow-xs z-10">
+                  <div className="hidden lg:flex absolute top-2 right-2 opacity-0 lg:group-hover:opacity-100 transition-opacity bg-th-card/95 backdrop-blur-xs rounded-lg p-1 border border-th-border-card dark:border-th-border-pill items-center gap-1 shadow-xs z-10">
                     <button
                       onClick={(e) => onOpenContentConfig(char.id, e)}
-                      className="p-1 rounded text-slate-500 hover:text-orange-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="p-1 rounded text-slate-500 hover:text-orange-500 hover:bg-th-pill-soft"
                       title="스케줄 설정"
                     >
                       <SlidersHorizontal className="w-3 h-3" />
                     </button>
                     <button
                       onClick={(e) => onToggleFavorite(char.id, e)}
-                      className={`p-1 rounded ${char.favorite ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'} hover:bg-slate-100 dark:hover:bg-slate-800`}
+                      className={`p-1 rounded ${char.favorite ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'} hover:bg-th-pill-soft`}
                       title="즐겨찾기"
                     >
                       <Star className="w-3 h-3" fill={char.favorite ? 'currentColor' : 'none'} />
@@ -572,7 +572,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     {index > 0 && (
                       <button
                         onClick={(e) => onMoveCharacter(char.id, 'up', e)}
-                        className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-th-pill-soft"
                         title="위로 이동"
                       >
                         <ArrowUp className="w-3 h-3" />
@@ -581,7 +581,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                     {index < characters.length - 1 && (
                       <button
                         onClick={(e) => onMoveCharacter(char.id, 'down', e)}
-                        className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-th-pill-soft"
                         title="아래로 이동"
                       >
                         <ArrowDown className="w-3 h-3" />
@@ -604,7 +604,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                 {isDeletingThis && (
                   <div 
                     onClick={(e) => e.stopPropagation()} 
-                    className="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-2xl flex items-center justify-between px-3 py-2 border border-rose-300 dark:border-rose-900 z-20 animate-in fade-in duration-150"
+                    className="absolute inset-0 bg-th-card/95 backdrop-blur-xs rounded-2xl flex items-center justify-between px-3 py-2 border border-rose-300 dark:border-rose-900 z-20 animate-in fade-in duration-150"
                   >
                     <span className="text-xs font-bold text-rose-600 dark:text-rose-400 truncate mr-1.5">
                       캐릭터를 삭제할까요?
@@ -621,7 +621,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
                       <button
                         type="button"
                         onClick={handleCancelDelete}
-                        className="px-2 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition-colors flex flex-row items-center gap-1 whitespace-nowrap"
+                        className="px-2 py-1 bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition-colors flex flex-row items-center gap-1 whitespace-nowrap"
                       >
                         <X className="w-3 h-3 flex-shrink-0" />
                         <span>취소</span>
@@ -640,13 +640,13 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
           <button
             id="btn-add-character"
             onClick={onOpenAddModal}
-            className="w-full py-3.5 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-orange-50/60 dark:hover:bg-orange-950/25 active:scale-[0.985] border-2 border-dashed border-slate-300 dark:border-slate-700/90 hover:border-orange-500 dark:hover:border-orange-500 rounded-2xl flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-[0_0_18px_rgba(249,115,22,0.28)] dark:hover:shadow-[0_0_20px_rgba(249,115,22,0.32)]"
+            className="w-full py-3.5 bg-th-card/80 dark:bg-th-card/70 hover:bg-orange-50/70 dark:hover:bg-orange-950/25 active:scale-[0.985] border-2 border-dashed border-th-border-strong dark:border-th-border-pill hover:border-orange-500 dark:hover:border-orange-500 rounded-2xl flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-[0_0_18px_rgba(249,115,22,0.28)] dark:hover:shadow-[0_0_20px_rgba(249,115,22,0.32)]"
             title="NEXON API 검색 또는 수동 캐릭터 추가"
           >
-            <div className="w-6 h-6 rounded-lg bg-slate-200/90 dark:bg-slate-800 group-hover:bg-orange-500 group-hover:scale-110 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:shadow-[0_0_10px_rgba(249,115,22,0.4)]">
-              <Plus className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-white stroke-[2.5] transition-colors" />
+            <div className="w-6 h-6 rounded-lg bg-th-pill-soft group-hover:bg-orange-500 group-hover:scale-110 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:shadow-[0_0_10px_rgba(249,115,22,0.4)]">
+              <Plus className="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-white stroke-[2.5] transition-colors" />
             </div>
-            <span className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors tracking-tight">
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors tracking-tight">
               캐릭터 추가
             </span>
           </button>
@@ -656,7 +656,7 @@ export const CharacterSidebar: React.FC<CharacterSidebarProps> = React.memo(({
       {/* 좌측 하단 초슬림 법적 고지 및 약관 바 (웹에서는 구글봇 크롤링 표준 a 태그, 데스크톱에서는 쾌적한 모달) */}
       <div 
         id="sidebar-legal-footer"
-        className="px-3 py-1.5 border-t border-slate-200/70 dark:border-slate-800/70 bg-slate-100/50 dark:bg-slate-900/50 flex-shrink-0 text-[10px] text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center gap-0.5 select-none"
+        className="px-3 py-1.5 border-t border-th-border-panel bg-th-footer/80 dark:bg-th-footer/90 flex-shrink-0 text-[10px] text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center gap-0.5 select-none"
       >
         <span className="text-[9px] tracking-tight font-medium text-slate-400/90 dark:text-slate-500/90">
           Data based on NEXON Open API

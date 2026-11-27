@@ -43,11 +43,11 @@ export const GuideModal: React.FC<GuideModalProps> = ({
     >
       <div 
         id="guide-modal"
-        className="w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150"
+        className="w-full max-w-3xl bg-th-canvas border border-th-border-panel rounded-2xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모달 상단 헤더 */}
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/90 flex-shrink-0">
+        <div className="px-5 py-4 border-b border-th-border-panel flex items-center justify-between bg-th-panel flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-900/40 flex items-center justify-center text-orange-600 dark:text-orange-400 flex-shrink-0">
               <BookOpen className="w-4 h-4" />
@@ -68,7 +68,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
           
           {/* 섹션 1: 메케줄 소개 및 7대 핵심 기능 */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center gap-2 pb-1.5 border-b border-th-border-panel">
               <span className="px-1.5 py-0.5 rounded bg-orange-500 text-white font-bold text-[10px]">01</span>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                 메케줄 소개 및 7대 핵심 기능
@@ -81,7 +81,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
               
               {/* 1. 인게임 자동 동기화 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -97,7 +97,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </div>
 
               {/* 2. 다계정 지원 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -113,7 +113,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </div>
 
               {/* 3. 계정 컨텐츠 통합 관리 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -129,7 +129,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </div>
 
               {/* 4. 나만의 커스텀 숙제 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -145,7 +145,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </div>
 
               {/* 5. 초기화 임박 알림이 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -161,7 +161,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </div>
 
               {/* 6. 검마/커스텀 완료기준 설정 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -177,7 +177,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
               </div>
 
               {/* 7. 데이터 백업 & 복원 */}
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5 sm:col-span-2">
+              <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5 sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center flex-shrink-0">
@@ -197,14 +197,14 @@ export const GuideModal: React.FC<GuideModalProps> = ({
 
           {/* 섹션 2: 넥슨 Open API 연동 안내 */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center gap-2 pb-1.5 border-b border-th-border-panel">
               <span className="px-1.5 py-0.5 rounded bg-orange-500 text-white font-bold text-[10px]">02</span>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                 NEXON Open API 연동 방법 및 데이터 갱신 규칙
               </h4>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+            <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-2">
               <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                 <Key className="w-3.5 h-3.5 text-orange-500" />
                 <span>API 키 발급 간단 3단계</span>
@@ -221,7 +221,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 gap-2 pt-1">
-              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1">
                 <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 text-[10px] flex items-center justify-center font-bold">1</span>
                   <span>인게임 최신 데이터 반영 주기</span>
@@ -231,7 +231,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1">
                 <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 text-[10px] flex items-center justify-center font-bold">2</span>
                   <span>신규 등록 전 1회 이상 게임 접속 권장</span>
@@ -242,7 +242,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1">
                 <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-600 text-[10px] flex items-center justify-center font-bold">3</span>
                   <span>몬스터파크: 마지막 접속 캐릭터 월드 기록 & 2회 이상 클리어</span>
@@ -258,7 +258,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
 
           {/* 섹션 3: 자주 묻는 질문 FAQ */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center gap-2 pb-1.5 border-b border-th-border-panel">
               <span className="px-1.5 py-0.5 rounded bg-orange-500 text-white font-bold text-[10px]">03</span>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                 자주 묻는 질문 (FAQ)
@@ -266,21 +266,21 @@ export const GuideModal: React.FC<GuideModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1">
                 <span className="font-bold text-xs text-slate-900 dark:text-white">Q. 새로 추가한 캐릭터의 정보가 안 불러와져요.</span>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   A. 신규/장기미접속 캐릭터는 넥슨 서버에 데이터가 없습니다. 게임에 1회 접속 후 채널이동이나 종료를 진행하시면 정상 등록됩니다.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1">
                 <span className="font-bold text-xs text-slate-900 dark:text-white">Q. 게임에서 보스를 잡았는데 바로 체크가 안 돼요.</span>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   A. 넥슨 API 반영에 5~10분이 걸립니다. 인게임에서 [채널 이동] 또는 [캐시샵 이동]을 하신 뒤 새로고침하시면 즉시 반영됩니다.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="p-3 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1">
                 <span className="font-bold text-xs text-slate-900 dark:text-white">Q. 브라우저 캐시 삭제 시 데이터가 날아가나요?</span>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   A. 중앙 서버 없이 로컬에만 저장되므로, 브라우저 청소 전 상단 설정의 <strong>[데이터 백업/내보내기]</strong>를 통해 파일로 백업해두시면 언제든 복원할 수 있습니다.
@@ -291,13 +291,13 @@ export const GuideModal: React.FC<GuideModalProps> = ({
 
           {/* 섹션 4: 로컬 보안 원칙 */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center gap-2 pb-1.5 border-b border-th-border-panel">
               <span className="px-1.5 py-0.5 rounded bg-orange-500 text-white font-bold text-[10px]">04</span>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                 100% 안전한 보안 원칙
               </h4>
             </div>
-            <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+            <div className="p-3.5 rounded-xl bg-th-card border border-th-border-card shadow-2xs space-y-1.5">
               <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                 <span>No-Server 완벽 로컬 아키텍처</span>
@@ -311,7 +311,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({
         </div>
 
         {/* 하단 푸터 바 */}
-        <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/90 flex-shrink-0 text-xs text-slate-400 dark:text-slate-500">
+        <div className="px-5 py-3 border-t border-th-border-panel flex items-center justify-between bg-th-panel flex-shrink-0 text-xs text-slate-400 dark:text-slate-500">
           <div className="flex items-center gap-2 text-[11px]">
             <button
               type="button"

@@ -710,7 +710,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
           <div className={`p-4 rounded-2xl border text-center transition-all shadow-xs ${
             isGrandCompleted
               ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400/20'
-              : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800/90'
+              : 'bg-th-card border-th-border-card'
           }`}>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
               전체 달성률
@@ -722,7 +722,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                   cx="50"
                   cy="50"
                   r="40"
-                  className="stroke-slate-200 dark:stroke-slate-700"
+                  className="stroke-th-pill"
                   strokeWidth="10"
                   fill="transparent"
                 />
@@ -763,7 +763,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {doneDailyTasks}/{totalDailyTasks}
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-th-pill overflow-hidden">
               <div
                 className="h-full bg-amber-500 transition-all duration-300 rounded-full"
                 style={{ width: `${dailyPct}%` }}
@@ -784,7 +784,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {doneDailyBossTasks}/{totalDailyBossTasks}
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-th-pill overflow-hidden">
               <div
                 className="h-full bg-sky-500 transition-all duration-300 rounded-full"
                 style={{ width: `${dailyBossPct}%` }}
@@ -805,7 +805,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {doneWeeklyTasks}/{totalWeeklyTasks}
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-th-pill overflow-hidden">
               <div
                 className="h-full bg-rose-600 dark:bg-rose-500 transition-all duration-300 rounded-full"
                 style={{ width: `${weeklyPct}%` }}
@@ -826,7 +826,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {doneBossCount}/{totalBossThreshold}
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-th-pill overflow-hidden">
               <div
                 className="h-full bg-purple-600 transition-all duration-300 rounded-full"
                 style={{ width: `${bossPct}%` }}
@@ -847,7 +847,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {doneBlackMageTasks}/{totalBlackMageTasks}
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-th-pill overflow-hidden">
               <div
                 className="h-full bg-[#bc364d] transition-all duration-300 rounded-full"
                 style={{ width: `${blackMagePct}%` }}
@@ -868,7 +868,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                 {doneCustomTasks}/{totalCustomTasks}
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-th-pill overflow-hidden">
               <div
                 className="h-full bg-zinc-800 dark:bg-zinc-200 transition-all duration-300 rounded-full"
                 style={{ width: `${customPct}%` }}
@@ -954,7 +954,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                   setModalEditingApiKeyId(effectiveApiKeyId);
                   setIsConfigOpen(true);
                 }}
-                className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs cursor-pointer"
+                className="w-6 h-6 rounded-lg bg-th-pill-soft hover:bg-th-pill-hover text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center justify-center border border-th-border-pill transition-colors shadow-2xs cursor-pointer"
                 title="계정 컨텐츠 항목 편집"
               >
                 <Settings2 className="w-3.5 h-3.5" />
@@ -978,7 +978,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                       className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-colors flex items-center gap-1 ${
                         isSelected
                           ? 'text-white'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+                          : 'bg-th-pill-soft text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-th-pill-hover'
                       }`}
                     >
                       {isSelected && (
@@ -995,7 +995,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                             ? 'bg-white/20 text-white'
                             : accStatus.isAllDone
                             ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                            : 'bg-th-pill-hover text-slate-600 dark:text-slate-300'
                         }`}>
                           {accStatus.done}/{accStatus.total}
                         </span>
@@ -1007,7 +1007,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
             )}
 
             {displayedCommonContents.length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-xs">
+              <div className="p-4 rounded-xl border border-dashed border-th-border-card text-center text-slate-400 text-xs">
                 <p>활성화된 계정 컨텐츠가 없습니다.</p>
                 <button
                   type="button"
@@ -1032,7 +1032,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                             ? 'border-2 border-red-500 shadow-md alert-pulse-red bg-red-50/20 dark:bg-red-950/20'
                             : isMonsterParkCompleted
                             ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800'
-                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700'
+                            : 'bg-th-card border-th-border-card hover:border-amber-300 dark:hover:border-amber-700'
                         }`}
                         title="클릭하여 완료/미완료 토글"
                       >
@@ -1063,7 +1063,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                               ? 'bg-amber-500 border-amber-500 text-white'
                               : isMpAlert
                               ? 'border-red-400 bg-red-100 dark:bg-red-950 text-transparent'
-                              : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-transparent'
+                              : 'border-th-border-strong bg-th-card-hover dark:bg-th-pill-soft text-transparent'
                           }`}
                         >
                           {isMonsterParkCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1083,7 +1083,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                           ? 'border-2 border-red-500 shadow-md alert-pulse-red bg-red-50/20 dark:bg-red-950/20'
                           : isDone
                           ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800'
-                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-700'
+                          : 'bg-th-card border-th-border-card hover:border-rose-300 dark:hover:border-rose-700'
                       }`}
                       title="클릭하여 완료/미완료 토글"
                     >
@@ -1114,7 +1114,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                             ? 'bg-rose-500 border-rose-500 text-white'
                             : isEpicAlert
                             ? 'border-red-400 bg-red-100 dark:bg-red-950 text-transparent'
-                            : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-transparent'
+                            : 'border-th-border-strong bg-th-card-hover dark:bg-th-pill-soft text-transparent'
                         }`}
                       >
                         {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1153,7 +1153,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
   return (
     <aside 
       id="progress-panel"
-      className="w-full lg:w-80 bg-slate-50/90 dark:bg-slate-950/80 border-l border-slate-200/80 dark:border-slate-800/80 flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-y-auto no-scrollbar touch-pan-y overscroll-contain h-full pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-5"
+      className="w-full lg:w-80 bg-th-panel border-l border-th-border-panel flex flex-col flex-1 lg:flex-initial flex-shrink-0 select-none overflow-y-auto no-scrollbar touch-pan-y overscroll-contain h-full pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-5"
     >
       {/* 1. 상단 타이틀 및 컨트롤 버튼 (모바일 계정 컨텐츠 모드에서는 요청에 따라 숨김) */}
       {mobileMode !== 'common' && (
@@ -1173,7 +1173,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
               className={`w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 ${
                 onlyFavorites
                   ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-th-pill-soft text-slate-700 dark:text-slate-300 border-th-border-pill hover:bg-th-pill-hover'
               }`}
               title={onlyFavorites ? '즐겨찾기 필터 해제 (전체 캐릭터 보기)' : '즐겨찾기 등록된 캐릭터만 통계에 반영'}
             >
@@ -1184,7 +1184,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
             <button
               type="button"
               onClick={() => setIsEditUiModalOpen(true)}
-              className="w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
+              className="w-7 h-7 rounded-xl transition-all flex items-center justify-center border flex-shrink-0 bg-th-pill-soft text-slate-700 dark:text-slate-300 border-th-border-pill hover:bg-th-pill-hover hover:text-slate-900 dark:hover:text-white"
               title="진행 현황 UI 편집 (항목 선택 및 순서 변경)"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -1231,9 +1231,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       {/* 3. 진행 현황 UI 편집 모달 (순서 변경 및 노출 여부 선택) */}
       {isEditUiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="bg-th-canvas rounded-2xl max-w-md w-full border border-th-border-panel shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             {/* 모달 헤더 */}
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="p-4 border-b border-th-border-panel bg-th-panel flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-orange-500" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white">
@@ -1252,8 +1252,8 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                     key={sec.id}
                     className={`p-2.5 px-3 rounded-xl border transition-all flex items-center justify-between gap-2.5 ${
                       sec.visible
-                        ? 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
-                        : 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-800/50 opacity-60'
+                        ? 'bg-th-card border-th-border-card'
+                        : 'bg-th-pill-soft/60 dark:bg-th-panel border-th-border-panel/70 dark:border-th-border-panel opacity-60'
                     }`}
                   >
                     {/* 순서 이동 버튼들 */}
@@ -1265,7 +1265,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                         className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
                           isFirst
                             ? 'border-transparent text-slate-300 dark:text-slate-700 cursor-not-allowed'
-                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
+                            : 'border-th-border-pill bg-th-pill-soft hover:bg-th-pill-hover text-slate-600 dark:text-slate-300'
                         }`}
                         title="위로 이동"
                       >
@@ -1278,7 +1278,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                         className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
                           isLast
                             ? 'border-transparent text-slate-300 dark:text-slate-700 cursor-not-allowed'
-                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
+                            : 'border-th-border-pill bg-th-pill-soft hover:bg-th-pill-hover text-slate-600 dark:text-slate-300'
                         }`}
                         title="아래로 이동"
                       >
@@ -1303,7 +1303,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all border flex-shrink-0 ${
                         sec.visible
                           ? 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400'
-                          : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500'
+                          : 'bg-th-pill-soft border-th-border-pill text-slate-500 dark:text-slate-400'
                       }`}
                       title={sec.visible ? '숨기기' : '표시하기'}
                     >
@@ -1325,11 +1325,11 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
             </div>
 
             {/* 모달 푸터 */}
-            <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
+            <div className="p-3 border-t border-th-border-panel bg-th-panel flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleResetSections}
-                className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-th-pill-soft hover:bg-th-pill-hover border border-th-border-pill text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
                 title="기본 순서 및 전체 표시로 초기화"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -1351,9 +1351,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
       {/* 계정 공통 컨텐츠 항목 편집 모달 */}
       {isConfigOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85vh]">
+          <div className="bg-th-canvas rounded-2xl max-w-sm w-full border border-th-border-panel shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85vh]">
             {/* 모달 헤더 (요구사항 8: X 버튼 제거) */}
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="p-4 border-b border-th-border-panel bg-th-panel flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-orange-500" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white">
@@ -1376,7 +1376,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                         className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-all duration-200 ${
                           isSelected
                             ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs scale-105'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+                            : 'bg-th-pill-soft border border-th-border-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-th-pill-hover'
                         }`}
                       >
                         {acc.alias}
@@ -1398,9 +1398,9 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                     className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer select-none ${
                       isSelected
                         ? item.type === 'daily'
-                          ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800'
-                          : 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60'
+                          ? 'bg-amber-50/75 dark:bg-amber-950/25 border-amber-300 dark:border-amber-800'
+                          : 'bg-rose-50/75 dark:bg-rose-950/25 border-rose-300 dark:border-rose-800'
+                        : 'bg-th-card border-th-border-card opacity-65'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
@@ -1423,7 +1423,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
                           ? item.type === 'daily'
                             ? 'bg-amber-500 border-amber-500 text-white'
                             : 'bg-rose-600 border-rose-600 text-white'
-                          : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800'
+                          : 'border-th-border-strong dark:border-th-border-pill bg-th-pill-soft'
                       }`}
                     >
                       {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1434,7 +1434,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = React.memo(({
             </div>
 
             {/* 모달 푸터 */}
-            <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex justify-end">
+            <div className="p-3 border-t border-th-border-panel bg-th-panel flex justify-end">
               <button
                 type="button"
                 onClick={() => setIsConfigOpen(false)}

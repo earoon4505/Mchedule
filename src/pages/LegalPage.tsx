@@ -68,9 +68,9 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
   };
 
   return (
-    <div className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden bg-[#F8F9FB] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white custom-scrollbar">
+    <div className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden bg-th-canvas text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white custom-scrollbar">
       {/* 1. 상단 글로벌 네비게이션 헤더 */}
-      <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
+      <header className="sticky top-0 z-40 bg-th-panel/95 backdrop-blur-md border-b border-th-border-panel shadow-2xs">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a 
@@ -86,7 +86,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
                 메케줄
               </span>
             </a>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-th-border-strong dark:text-th-border-pill">|</span>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
               운영 정책 및 법적 고지
             </span>
@@ -109,14 +109,14 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
         
         {/* 상단 탭 스위처 */}
-        <div className="flex p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs gap-1.5">
+        <div className="flex p-1.5 rounded-2xl bg-th-panel border border-th-border-panel shadow-xs gap-1.5">
           <button
             type="button"
             onClick={() => handleSwitchTab('terms')}
             className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'terms'
                 ? 'bg-orange-500 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-th-pill-soft/80 dark:hover:bg-th-pill-soft/70 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -128,7 +128,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
             className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'privacy'
                 ? 'bg-orange-500 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-th-pill-soft/80 dark:hover:bg-th-pill-soft/70 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
@@ -150,14 +150,14 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
         {/* 탭 1: 이용약관 */}
         {activeTab === 'terms' ? (
           <div className="space-y-4 text-xs sm:text-sm leading-relaxed">
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제1조 (목적)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 본 약관은 "메케줄(MapleSchedule)"(이하 "서비스")을 제공하는 운영자와 서비스를 이용하는 이용자 간에 서비스의 이용 조건, 절차 및 권리·의무, 책임사항 등 제반 사항을 규정함을 목적으로 합니다.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제2조 (용어의 정의)</h3>
               <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 space-y-1">
                 <li><strong>"서비스"</strong>란 운영자가 제작하여 웹 브라우저 및 Windows 데스크톱 애플리케이션 형태로 제공하는 메이플스토리 스케줄 관리 및 통계 유틸리티를 의미합니다.</li>
@@ -167,7 +167,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
               </ul>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제3조 (약관의 효력 및 개정)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 ① 본 약관은 서비스 웹사이트 및 애플리케이션 내에 게시함으로써 효력이 발생합니다.<br />
@@ -175,7 +175,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제4조 (서비스의 내용 및 제공)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 ① 메케줄은 메이플스토리 유저를 위한 무료 팬 메이드 유틸리티로 다음과 같은 기능을 제공합니다:
@@ -189,7 +189,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
               </ul>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제5조 (데이터의 보관 및 백업)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 ① 본 서비스는 사용자의 개인정보와 API 키, 캐릭터 체크 데이터를 중앙 서버에 수집하지 않으며, 전적으로 이용자의 단말기(브라우저 LocalStorage 및 PC 로컬)에만 저장합니다.<br />
@@ -197,14 +197,14 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제6조 (광고의 게재)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 운영자는 서비스의 지속적인 무료 제공과 서버·시스템 유지보수를 위하여 웹 브라우저 환경에 온라인 광고를 게재할 수 있습니다. 광고 게재에 따른 쿠키 및 이용자 권리는 개인정보처리방침 제9조에 따릅니다.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제7조 (면책 조항)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 ① 본 서비스는 넥슨코리아의 공식 서비스가 아니며, 넥슨 Open API에서 제공하는 데이터의 정확성 및 넥슨 게임 서버의 정기/임시 점검으로 인한 조회 지연에 대해 운영자는 책임을 부담하지 않습니다.<br />
@@ -215,14 +215,14 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
         ) : (
           /* 탭 2: 개인정보처리방침 */
           <div className="space-y-4 text-xs sm:text-sm leading-relaxed">
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제1조 (개인정보의 처리 목적)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 메케줄(MapleSchedule)은 개인정보보호법 제30조에 따라 이용자의 개인정보를 보호하고 관련 고충을 신속하게 처리하기 위하여 본 방침을 수립·공개합니다. 본 서비스는 회원가입 없이 이용 가능하며, 넥슨 API 조회를 위한 식별값 외에 주민등록번호, 계정 비밀번호 등 어떠한 민감 개인정보도 수집하지 않습니다.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제2조 (수집하는 개인정보 항목 및 저장 방식)</h3>
               <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 space-y-1">
                 <li><strong>처리 항목</strong>: 이용자가 직접 입력한 넥슨 Open API Key, 캐릭터 이름, 직업, 레벨, 캐릭터 식별자(OCID), 일일/주간 숙제 체크 기록</li>
@@ -231,14 +231,14 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
               </ul>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제3조 (개인정보의 처리 및 보유 기간)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 중앙 서버 DB가 존재하지 않으므로, 데이터의 보유 기간은 이용자의 이용 의사에 따릅니다. 사용자가 <strong>앱 내 [설정 → 데이터 초기화]</strong>를 누르거나 브라우저 캐시를 삭제하면 즉시 지체 없이 완전 영구 파기됩니다.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제4조 (제3자 제공 및 업무 위탁의 부존재)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 본 서비스는 어떠한 개인정보도 제3자에게 제공하거나 판매하지 않으며, 처리를 위탁하지 않습니다. 단, 캐릭터 데이터 조회를 위해 브라우저에서 넥슨 공식 서버(<code>open.api.nexon.com</code>)로 직접 HTTPS 통신 조회가 발생합니다.
@@ -246,7 +246,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
             </div>
 
             {/* 제9조 (온라인 맞춤형 광고 및 쿠키 운영 안내) */}
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">
                 제9조 (온라인 맞춤형 광고 및 쿠키(Cookie) 운영 안내)
               </h3>
@@ -263,7 +263,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-5 rounded-2xl bg-th-card border border-th-border-card space-y-2">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">제10조 (개인정보 보호책임자 및 공식 문의)</h3>
               <p className="text-slate-600 dark:text-slate-400">
                 • <strong>공식 문의 이메일</strong>: <strong>mchedule4505@gmail.com</strong><br />
@@ -274,7 +274,7 @@ export const LegalPage: React.FC<LegalPageProps> = ({ initialTab = 'terms' }) =>
         )}
 
         {/* 하단 푸터 */}
-        <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 dark:text-slate-500">
+        <div className="pt-6 border-t border-th-border-panel flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 dark:text-slate-500">
           <span>Data based on NEXON Open API | MapleStory © NEXON Korea Corp.</span>
           <div className="flex items-center gap-3">
             <a href="/guide" className="hover:text-slate-700 dark:hover:text-slate-200 underline">

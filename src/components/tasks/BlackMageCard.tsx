@@ -15,6 +15,8 @@ interface BlackMageCardProps {
   onOpenContentConfig: () => void;
   soundEnabled: boolean;
   collapsible?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
   isAlertActive?: boolean;
 }
 
@@ -24,13 +26,23 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
   onToggleBlackMage,
   soundEnabled,
   collapsible = false,
+  isCollapsed: controlledCollapsed,
+  onToggleCollapse,
   isAlertActive = false,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(collapsible);
+  // 외부 제어 상태가 주어지면 사용자 설정(전체 탭 펼침/접힘)을 그대로 유지하고, 개별 탭(collapsible=false)에서는 항상 펼침
+  const [internalCollapsed, setInternalCollapsed] = useState(collapsible);
+  const isControlled = controlledCollapsed !== undefined && onToggleCollapse !== undefined;
+  const isCollapsed = collapsible ? (isControlled ? controlledCollapsed : internalCollapsed) : false;
 
-  useEffect(() => {
-    setIsCollapsed(collapsible);
-  }, [collapsible]);
+  const handleToggleCollapse = () => {
+    if (!collapsible) return;
+    if (isControlled) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed((prev) => !prev);
+    }
+  };
 
   const selectedDiffId = character.selectedBlackMageId;
   const selectedTask = selectedDiffId
@@ -116,7 +128,7 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
     <div id={`black-mage-section-${character.id}`}>
       {/* 검은 마법사 상단 요약 바: 클리어 시 순수 검정 배경 (박스 전체 클릭 시 펼치기/접기 지원) */}
       <div
-        onClick={collapsible ? () => setIsCollapsed((prev) => !prev) : undefined}
+        onClick={collapsible ? handleToggleCollapse : undefined}
         className={`relative overflow-hidden flex flex-wrap items-center justify-between gap-3 p-4 border rounded-2xl shadow-xs transition-all ${
           collapsible ? 'cursor-pointer select-none' : ''
         } ${
@@ -124,7 +136,7 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
             ? 'border-2 border-red-500 ring-2 ring-red-500/50 animate-pulse bg-red-50/40 dark:bg-red-950/20 shadow-md shadow-red-500/20'
             : isAllCompleted
             ? 'bg-black dark:bg-black border-red-600 dark:border-red-600 ring-1 ring-red-600/50 text-white shadow-xs'
-            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white'
+            : 'bg-th-card border-th-border-card text-slate-900 dark:text-white'
         }`}
       >
         <div className="flex items-center gap-3 relative z-10">
@@ -175,12 +187,12 @@ export const BlackMageCard: React.FC<BlackMageCardProps> = React.memo(({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsCollapsed((prev) => !prev);
+                handleToggleCollapse();
               }}
               className={`p-1.5 rounded-xl border transition-colors shadow-xs ml-0.5 cursor-pointer ${
                 isAllCompleted
                   ? 'border-red-600 bg-black text-red-400 hover:bg-zinc-900'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  : 'border-th-border-card dark:border-th-border-pill bg-th-card dark:bg-th-pill-soft hover:bg-th-panel dark:hover:bg-th-pill-hover text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
               title={isCollapsed ? '목록 펼치기' : '목록 접기'}
             >

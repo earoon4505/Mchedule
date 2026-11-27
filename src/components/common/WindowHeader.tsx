@@ -81,7 +81,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
           (window as any).electronAPI.maximize();
         }
       }}
-      className="h-[calc(3rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-12 lg:pt-0 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between px-3 select-none flex-shrink-0 z-30 transition-colors titlebar-drag"
+      className="h-[calc(3rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-12 lg:pt-0 bg-th-panel border-b border-th-border-panel flex items-center justify-between px-3 select-none flex-shrink-0 z-30 transition-colors titlebar-drag"
     >
       {/* 1. 좌측 영역: 앱 로고 & 미완료 캐릭터 알림 뱃지 */}
       <div className="flex items-center gap-3 flex-shrink-0 min-w-0">
@@ -99,7 +99,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
 
         {/* 미완료 캐릭터 썸네일 얼굴 표시 */}
         {incompleteCharacters.length > 0 ? (
-          <div className="hidden xl:flex items-center gap-1.5 pl-2 border-l border-slate-200 dark:border-slate-800 flex-shrink-0 titlebar-no-drag">
+          <div className="hidden xl:flex items-center gap-1.5 pl-2 border-l border-th-border-panel flex-shrink-0 titlebar-no-drag">
             <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
               미완료 {incompleteCharacters.length}
             </span>
@@ -109,7 +109,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
                   key={char.id}
                   onClick={() => onSelectCharacter(char.id)}
                   title={`${char.characterName} (미완료 컨텐츠 진행 중)`}
-                  className="w-5 h-5 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden flex items-center justify-center hover:scale-110 transition-transform"
+                  className="w-5 h-5 rounded-full ring-2 ring-white dark:ring-th-panel overflow-hidden flex items-center justify-center hover:scale-110 transition-transform"
                 >
                   <CharacterAvatar
                     imageUrl={char.characterImage}
@@ -123,7 +123,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
           </div>
         ) : (
           characters.length > 0 && (
-            <div className="hidden xl:flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 pl-2 border-l border-slate-200 dark:border-slate-800 flex-shrink-0 titlebar-drag">
+            <div className="hidden xl:flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 pl-2 border-l border-th-border-panel flex-shrink-0 titlebar-drag">
               <CheckCircle2 className="w-3 h-3 pointer-events-none" />
               <span className="pointer-events-none">전체 완료</span>
             </div>
@@ -153,7 +153,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
         <button
           id="btn-header-notice"
           onClick={onOpenNoticeModal}
-          className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors border border-slate-200 dark:border-slate-700 flex-shrink-0 shadow-2xs hover:text-orange-500 dark:hover:text-orange-400"
+          className="h-7 w-7 rounded-lg bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors border border-th-border-pill flex-shrink-0 shadow-2xs hover:text-orange-500 dark:hover:text-orange-400"
           title="공지사항"
         >
           <Megaphone className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
             : `${Math.floor(autoSyncIntervalSec / 60)}분`;
           return (
             <div 
-              className="hidden sm:flex items-center justify-center w-[124px] h-7 px-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 select-none flex-shrink-0"
+              className="hidden sm:flex items-center justify-center w-[124px] h-7 px-2 bg-th-pill-soft text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg border border-th-border-pill select-none flex-shrink-0"
               title={`${intervalText}마다 자동으로 NEXON Open API와 최신 상태가 동기화됩니다`}
             >
               <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -206,7 +206,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
           id="btn-refresh-all"
           onClick={onRefreshAll}
           disabled={isRefreshing}
-          className="h-7 w-7 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0 shadow-2xs disabled:opacity-50"
+          className="h-7 w-7 bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 rounded-lg transition-colors border border-th-border-pill flex items-center justify-center flex-shrink-0 shadow-2xs disabled:opacity-50"
           title="새로고침"
         >
           <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-orange-500' : ''}`} />
@@ -216,7 +216,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
         <button
           id="btn-header-darkmode-toggle"
           onClick={onToggleDarkMode}
-          className="hidden lg:flex h-7 w-7 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 items-center justify-center flex-shrink-0 shadow-2xs"
+          className="hidden lg:flex h-7 w-7 bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 rounded-lg transition-colors border border-th-border-pill items-center justify-center flex-shrink-0 shadow-2xs"
           title={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
         >
           {darkMode ? (
@@ -230,7 +230,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
         <button
           id="btn-open-settings"
           onClick={onOpenSettings}
-          className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors border border-slate-200 dark:border-slate-700 flex-shrink-0 shadow-2xs"
+          className="h-7 w-7 rounded-lg bg-th-pill-soft hover:bg-th-pill-hover text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors border border-th-border-pill flex-shrink-0 shadow-2xs"
           title="설정"
         >
           <SettingsIcon className="w-3.5 h-3.5" />
@@ -238,7 +238,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
 
         {/* Windows 창 조작 버튼 (데스크톱 전용) */}
         {supportsWindowControls && (
-          <div className="flex items-center gap-1 pl-1 ml-0.5 border-l border-slate-200 dark:border-slate-800 flex-shrink-0">
+          <div className="flex items-center gap-1 pl-1 ml-0.5 border-l border-th-border-panel flex-shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -246,7 +246,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
                   (window as any).electronAPI.minimize();
                 }
               }}
-              className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 transition-colors"
+              className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:bg-th-pill-soft hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               title="최소화"
             >
               <Minus className="w-3 h-3" />
@@ -258,7 +258,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = React.memo(({
                   (window as any).electronAPI.maximize();
                 }
               }}
-              className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 transition-colors"
+              className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:bg-th-pill-soft hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               title="최대화 / 원래 크기로"
             >
               <Square className="w-2.5 h-2.5" />

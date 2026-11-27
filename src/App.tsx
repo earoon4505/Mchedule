@@ -96,6 +96,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   incompleteCharacterIcon: true,
   showCompletedIcon: true,
   darkMode: false, // 기본 라이트 모드 (토글 버튼으로 원클릭 전환)
+  lightTheme: 'classic', // 라이트 모드 기본 프리셋 (기존 화이트)
+  darkTheme: 'deep', // 다크 모드 기본 프리셋 (4단계 딥 차콜)
   autoSyncIntervalSec: 120, // 2분
   soundEnabled: true,
   includeCustomInCompletion: true,
@@ -152,8 +154,50 @@ export default function App() {
 
   // 중앙 탭: 'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom'
   const [activeTab, setActiveTab] = useState<'all' | 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'custom'>('all');
-  const [collapseTrigger, setCollapseTrigger] = useState<number>(0);
   const [characterSelectTrigger, setCharacterSelectTrigger] = useState<number>(0);
+
+  // '전체' 탭 각 섹션의 사용자 펼침/접힘 상태 유지 (캐릭터 전환·탭 이동·재실행 시에도 유지)
+  type SectionCollapseKey = 'daily' | 'daily_boss' | 'weekly' | 'bosses' | 'black_mage' | 'custom';
+  const SECTION_COLLAPSE_STORAGE_KEY = 'mapleschedule_section_collapsed_v1';
+  const DEFAULT_SECTION_COLLAPSED: Record<SectionCollapseKey, boolean> = {
+    daily: true,
+    daily_boss: true,
+    weekly: true,
+    bosses: true,
+    black_mage: true,
+    custom: true,
+  };
+
+  const [sectionCollapsedMap, setSectionCollapsedMap] = useState<Record<SectionCollapseKey, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem(SECTION_COLLAPSE_STORAGE_KEY);
+      if (!raw) return DEFAULT_SECTION_COLLAPSED;
+      const parsed = JSON.parse(raw);
+      return {
+        daily: typeof parsed?.daily === 'boolean' ? parsed.daily : true,
+        daily_boss: typeof parsed?.daily_boss === 'boolean' ? parsed.daily_boss : true,
+        weekly: typeof parsed?.weekly === 'boolean' ? parsed.weekly : true,
+        bosses: typeof parsed?.bosses === 'boolean' ? parsed.bosses : true,
+        black_mage: typeof parsed?.black_mage === 'boolean' ? parsed.black_mage : true,
+        custom: typeof parsed?.custom === 'boolean' ? parsed.custom : true,
+      };
+    } catch {
+      return DEFAULT_SECTION_COLLAPSED;
+    }
+  });
+
+  const handleToggleSectionCollapse = useCallback((sectionKey: SectionCollapseKey) => {
+    setSectionCollapsedMap((prev) => {
+      const next = {
+        ...prev,
+        [sectionKey]: !prev[sectionKey],
+      };
+      try {
+        localStorage.setItem(SECTION_COLLAPSE_STORAGE_KEY, JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
+  }, []);
 
   // 모바일 전용 하단 탭 및 캐릭터 화면 서브 뷰 상태 (모바일 최초 접속 시 캐릭터 목록 화면 우선 노출)
   const [mobileTab, setMobileTab] = useState<MobileTabType>('character');
@@ -161,7 +205,6 @@ export default function App() {
 
   const handleSelectCharacter = (id: string) => {
     setActiveCharacterId(id);
-    setCollapseTrigger((prev) => prev + 1);
     setCharacterSelectTrigger((prev) => prev + 1);
     setMobileCharacterSubView('detail'); // 모바일에서 캐릭터 카드 탭 시 바로 해당 캐릭터 할 일로 전환!
     // 메인 창 캐릭터 선택 즉시 로컬 스토리지 저장 및 PiP로 0ms 브로드캐스트
@@ -195,7 +238,7 @@ export default function App() {
     if (!electron?.onUpdateDownloaded) return;
 
     const unsubscribe = electron.onUpdateDownloaded((info: { version?: string }) => {
-      const ver = info?.version || '1.2.1';
+      const ver = info?.version || '1.2.2';
       setUpdateInfo({
         hasUpdate: true,
         version: ver,
@@ -356,14 +399,12 @@ export default function App() {
     }
   };
 
-  // 다크모드 HTML 클래스 연동
+  // 다크모드 및 라이트/다크 색상 프리셋 HTML DOM 연동
   useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [settings.darkMode]);
+    document.documentElement.classList.toggle('dark', !!settings.darkMode);
+    document.documentElement.dataset.lightTheme = settings.lightTheme === 'cream' ? 'cream' : 'classic';
+    document.documentElement.dataset.darkTheme = settings.darkTheme === 'classic' ? 'classic' : 'deep';
+  }, [settings.darkMode, settings.lightTheme, settings.darkTheme]);
 
 
   // 페이지 새로고침(F5) 또는 탭 닫기 시 디바운스 대기 중인 최신 데이터 즉시 서버 동기화 (데스크톱 전용)
@@ -490,7 +531,7 @@ export default function App() {
       if (payload) {
         if (payload.characters) setCharacters(payload.characters);
         if (payload.records) setRecords(payload.records);
-        if (payload.settings) setSettings(payload.settings);
+        if (payload.settings) setSettings({ ...DEFAULT_SETTINGS, ...payload.settings });
         if (payload.activeCharacterId !== undefined) {
           setActiveCharacterId(payload.activeCharacterId);
         }
@@ -521,7 +562,6 @@ export default function App() {
       unsubscribeActiveChar = (window as any).electronAPI.onActiveCharacterChanged((charId: string) => {
         if (charId && charId !== activeCharacterIdRef.current) {
           setActiveCharacterId(charId);
-          setCollapseTrigger((prev) => prev + 1);
           setCharacterSelectTrigger((prev) => prev + 1);
         }
       });
@@ -696,7 +736,7 @@ export default function App() {
             selectedBossIds: sortBossIdsByStandardOrder(c.selectedBossIds || []),
           }));
           setCharacters(cleanedChars);
-          setSettings(localData.settings || DEFAULT_SETTINGS);
+          setSettings({ ...DEFAULT_SETTINGS, ...(localData.settings || {}) });
           setActiveCharacterId(localData.activeCharacterId || cleanedChars[0]?.id || null);
           setRecords(validatedRecords);
           setIsInitializing(false);
@@ -743,7 +783,7 @@ export default function App() {
                     }
                     return char;
                   });
-                  persistData(updated, validatedRecords, localData?.settings || DEFAULT_SETTINGS, localData?.activeCharacterId || updated[0]?.id || null);
+                  persistData(updated, validatedRecords, { ...DEFAULT_SETTINGS, ...(localData?.settings || {}) }, localData?.activeCharacterId || updated[0]?.id || null);
                   return updated;
                 });
               }
@@ -779,7 +819,7 @@ export default function App() {
           initialData = JSON.parse(localRaw);
           if (initialData && initialData.characters && initialData.characters.length > 0) {
             setCharacters(initialData.characters);
-            setSettings(initialData.settings || DEFAULT_SETTINGS);
+            setSettings({ ...DEFAULT_SETTINGS, ...(initialData.settings || {}) });
             setActiveCharacterId(initialData.activeCharacterId || initialData.characters[0]?.id || null);
             setRecords(checkAndResetRecords(initialData.records || {}, initialData.characters));
           }
@@ -848,7 +888,7 @@ export default function App() {
           loadedData = {
             characters: serverData.characters?.length ? serverData.characters : (initialData.characters || []),
             records: mergedRecords,
-            settings: serverData.settings || initialData.settings || DEFAULT_SETTINGS,
+            settings: { ...DEFAULT_SETTINGS, ...(serverData.settings || initialData.settings || {}) },
             activeCharacterId: serverData.activeCharacterId || initialData.activeCharacterId || null,
             lastServerSync: new Date().toISOString(),
           };
@@ -868,7 +908,7 @@ export default function App() {
             selectedBossIds: sortBossIdsByStandardOrder(c.selectedBossIds || []),
           }));
           setCharacters(cleanedChars);
-          setSettings(loadedData.settings || DEFAULT_SETTINGS);
+          setSettings({ ...DEFAULT_SETTINGS, ...(loadedData.settings || {}) });
           setActiveCharacterId(loadedData.activeCharacterId || cleanedChars[0]?.id || null);
           setRecords(validatedRecords);
 
@@ -913,7 +953,7 @@ export default function App() {
                     }
                     return char;
                   });
-                  persistData(updated, validatedRecords, loadedData.settings || DEFAULT_SETTINGS, loadedData.activeCharacterId || updated[0]?.id || null);
+                  persistData(updated, validatedRecords, { ...DEFAULT_SETTINGS, ...(loadedData.settings || {}) }, loadedData.activeCharacterId || updated[0]?.id || null);
                   return updated;
                 });
               }
@@ -2017,7 +2057,7 @@ export default function App() {
           // 1. 캐릭터, 기록, 설정, 활성 캐릭터 복원
           setCharacters(json.characters);
           setRecords(json.records || {});
-          setSettings(json.settings || DEFAULT_SETTINGS);
+          setSettings({ ...DEFAULT_SETTINGS, ...(json.settings || {}) });
           const nextActiveId = json.activeCharacterId || json.characters[0]?.id || null;
           setActiveCharacterId(nextActiveId);
 
@@ -2040,7 +2080,7 @@ export default function App() {
           }
 
           // 4. 로컬스토리지 및 데스크톱 스토리지 영구 반영
-          await persistData(json.characters, json.records || {}, json.settings || DEFAULT_SETTINGS, nextActiveId);
+          await persistData(json.characters, json.records || {}, { ...DEFAULT_SETTINGS, ...(json.settings || {}) }, nextActiveId);
 
           const keyCountMsg = Array.isArray(json.apiKeys) && json.apiKeys.length > 0 
             ? ` (API 키 ${json.apiKeys.length}개 포함)` 
@@ -2062,11 +2102,13 @@ export default function App() {
     setActiveCharacterId(null);
     setSettings(DEFAULT_SETTINGS);
     setHasApiKey(false);
+    setSectionCollapsedMap(DEFAULT_SECTION_COLLAPSED);
 
     try {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       localStorage.removeItem('mapleschedule_common_content_ids');
       localStorage.removeItem('mapleschedule_progress_only_favorites');
+      localStorage.removeItem(SECTION_COLLAPSE_STORAGE_KEY);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('storage'));
       }
@@ -2116,14 +2158,14 @@ export default function App() {
 
   if (isInitializing) {
     return (
-      <div className="h-screen w-screen bg-[#F8F9FB] dark:bg-slate-950 flex flex-col items-center justify-center text-slate-800 dark:text-slate-100">
+      <div className="h-screen w-screen bg-th-canvas flex flex-col items-center justify-center text-slate-800 dark:text-slate-100">
         <LoadingSpinner size="xl" text="메이플스토리 스케줄러 시스템을 준비하는 중..." />
       </div>
     );
   }
 
   return (
-    <div className={`h-[100dvh] lg:h-screen w-screen flex flex-col overflow-hidden ${settings.darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-[#F8F9FB] text-slate-800'}`}>
+    <div className={`h-[100dvh] lg:h-screen w-screen flex flex-col overflow-hidden bg-th-canvas ${settings.darkMode ? 'dark text-slate-100' : 'text-slate-800'}`}>
       {/* 1. 상단 Windows 헤더 */}
       <WindowHeader
         characters={characters}
@@ -2184,7 +2226,7 @@ export default function App() {
       )}
 
       {/* 2. 메인 뷰 (데스크톱: 3분할 가로 정렬 / 모바일: 하단 탭에 따른 단일 전체화면 뷰) */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#F8F9FB] dark:bg-slate-950 min-h-0 min-w-0 relative">
+      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-th-canvas min-h-0 min-w-0 relative">
         {/* 좌측 사이드바: 캐릭터 목록 (모바일에서는 '캐릭터' 탭의 '목록' 상태일 때 전체 화면으로 표시되며 위아래 스크롤 지원) */}
         <div className={`
           ${mobileTab === 'character' && (mobileCharacterSubView === 'list' || !activeCharacter) ? 'flex' : 'hidden'} 
@@ -2220,12 +2262,12 @@ export default function App() {
           id="main-content-section" 
           className={`
             ${mobileTab === 'character' && mobileCharacterSubView === 'detail' && activeCharacter ? 'flex' : 'hidden'}
-            lg:flex flex-1 flex-col bg-[#F8F9FB] dark:bg-slate-950 overflow-hidden min-h-0 min-w-0 h-full pb-0
+            lg:flex flex-1 flex-col bg-th-canvas overflow-hidden min-h-0 min-w-0 h-full pb-0
           `}
         >
           {/* 모바일 전용 상단 캐릭터 전환 미니 바: 캐릭터 목록으로 돌아가기 버튼 + 현재 캐릭터 정보 + 스케줄 설정 버튼 */}
           {activeCharacter && (
-            <div className="lg:hidden px-3.5 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 flex-shrink-0 shadow-2xs">
+            <div className="lg:hidden px-3.5 py-2.5 bg-th-panel border-b border-th-border-panel flex items-center justify-between gap-2 flex-shrink-0 shadow-2xs">
               <button
                 type="button"
                 id="btn-mobile-back-to-char-list"
@@ -2239,14 +2281,14 @@ export default function App() {
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
                   {activeCharacter.characterName}
                 </span>
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-300 bg-th-pill-soft px-1.5 py-0.5 rounded">
                   Lv.{activeCharacter.characterLevel}
                 </span>
                 <button
                   type="button"
                   id="btn-mobile-schedule-config"
                   onClick={() => setConfigCharacterId(activeCharacter.id)}
-                  className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-500 active:scale-95 transition-all cursor-pointer"
+                  className="p-1.5 rounded-xl bg-th-pill-soft text-slate-600 dark:text-slate-300 hover:text-orange-500 active:scale-95 transition-all cursor-pointer"
                   title="스케줄 설정"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -2263,12 +2305,12 @@ export default function App() {
               <div 
                 ref={tabScrollRef}
                 onWheel={handleTabWheel}
-                className="hidden lg:flex px-5 sm:px-6 py-3.5 bg-[#F8F9FB] dark:bg-slate-950 items-center justify-between gap-3 flex-shrink-0 overflow-x-auto custom-scrollbar"
+                className="hidden lg:flex px-5 sm:px-6 py-3.5 bg-th-canvas items-center justify-between gap-3 flex-shrink-0 overflow-x-auto custom-scrollbar"
               >
                 <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
                   {/* 한국어 탭 세그먼트 버튼 (부드러운 슬라이딩 모션 전환) */}
                   <LayoutGroup id="mainTabsGroup">
-                    <div className="flex bg-white dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-800 shadow-xs flex-shrink-0 relative">
+                    <div className="flex bg-th-card dark:bg-th-panel rounded-xl p-1 border border-th-border-panel shadow-xs flex-shrink-0 relative">
                       {[
                         { id: 'all', label: '전체', icon: LayoutGrid, activeBg: 'bg-orange-500', activeText: 'text-white' },
                         { id: 'daily', label: '일일 컨텐츠', icon: Calendar, activeBg: 'bg-amber-500', activeText: 'text-white' },
@@ -2289,7 +2331,7 @@ export default function App() {
                             className={`relative px-3 sm:px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer z-10 select-none ${
                               isActive
                                 ? tab.activeText
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-th-pill-soft/80'
                             }`}
                           >
                             {isActive && (
@@ -2311,7 +2353,7 @@ export default function App() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => setConfigCharacterId(activeCharacter.id)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-colors flex items-center gap-1.5 shadow-xs whitespace-nowrap cursor-pointer"
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-th-card hover:bg-th-card-hover dark:hover:bg-th-pill-soft text-slate-700 dark:text-slate-200 border border-th-border-card transition-colors flex items-center gap-1.5 shadow-xs whitespace-nowrap cursor-pointer"
                     title="캐릭터별 컨텐츠 및 보스 표시 설정"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5 text-orange-500" />
@@ -2325,7 +2367,7 @@ export default function App() {
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] lg:pb-26">
                 {(activeTab === 'all' || activeTab === 'daily') && (
                   <DailyTaskList
-                    key={`${activeCharacter.id}-${collapseTrigger}-daily`}
+                    key={`${activeCharacter.id}-daily`}
                     character={activeCharacter}
                     record={records[activeCharacter.id]}
                     onToggleTask={handleToggleTask}
@@ -2333,13 +2375,15 @@ export default function App() {
                     onOpenContentConfig={() => setConfigCharacterId(activeCharacter.id)}
                     soundEnabled={settings.soundEnabled}
                     collapsible={activeTab === 'all'}
+                    isCollapsed={sectionCollapsedMap.daily}
+                    onToggleCollapse={() => handleToggleSectionCollapse('daily')}
                     isAlertActive={activeCharAlert?.dailyAlert}
                   />
                 )}
 
                 {(activeTab === 'all' || activeTab === 'daily_boss') && (
                   <DailyBossList
-                    key={`${activeCharacter.id}-${collapseTrigger}-daily-boss`}
+                    key={`${activeCharacter.id}-daily-boss`}
                     character={activeCharacter}
                     record={records[activeCharacter.id]}
                     onToggleDailyBoss={handleToggleDailyBoss}
@@ -2348,13 +2392,15 @@ export default function App() {
                     onOpenContentConfig={() => setConfigCharacterId(activeCharacter.id)}
                     soundEnabled={settings.soundEnabled}
                     collapsible={activeTab === 'all'}
+                    isCollapsed={sectionCollapsedMap.daily_boss}
+                    onToggleCollapse={() => handleToggleSectionCollapse('daily_boss')}
                     isAlertActive={activeCharAlert?.dailyBossAlert}
                   />
                 )}
 
                 {(activeTab === 'all' || activeTab === 'weekly') && (
                   <WeeklyTaskList
-                    key={`${activeCharacter.id}-${collapseTrigger}-weekly`}
+                    key={`${activeCharacter.id}-weekly`}
                     character={activeCharacter}
                     record={records[activeCharacter.id]}
                     onToggleTask={handleToggleTask}
@@ -2362,13 +2408,15 @@ export default function App() {
                     onOpenContentConfig={() => setConfigCharacterId(activeCharacter.id)}
                     soundEnabled={settings.soundEnabled}
                     collapsible={activeTab === 'all'}
+                    isCollapsed={sectionCollapsedMap.weekly}
+                    onToggleCollapse={() => handleToggleSectionCollapse('weekly')}
                     isAlertActive={activeCharAlert?.weeklyAlert}
                   />
                 )}
 
                 {(activeTab === 'all' || activeTab === 'bosses') && (
                   <WeeklyBossList
-                    key={`${activeCharacter.id}-${collapseTrigger}-bosses`}
+                    key={`${activeCharacter.id}-bosses`}
                     character={activeCharacter}
                     record={records[activeCharacter.id]}
                     onToggleBoss={handleToggleBoss}
@@ -2376,26 +2424,30 @@ export default function App() {
                     onOpenContentConfig={() => setConfigCharacterId(activeCharacter.id)}
                     soundEnabled={settings.soundEnabled}
                     collapsible={activeTab === 'all'}
+                    isCollapsed={sectionCollapsedMap.bosses}
+                    onToggleCollapse={() => handleToggleSectionCollapse('bosses')}
                     isAlertActive={activeCharAlert?.bossAlert}
                   />
                 )}
 
                 {(activeTab === 'all' || activeTab === 'bosses') && (
                   <BlackMageCard
-                    key={`${activeCharacter.id}-${collapseTrigger}-black-mage`}
+                    key={`${activeCharacter.id}-black-mage`}
                     character={activeCharacter}
                     record={records[activeCharacter.id]}
                     onToggleBlackMage={handleToggleBlackMage}
                     onOpenContentConfig={() => setConfigCharacterId(activeCharacter.id)}
                     soundEnabled={settings.soundEnabled}
                     collapsible={activeTab === 'all'}
+                    isCollapsed={sectionCollapsedMap.black_mage}
+                    onToggleCollapse={() => handleToggleSectionCollapse('black_mage')}
                     isAlertActive={activeCharAlert?.blackMageAlert}
                   />
                 )}
 
                 {(activeTab === 'all' || activeTab === 'custom') && (
                   <CustomTaskList
-                    key={`${activeCharacter.id}-${collapseTrigger}-custom`}
+                    key={`${activeCharacter.id}-custom`}
                     character={activeCharacter}
                     record={records[activeCharacter.id]}
                     onToggleCustomTask={handleToggleCustomTask}
@@ -2403,6 +2455,8 @@ export default function App() {
                     onOpenContentConfig={() => setConfigCharacterId(activeCharacter.id)}
                     soundEnabled={settings.soundEnabled}
                     collapsible={activeTab === 'all'}
+                    isCollapsed={sectionCollapsedMap.custom}
+                    onToggleCollapse={() => handleToggleSectionCollapse('custom')}
                     isAlertActive={activeCharAlert?.customAlert}
                   />
                 )}

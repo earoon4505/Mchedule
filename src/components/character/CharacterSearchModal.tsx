@@ -297,10 +297,10 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
     >
       <div 
         id="character-search-modal"
-        className="w-full max-w-lg sm:max-w-4xl max-h-[82dvh] sm:h-[85vh] sm:max-h-[850px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col transition-all"
+        className="w-full max-w-lg sm:max-w-4xl max-h-[82dvh] sm:h-[85vh] sm:max-h-[850px] bg-th-canvas border border-th-border-panel rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col transition-all"
       >
         {/* 1. 모달 상단 헤더 */}
-        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/90 flex-shrink-0">
+        <div className="px-5 sm:px-6 py-4 border-b border-th-border-panel flex items-center justify-between bg-th-panel flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center border border-orange-200 dark:border-orange-900/50 shadow-xs">
               <UserPlus className="w-5 h-5" />
@@ -319,7 +319,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                 onClick={() => loadApiCharacters(true)}
                 disabled={isRefreshing || isLoading}
                 title="API 캐릭터 목록 새로고침"
-                className="p-2 rounded-xl text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1 text-xs font-semibold"
+                className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 bg-th-pill-soft hover:bg-th-pill-hover transition-all border border-th-border-pill flex items-center gap-1 text-xs font-semibold"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-orange-500' : ''}`} />
                 <span className="hidden sm:inline">새로고침</span>
@@ -361,7 +361,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl transition-all"
+                className="w-full py-2.5 px-4 bg-th-pill-soft hover:bg-th-pill-hover border border-th-border-pill text-slate-700 dark:text-slate-200 font-semibold text-xs rounded-xl transition-all"
               >
                 닫기
               </button>
@@ -371,7 +371,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
           /* 3. API 키 등록 상태: 검색 및 캐릭터 카드 목록 */
           <div className="flex flex-col flex-1 overflow-hidden min-h-0">
             {/* 상단 검색 & 월드 필터 바 */}
-            <div className="p-4 sm:px-6 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800 space-y-3 flex-shrink-0">
+            <div className="p-4 sm:px-6 bg-th-panel border-b border-th-border-panel space-y-3 flex-shrink-0">
               <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
                 {/* 실시간 API 내 캐릭터 검색 입력창 */}
                 <div className="relative flex-1">
@@ -382,7 +382,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="캐릭터명, 직업, 월드 검색"
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9.5 pr-8 py-2 text-base sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-xs"
+                    className="w-full bg-th-card border border-th-border-card rounded-xl pl-9.5 pr-8 py-2 text-base sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-xs"
                   />
                   {searchQuery && (
                     <button
@@ -403,7 +403,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                         id="api-character-world-filter"
                         value={selectedWorld}
                         onChange={(e) => setSelectedWorld(e.target.value)}
-                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-orange-500 shadow-xs cursor-pointer"
+                        className="bg-th-card border border-th-border-card rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:border-orange-500 shadow-xs cursor-pointer"
                       >
                         <option value="all">전체 월드 ({accountCharacters.length})</option>
                         {availableWorlds.map((world) => {
@@ -439,7 +439,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                     className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-colors ${
                       selectedAccount === 'all'
                         ? 'text-white'
-                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs'
+                        : 'bg-th-pill-soft text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-th-pill-hover border border-th-border-pill shadow-2xs'
                     }`}
                   >
                     {selectedAccount === 'all' && (
@@ -463,7 +463,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                         className={`relative px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap cursor-pointer focus:outline-hidden transition-colors ${
                           isSelected
                             ? 'text-white'
-                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs'
+                            : 'bg-th-pill-soft text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-th-pill-hover border border-th-border-pill shadow-2xs'
                         }`}
                       >
                         {isSelected && (
@@ -544,7 +544,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                 </div>
               ) : filteredCharacters.length === 0 ? (
                 <div className="py-16 text-center text-slate-400 space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-xl">
+                  <div className="w-12 h-12 rounded-2xl bg-th-pill-soft border border-th-border-pill flex items-center justify-center mx-auto text-xl">
                     🔍
                   </div>
                   <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
@@ -571,13 +571,13 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                         onClick={() => !isRegistered && handleSelectCharacter(char)}
                         className={`group relative p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col items-center justify-between text-center ${
                           isRegistered
-                            ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300/80 dark:border-emerald-800/80 shadow-xs cursor-default'
-                            : 'bg-white dark:bg-slate-800/70 border-slate-200/90 dark:border-slate-700 hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-md hover:bg-orange-50/20 dark:hover:bg-orange-950/20 cursor-pointer'
+                            ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300/80 dark:border-emerald-800/80 shadow-xs cursor-default'
+                            : 'bg-th-card border-th-border-card hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-md hover:bg-orange-50/30 dark:hover:bg-orange-950/20 cursor-pointer'
                         }`}
                       >
                         {/* 계정 별칭 태그 (연결된 API가 2개 이상인 다계정일 때만 표시) */}
                         {isMultiAccount && char.apiKeyAlias && (
-                          <div className="absolute top-2.5 left-2.5 z-10 px-1.5 py-0.5 rounded-md bg-slate-100/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 text-[9px] font-semibold border border-slate-200/80 dark:border-slate-700/80 max-w-[85px] truncate shadow-2xs backdrop-blur-xs">
+                          <div className="absolute top-2.5 left-2.5 z-10 px-1.5 py-0.5 rounded-md bg-th-pill-soft/95 text-slate-600 dark:text-slate-300 text-[9px] font-semibold border border-th-border-pill max-w-[85px] truncate shadow-2xs backdrop-blur-xs">
                             {char.apiKeyAlias}
                           </div>
                         )}
@@ -590,7 +590,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                             containerClassName={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl ${
                               isRegistered
                                 ? 'bg-emerald-100/50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700'
-                                : 'bg-slate-100 dark:bg-slate-800 border-slate-200/90 dark:border-slate-700 group-hover:scale-105'
+                                : 'bg-th-pill-soft border-th-border-pill group-hover:scale-105'
                             }`}
                             isAllCompleted={isRegistered}
                             size="custom"
@@ -625,7 +625,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
                         </div>
 
                         {/* 3. 하단 액션 버튼 */}
-                        <div className="w-full mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60">
+                        <div className="w-full mt-3 pt-2.5 border-t border-th-border-card">
                           {isRegistered ? (
                             <div className="py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
                               <Check className="w-3.5 h-3.5" />
@@ -653,7 +653,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
             </div>
 
             {/* 하단 완료 바 */}
-            <div className="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900 flex-shrink-0">
+            <div className="px-6 py-3.5 border-t border-th-border-panel flex items-center justify-between bg-th-panel flex-shrink-0">
               <div className="text-xs text-slate-500 dark:text-slate-400">
                 {justAddedNames.size > 0 && (
                   <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
@@ -665,7 +665,7 @@ export const CharacterSearchModal: React.FC<CharacterSearchModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-xs"
+                className="px-5 py-2 bg-th-pill-soft hover:bg-th-pill-hover border border-th-border-pill text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors shadow-xs"
               >
                 닫기
               </button>

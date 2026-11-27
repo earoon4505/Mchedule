@@ -76,6 +76,8 @@ export const StandalonePiPView: React.FC = () => {
     incompleteCharacterIcon: true,
     showCompletedIcon: true,
     darkMode: true,
+    lightTheme: 'classic',
+    darkTheme: 'deep',
     soundEnabled: true,
     autoSyncIntervalSec: 120,
     pip: {
@@ -195,7 +197,12 @@ export const StandalonePiPView: React.FC = () => {
         if (data.characters) setCharacters(data.characters);
         if (data.records) setRecords(data.records);
         if (data.settings) {
-          setSettings(data.settings);
+          setSettings((prev) => ({
+            ...prev,
+            ...data.settings,
+            lightTheme: data.settings.lightTheme === 'cream' ? 'cream' : 'classic',
+            darkTheme: data.settings.darkTheme === 'classic' ? 'classic' : 'deep',
+          }));
           if (data.settings.pip && data.settings.pip.enabled === false) {
             if ((window as any).electronAPI?.closePiPWindow) {
               (window as any).electronAPI.closePiPWindow();
@@ -233,7 +240,12 @@ export const StandalonePiPView: React.FC = () => {
         if (payload.characters) setCharacters(payload.characters);
         if (payload.records) setRecords(payload.records);
         if (payload.settings) {
-          setSettings(payload.settings);
+          setSettings((prev) => ({
+            ...prev,
+            ...payload.settings,
+            lightTheme: payload.settings.lightTheme === 'cream' ? 'cream' : 'classic',
+            darkTheme: payload.settings.darkTheme === 'classic' ? 'classic' : 'deep',
+          }));
           // 메인 창에서 사용자가 PiP 설정을 껐을 경우, 독립 PiP 창도 스스로 안전하게 닫힘
           if (payload.settings.pip && payload.settings.pip.enabled === false) {
             if ((window as any).electronAPI?.closePiPWindow) {
@@ -290,13 +302,11 @@ export const StandalonePiPView: React.FC = () => {
     return () => clearInterval(interval);
   }, [syncData]);
 
-  // 다크모드 HTML 클래스 연동 (배경 투명성 100% 보장 유지)
+  // 다크모드 및 색상 프리셋 HTML DOM 연동 (배경 투명성 100% 보장 유지)
   useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', !!settings.darkMode);
+    document.documentElement.dataset.lightTheme = settings.lightTheme === 'cream' ? 'cream' : 'classic';
+    document.documentElement.dataset.darkTheme = settings.darkTheme === 'classic' ? 'classic' : 'deep';
     document.documentElement.style.background = 'transparent';
     document.documentElement.style.backgroundColor = 'transparent';
     document.body.style.background = 'transparent';
@@ -306,7 +316,7 @@ export const StandalonePiPView: React.FC = () => {
       rootEl.style.background = 'transparent';
       rootEl.style.backgroundColor = 'transparent';
     }
-  }, [settings.darkMode]);
+  }, [settings.darkMode, settings.lightTheme, settings.darkTheme]);
 
   const pip = {
     enabled: true,
@@ -738,12 +748,12 @@ export const StandalonePiPView: React.FC = () => {
                     : 'w-[52px] h-[52px] min-w-[52px] min-h-[52px] max-w-[52px] max-h-[52px] p-1'
                 } aspect-square rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-sm relative select-none flex-shrink-0 ${
                   isItemAlerting
-                    ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
+                    ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-th-card'
                     : isDone
                     ? item.type === 'daily'
                       ? 'bg-amber-50 dark:bg-amber-950 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
                       : 'bg-rose-50 dark:bg-rose-950 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+                    : 'bg-th-card border-th-border-card hover:border-orange-300 dark:hover:border-orange-500/70'
                 }`}
               >
                 <div className="relative flex items-center justify-center pointer-events-none select-none">
@@ -798,12 +808,12 @@ export const StandalonePiPView: React.FC = () => {
           title={`[계정 컨텐츠] ${item.name} (${item.type === 'daily' ? '일일' : '주간'})\n${isDone ? '완료됨 (클리어)' : '미완료'}\n(클릭하여 완료 토글 / 드래그하여 위치 이동)`}
           className={`w-[54px] h-[54px] min-w-[54px] min-h-[54px] max-w-[54px] max-h-[54px] aspect-square rounded-2xl border flex items-center justify-center p-1 transition-all cursor-pointer shadow-sm relative select-none flex-shrink-0 ${
             isItemAlerting
-              ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-slate-900'
+              ? 'border-red-500 shadow-md alert-pulse-red bg-red-50 dark:bg-th-card'
               : isDone
               ? item.type === 'daily'
                 ? 'bg-amber-50 dark:bg-amber-950 border-amber-400 dark:border-amber-500 shadow-amber-500/20 ring-1 ring-amber-400/40'
                 : 'bg-rose-50 dark:bg-rose-950 border-rose-400 dark:border-rose-500 shadow-rose-500/20 ring-1 ring-rose-400/40'
-              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+              : 'bg-th-card border-th-border-card hover:border-orange-300 dark:hover:border-orange-500/70'
           }`}
         >
           <div className="relative flex items-center justify-center pointer-events-none select-none">
@@ -940,7 +950,7 @@ export const StandalonePiPView: React.FC = () => {
                       ? item.type === 'daily'
                         ? 'bg-amber-100 dark:bg-amber-950 border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/40'
                         : 'bg-rose-100 dark:bg-rose-950 border-rose-400 dark:border-rose-500 ring-2 ring-rose-400/40'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+                      : 'bg-th-card border-th-border-card hover:border-orange-300 dark:hover:border-orange-500/70'
                   }`}
                 >
                   <div className={`relative w-11 h-11 rounded-xl flex items-center justify-center p-1 transition-all pointer-events-none select-none ${
@@ -948,7 +958,7 @@ export const StandalonePiPView: React.FC = () => {
                       ? item.type === 'daily'
                         ? 'bg-amber-200/60 dark:bg-amber-900/60'
                         : 'bg-rose-200/60 dark:bg-rose-900/60'
-                      : 'bg-slate-100 dark:bg-slate-800/80'
+                      : 'bg-th-pill-soft'
                   }`}>
                     <MapleIcon
                       taskId={item.id}
@@ -1021,14 +1031,14 @@ export const StandalonePiPView: React.FC = () => {
                     title={`${char.characterName} (Lv.${char.characterLevel})\n일일 ${dailyDone}/${dailyTotal} · 일보 ${dailyBossDone}/${dailyBossTotal} · 주간 ${weeklyDone}/${weeklyTotal} · 주보 ${clearedBossCount}/${bossThreshold}\n(드래그하여 위치 이동 / 휠 스크롤 가능)`}
                     className={`group relative p-1 rounded-2xl border transition-colors cursor-grab active:cursor-grabbing select-none w-[56px] min-w-[56px] max-w-[56px] h-[56px] min-h-[56px] max-h-[56px] flex-shrink-0 shadow-none flex items-center justify-center box-border ${
                       isAlerting
-                        ? 'border-red-500 alert-pulse-red bg-red-50 dark:bg-slate-900'
+                        ? 'border-red-500 alert-pulse-red bg-red-50 dark:bg-th-card'
                         : isAllCompleted
                         ? isActive
                           ? 'bg-emerald-100 dark:bg-emerald-950 border-emerald-500 ring-2 ring-emerald-400'
                           : 'bg-emerald-50 dark:bg-emerald-950 border-emerald-400 hover:border-emerald-500'
                         : isActive
-                        ? 'bg-orange-50 dark:bg-slate-900 border-orange-400 ring-2 ring-orange-400/60'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300'
+                        ? 'bg-orange-50 dark:bg-th-card border-orange-400 ring-2 ring-orange-400/60'
+                        : 'bg-th-card border-th-border-card hover:border-orange-300 dark:hover:border-orange-500/70'
                     }`}
                   >
                     <CharacterAvatar
@@ -1068,14 +1078,14 @@ export const StandalonePiPView: React.FC = () => {
                   }}
                   className={`group relative p-3 rounded-2xl border transition-all cursor-grab active:cursor-grabbing select-none w-[280px] min-w-[280px] max-w-[280px] h-[142px] min-h-[142px] max-h-[142px] flex-shrink-0 shadow-none box-border flex flex-col justify-between overflow-hidden ${
                     isAlerting
-                      ? 'border-red-500 alert-pulse-red bg-red-50 dark:bg-slate-900'
+                      ? 'border-red-500 alert-pulse-red bg-red-50 dark:bg-th-card'
                       : isAllCompleted
                       ? isActive
                         ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-500 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
                         : 'bg-emerald-50 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 shadow-xs'
                       : isActive
-                      ? 'bg-white dark:bg-slate-900 border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs hover:shadow-sm'
+                      ? 'bg-th-card border-orange-400 dark:border-orange-500 shadow-sm ring-2 ring-orange-500/20 dark:ring-orange-500/30'
+                      : 'bg-th-card border-th-border-card hover:border-th-border-strong hover:bg-th-card-hover shadow-xs hover:shadow-sm'
                   }`}
                 >
                   {/* 1. 상단 캐릭터 기본 헤더 (프로필 사진과 닉네임/정보를 세로 중앙 정렬) */}
@@ -1105,7 +1115,7 @@ export const StandalonePiPView: React.FC = () => {
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                           isAllCompleted
                             ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                            : 'bg-th-pill-soft text-slate-600 dark:text-slate-300'
                         }`}>
                           Lv.{char.characterLevel}
                         </span>
@@ -1175,7 +1185,7 @@ export const StandalonePiPView: React.FC = () => {
                     ) : (
                       <div
                         title="검은 마법사 미등록"
-                        className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-600 bg-slate-100/50 dark:bg-slate-900/40 select-none"
+                        className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-400/80 bg-th-pill-soft/65 select-none"
                       >
                         <span className="truncate">검마 -</span>
                       </div>
@@ -1229,7 +1239,7 @@ export const StandalonePiPView: React.FC = () => {
                     ) : (
                       <div
                         title="커스텀 컨텐츠 미등록"
-                        className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-600 bg-slate-100/50 dark:bg-slate-900/40 select-none"
+                        className="flex items-center justify-center gap-1 font-medium py-1 px-1 rounded border border-transparent text-slate-400 dark:text-slate-400/80 bg-th-pill-soft/65 select-none"
                       >
                         <span className="truncate">커스텀 -</span>
                       </div>
